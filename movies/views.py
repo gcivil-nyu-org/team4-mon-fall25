@@ -1,7 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from .models import Movie
 
+@login_required
 def movie_list(request):
     """Display a paginated list of movies"""
     movies = Movie.objects.all()
@@ -12,6 +14,7 @@ def movie_list(request):
 
     return render(request, 'movies/movie_list.html', {'page_obj': page_obj})
 
+@login_required
 def movie_detail(request, movie_id):
     """Display detailed information about a specific movie"""
     movie = get_object_or_404(Movie, id=movie_id)

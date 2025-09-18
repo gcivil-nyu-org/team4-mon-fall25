@@ -87,7 +87,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><a href="{% url 'movies:movie_list' %}" style="text-decoration: none; color: #333;">🎬 CineMatch</a></h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1><a href="{% url 'movies:movie_list' %}" style="text-decoration: none; color: #333;">🎬 CineMatch</a></h1>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <span style="color: #666;">Welcome, {{ user.username }}!</span>
+                    <a href="{% url 'accounts:logout' %}" style="color: #e74c3c; text-decoration: none; padding: 8px 15px; border: 1px solid #e74c3c; border-radius: 4px; transition: all 0.2s;">
+                        Logout
+                    </a>
+                </div>
+            </div>
             <p>Discover your next favorite movie</p>
         </div>
         {% block content %}
