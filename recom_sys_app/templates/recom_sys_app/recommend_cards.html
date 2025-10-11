@@ -1,0 +1,99 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Recommended Movies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+  <style>
+    .actions { display:flex; gap:.5rem; margin-top:.5rem; flex-wrap: wrap; }
+    .actions form { display:inline; }
+    .poster.missing { width:150px; height:225px; display:flex; align-items:center; justify-content:center; background:#eee; color:#666; border-radius:8px; }
+    .poster { max-width:150px; border-radius:8px; }
+    .card { padding:.75rem; border:1px solid #eee; border-radius:10px; }
+    .meta h3 { margin:.25rem 0; }
+    .year { color:#666; font-weight:400; margin-left:.25rem; }
+    .stats { font-size:.9rem; color:#444; display:flex; gap:1rem; }
+    .messages { margin:.5rem 0 1rem; padding:0; list-style:none; }
+    .messages li { padding:.4rem .6rem; border-radius:6px; margin-bottom:.4rem; }
+    .messages .success { background:#e8f6ee; border:1px solid #bde5cb; color:#0a7a3e; }
+    .messages .error { background:#fdecea; border:1px solid #f5c2c0; color:#a30000; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Recommended Movies</h1>
+    <div class="nav" style="margin:.5rem 0 1rem;">
+      <a href="{% url 'profile' %}">Edit my Profile</a>
+      <a href="{% url 'recommend' %}">Refresh</a>
+    </div>
+  </header>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for m in messages %}
+        <li class="{{ m.tags }}">{{ m }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <main class="grid">
+    {% for m in results %}
+      <article class="card">
+        {% if m.found %}
+          {% if m.poster_url %}
+            <img class="poster" src="{{ m.poster_url }}" alt="Poster of {{ m.title }}">
+          {% else %}
+            <div class="poster missing">No Poster</div>
+          {% endif %}
+
+          <div class="meta">
+            <h3>{{ m.title }} <span class="year">{{ m.year }}</span></h3>
+            <p class="ov">{{ m.overview }}</p>
+            <div class="stats">
+              <span>Rating: {{ m.vote_average|default:"—" }}</span>
+              <span>Votes: {{ m.vote_count|default:"—" }}</span>
+            </div>
+
+            {% if m.tmdb_id %}
+            <div class="actions" role="group" aria-label="Actions for {{ m.title }}">
+              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='LIKE' %}">
+                {% csrf_token %}
+                <button type="submit">Like</button>
+              </form>
+              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='DISLIKE' %}">
+                {% csrf_token %}
+                <button type="submit">Dislike</button>
+              </form>
+              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='WATCH_LATER' %}">
+                {% csrf_token %}
+                <button type="submit">Watch Later</button>
+              </form>
+              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='WATCHED' %}">
+                {% csrf_token %}
+                <button type="submit">Watched</button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+
+        {% else %}
+          <div class="poster missing">No Poster</div>
+          <div class="meta">
+            <h3>{{ m.query }}</h3>
+            <p class="miss">Not found on TMDB.</p>
+          </div>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </main>
+
+  <footer>
+    <details>
+      <summary>Show raw agent markdown</summary>
+      <pre>{{ agent_text }}</pre>
+    </details>
+  </footer>
+</body>
+</html>
