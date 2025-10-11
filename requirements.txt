@@ -3,3 +3,7 @@ groq
 psycopg[binary]
 python-dotenv
 Django
+djangorestframework
+environs
+django-filter
+django-cors-headers
