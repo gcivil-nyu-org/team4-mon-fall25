@@ -1,0 +1,21 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>My Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+</head>
+<body>
+  <a href="{% url 'signup' %}">Sign up</a>
+
+  <h1>Profile</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+  <p><a href="{% url 'recommend' %}">Go to Recommendations</a></p>
+</body>
+</html>

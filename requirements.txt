@@ -1,0 +1,5 @@
+phidata
+groq
+psycopg[binary]
+python-dotenv
+Django
