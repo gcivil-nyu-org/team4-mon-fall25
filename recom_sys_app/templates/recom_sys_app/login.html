@@ -1,0 +1,12 @@
+<form method="post" action="{% url 'login' %}">
+  {% csrf_token %}
+  {% load static %}
+  <a href="{% url 'signup' %}">Sign up</a>
+    <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+  {% if form.non_field_errors %}<div style="color:#b00;">{{ form.non_field_errors }}</div>{% endif %}
+  <p>{{ form.username.label_tag }} {{ form.username }}</p>
+  <p>{{ form.password.label_tag }} {{ form.password }}</p>
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button type="submit">Log in</button>
+</form>
+

@@ -1,0 +1,41 @@
+<!-- recom_sys_app/templates/recom_sys_app/signup.html -->
+ {% load static %}
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Sign up</title></head>
+<body>
+  <a href="{% url 'signup' %}">Sign up</a>
+   <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+  <h1>Create your account</h1>
+  <form method="post">
+    {% csrf_token %}
+
+    <p>{{ form.username.label_tag }} {{ form.username }}</p>  <!-- ADD THIS -->
+
+    <p>{{ form.name.label_tag }} {{ form.name }}</p>
+    <p>{{ form.email.label_tag }} {{ form.email }}</p>
+
+    <p>{{ form.password1.label_tag }} {{ form.password1 }}</p>
+    <p>{{ form.password2.label_tag }} {{ form.password2 }}</p>
+
+    <hr>
+    <p>{{ form.age.label_tag }} {{ form.age }}</p>
+    <p>{{ form.sex.label_tag }} {{ form.sex }}</p>
+    <p>{{ form.favourite_genre1.label_tag }} {{ form.favourite_genre1 }}</p>
+    <p>{{ form.liked_g1_title.label_tag }} {{ form.liked_g1_title }}</p>
+    <p>{{ form.favourite_genre2.label_tag }} {{ form.favourite_genre2 }}</p>
+    <p>{{ form.liked_g2_title.label_tag }} {{ form.liked_g2_title }}</p>
+
+    {% if form.non_field_errors %}
+      <div style="color:#b00;">{{ form.non_field_errors }}</div>  <!-- SHOW THESE -->
+    {% endif %}
+    {% if form.errors %}
+      <div style="color:#b00;">{{ form.errors }}</div>
+    {% endif %}
+
+    <button type="submit">Sign up</button>
+  </form>
+
+  <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+</body>
+</html>
