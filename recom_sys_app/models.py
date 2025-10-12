@@ -2,6 +2,9 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import date
+import uuid
+import random
+import string
 
 # ---- 1) User fundamentals ----
 class Sex(models.TextChoices):
@@ -121,3 +124,84 @@ class Interaction(models.Model):
         return f"{self.user_id}:{self.tmdb_id} -> {self.status}"
 
 # Create your models here.
+
+# ---- 3) Group Movie Matching (NEW) ----
+class GroupSession(models.Model):
+    """群组会话模型 - 用于多人协作选电影"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group_code = models.CharField(max_length=8, unique=True, db_index=True)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_groups'
+    )
+    
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'group_sessions'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['group_code']),
+            models.Index(fields=['creator', '-created_at']),
+        ]
+    
+    def save(self, *args, **kwargs):
+        """覆盖 save 方法，自动生成 group_code"""
+        if not self.group_code:
+            self.group_code = self.generate_unique_code()
+        super().save(*args, **kwargs)
+    
+    @staticmethod
+    def generate_unique_code():
+        """生成唯一的6位大写字母+数字群组代码"""
+        import random
+        import string
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            if not GroupSession.objects.filter(group_code=code).exists():
+                return code
+
+
+class GroupMember(models.Model):
+    """群组成员模型"""
+    
+    class Role(models.TextChoices):
+        CREATOR = "CREATOR", "Creator"
+        MEMBER = "MEMBER", "Member"
+    
+    id = models.AutoField(primary_key=True)
+    group_session = models.ForeignKey(
+        GroupSession,
+        on_delete=models.CASCADE,
+        related_name='members'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='group_memberships'
+    )
+    role = models.CharField(max_length=10, choices=Role.choices, default=Role.MEMBER)
+    
+    is_active = models.BooleanField(default=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'group_members'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['group_session', 'user'], 
+                name='uniq_group_user'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['group_session', 'is_active']),
+            models.Index(fields=['user', 'is_active']),
+        ]
+        ordering = ['joined_at']
+    
+    def __str__(self):
+        return f"{self.user.username} in {self.group_session.group_code}"
