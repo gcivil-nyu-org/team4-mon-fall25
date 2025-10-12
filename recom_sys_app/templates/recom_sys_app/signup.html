@@ -4,27 +4,64 @@
 <html>
 <head><meta charset="utf-8"><title>Sign up</title></head>
 <body>
-  <a href="{% url 'signup' %}">Sign up</a>
-   <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+  <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
   <h1>Create your account</h1>
   <form method="post">
     {% csrf_token %}
 
-    <p>{{ form.username.label_tag }} {{ form.username }}</p>  <!-- ADD THIS -->
+    <p>
+      {{ form.name.label_tag }} {{ form.name }}
+      {% if form.name.errors %}<br><span style="color:#b00;">{{ form.name.errors|striptags }}</span>{% endif %}
+    </p>
 
-    <p>{{ form.name.label_tag }} {{ form.name }}</p>
-    <p>{{ form.email.label_tag }} {{ form.email }}</p>
+    <p>
+      {{ form.email.label_tag }} {{ form.email }}
+      {% if form.email.errors %}<br><span style="color:#b00;">{{ form.email.errors|striptags }}</span>{% endif %}
+    </p>
 
-    <p>{{ form.password1.label_tag }} {{ form.password1 }}</p>
-    <p>{{ form.password2.label_tag }} {{ form.password2 }}</p>
+    <p>
+      {{ form.password1.label_tag }} {{ form.password1 }}
+      {% if form.password1.errors %}<br><span style="color:#b00;">{{ form.password1.errors|striptags }}</span>{% endif %}
+    </p>
+    <p>
+      {{ form.password2.label_tag }} {{ form.password2 }}
+      {% if form.password2.errors %}<br><span style="color:#b00;">{{ form.password2.errors|striptags }}</span>{% endif %}
+    </p>
 
     <hr>
-    <p>{{ form.age.label_tag }} {{ form.age }}</p>
-    <p>{{ form.sex.label_tag }} {{ form.sex }}</p>
-    <p>{{ form.favourite_genre1.label_tag }} {{ form.favourite_genre1 }}</p>
-    <p>{{ form.liked_g1_title.label_tag }} {{ form.liked_g1_title }}</p>
-    <p>{{ form.favourite_genre2.label_tag }} {{ form.favourite_genre2 }}</p>
-    <p>{{ form.liked_g2_title.label_tag }} {{ form.liked_g2_title }}</p>
+
+    <p>
+      {{ form.country.label_tag }} {{ form.country }}
+      {% if form.country.errors %}<br><span style="color:#b00;">{{ form.country.errors|striptags }}</span>{% endif %}
+    </p>
+
+    <p>
+      {{ form.age.label_tag }} {{ form.age }}
+      {% if form.age.errors %}<br><span style="color:#b00;">{{ form.age.errors|striptags }}</span>{% endif %}
+    </p>
+
+    <p>
+      {{ form.sex.label_tag }} {{ form.sex }}
+      {% if form.sex.errors %}<br><span style="color:#b00;">{{ form.sex.errors|striptags }}</span>{% endif %}
+    </p>
+
+    <p>
+      {{ form.favourite_genre1.label_tag }} {{ form.favourite_genre1 }}
+      {% if form.favourite_genre1.errors %}<br><span style="color:#b00;">{{ form.favourite_genre1.errors|striptags }}</span>{% endif %}
+    </p>
+    <p>
+      {{ form.liked_g1_title.label_tag }} {{ form.liked_g1_title }}
+      {% if form.liked_g1_title.errors %}<br><span style="color:#b00;">{{ form.liked_g1_title.errors|striptags }}</span>{% endif %}
+    </p>
+
+    <p>
+      {{ form.favourite_genre2.label_tag }} {{ form.favourite_genre2 }}
+      {% if form.favourite_genre2.errors %}<br><span style="color:#b00;">{{ form.favourite_genre2.errors|striptags }}</span>{% endif %}
+    </p>
+    <p>
+      {{ form.liked_g2_title.label_tag }} {{ form.liked_g2_title }}
+      {% if form.liked_g2_title.errors %}<br><span style="color:#b00;">{{ form.liked_g2_title.errors|striptags }}</span>{% endif %}
+    </p>
 
     {% if form.non_field_errors %}
       <div style="color:#b00;">{{ form.non_field_errors }}</div>  <!-- SHOW THESE -->
