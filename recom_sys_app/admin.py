@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import UserProfile, Interaction
+from .models import UserProfile, Interaction, GroupSession, GroupMember
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -14,3 +15,27 @@ class InteractionAdmin(admin.ModelAdmin):
     search_fields = ("tmdb_id", "user__username")
 
 # Register your models here.
+
+@admin.register(GroupSession)
+class GroupSessionAdmin(admin.ModelAdmin):
+    list_display = ('group_code', 'creator', 'member_count', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('group_code', 'creator__username')
+    readonly_fields = ('id', 'group_code', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+    
+    def member_count(self, obj):
+        return obj.members.filter(is_active=True).count()
+    member_count.short_description = 'Members'
+
+
+@admin.register(GroupMember)
+class GroupMemberAdmin(admin.ModelAdmin):
+    list_display = ('user', 'group_code', 'role', 'is_active', 'joined_at')
+    list_filter = ('role', 'is_active', 'joined_at')
+    search_fields = ('user__username', 'group_session__group_code')
+    readonly_fields = ('joined_at',)
+    
+    def group_code(self, obj):
+        return obj.group_session.group_code
+    group_code.short_description = 'Group Code'
