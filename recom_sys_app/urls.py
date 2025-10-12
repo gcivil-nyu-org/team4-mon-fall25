@@ -39,6 +39,21 @@ urlpatterns = [
     
     # Interactions
     path("interact/<int:tmdb_id>/<str:status>/", set_interaction_view, name="set_interaction"),
+
+    # ============ Group Matching URLs (NEW) ============
+    # API endpoints
+    path('api/groups', views.create_group, name='create_group'),
+    path('api/groups/<uuid:group_id>', views.get_group_details, name='group_details'),
+    
+    # Page views
+    path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
+
+    # Group Matching URLs
+    path('api/groups', views.create_group, name='create_group'),
+    path('api/groups/join', views.join_group, name='join_group'),  # 新增
+    path('api/groups/<uuid:group_id>', views.get_group_details, name='group_details'),
+    path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
+
 ]
 
 # ==================== NEW HELPER ROUTES (Optional - add if you created these views) ====================
