@@ -5,41 +5,349 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Group Lobby - {{ group_code }}</title>
-    <link rel="stylesheet" href="{% static 'css/group.css' %}">
+    <link rel="stylesheet" href="{% static 'recom_sys_app/cards.css' %}">
+    <style>
+        .lobby-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-5);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--link);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            margin-bottom: var(--space-4);
+        }
+
+        .back-link:hover {
+            border-color: var(--border);
+            background: rgba(122,162,247,.06);
+        }
+
+        .lobby-card {
+            background: linear-gradient(180deg, var(--card-elev) 0%, var(--card) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
+            box-shadow: var(--shadow);
+        }
+
+        .lobby-header {
+            text-align: center;
+            margin-bottom: var(--space-5);
+        }
+
+        .lobby-header h1 {
+            font-size: 28px;
+            margin: 0 0 var(--space-4) 0;
+            color: var(--fg);
+        }
+
+        .code-display {
+            background: rgba(122, 162, 247, 0.1);
+            border: 2px solid rgba(122, 162, 247, 0.4);
+            border-radius: var(--radius-sm);
+            padding: var(--space-4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .code-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .code-value {
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: var(--accent);
+        }
+
+        .btn-copy {
+            background: var(--card-elev);
+            border: 1px solid var(--border);
+            color: var(--fg);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy:hover {
+            background: rgba(122,162,247,.12);
+            border-color: var(--accent);
+        }
+
+        .btn-copy.copied {
+            background: rgba(158,206,106,.15);
+            border-color: var(--accent-2);
+            color: var(--accent-2);
+        }
+
+        .invite-text {
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .members-section {
+            margin-bottom: var(--space-4);
+        }
+
+        .members-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+            padding-bottom: var(--space-3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .members-header h2 {
+            font-size: 20px;
+            color: var(--fg);
+            margin: 0;
+        }
+
+        .member-count {
+            background: rgba(122, 162, 247, 0.15);
+            border: 1px solid rgba(122, 162, 247, 0.4);
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .members-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3);
+            background: rgba(15, 19, 32, 0.4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .member-avatar {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #7aa2f7 0%, #bb9af7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .member-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .member-name {
+            font-weight: 700;
+            color: var(--fg);
+            font-size: 15px;
+        }
+
+        .member-username {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .member-role {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .member-role.creator {
+            background: rgba(224, 175, 104, 0.2);
+            border: 1px solid rgba(224, 175, 104, 0.5);
+            color: var(--warning);
+        }
+
+        .member-role.member {
+            background: rgba(181, 184, 195, 0.15);
+            border: 1px solid rgba(181, 184, 195, 0.4);
+            color: var(--muted);
+        }
+
+        .loading, .no-members {
+            text-align: center;
+            padding: var(--space-5);
+            color: var(--muted);
+        }
+
+        .lobby-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 14px 28px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #9d7cd8 100%);
+            color: white;
+            border: 1px solid rgba(122, 162, 247, 0.5);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(247, 118, 142, 0.15);
+            border: 1px solid rgba(247, 118, 142, 0.5);
+            color: var(--accent-3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(247, 118, 142, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification.success {
+            background: rgba(158,206,106,.12);
+            border: 1px solid rgba(158,206,106,.35);
+            color: var(--accent-2);
+        }
+
+        .notification.error {
+            background: rgba(247,118,142,.12);
+            border: 1px solid rgba(247,118,142,.35);
+            color: var(--accent-3);
+        }
+
+        .notification.info {
+            background: rgba(122,162,247,.12);
+            border: 1px solid rgba(122,162,247,.35);
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .lobby-container {
+                padding: var(--space-4);
+            }
+
+            .lobby-card {
+                padding: var(--space-4);
+            }
+
+            .code-value {
+                font-size: 24px;
+                letter-spacing: 4px;
+            }
+
+            .lobby-actions {
+                flex-direction: column;
+                gap: var(--space-2);
+            }
+
+            .lobby-actions button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="group-lobby-container">
-        <!-- Head area -->
-        <div class="lobby-header">
-            <h1>🎬 Group Lobby</h1>
-            <div class="group-code-display">
-                <div class="code-label">Group Code</div>
-                <div class="code-value">{{ group_code }}</div>
-                <button id="copyCodeBtn" class="btn-copy" title="Copy group code">
-                    📋 Copy
+    <div class="lobby-container">
+        <a href="{% url 'profile' %}" class="back-link">← Back to Profile</a>
+
+        <div class="lobby-card">
+            <div class="lobby-header">
+                <h1>🎬 Group Lobby</h1>
+                <div class="code-display">
+                    <div class="code-label">Group Code</div>
+                    <div class="code-value">{{ group_code }}</div>
+                    <button id="copyCodeBtn" class="btn-copy">📋 Copy</button>
+                </div>
+                <p class="invite-text">Share this code with friends to invite them to your movie session!</p>
+            </div>
+
+            <div class="members-section">
+                <div class="members-header">
+                    <h2>👥 Members</h2>
+                    <span id="memberCount" class="member-count">0</span>
+                </div>
+                <div id="membersList" class="members-list">
+                    <div class="loading">Loading members...</div>
+                </div>
+            </div>
+
+            <div class="lobby-actions">
+                {% if is_creator %}
+                <button id="startMatchingBtn" class="btn-primary">
+                    ▶️ Start Matching
+                </button>
+                {% endif %}
+                <button id="leaveLobbyBtn" class="btn-secondary">
+                    🚪 Leave Lobby
                 </button>
             </div>
-            <p class="invite-text">Share this code with friends to invite them!</p>
-        </div>
-        
-        <!-- member list area -->
-        <div class="members-section">
-            <h2>👥 Members <span id="memberCount" class="member-count">(0)</span></h2>
-            <div id="membersList" class="members-list">
-                <div class="loading">Loading members...</div>
-            </div>
-        </div>
-        
-        <!-- operation button -->
-        <div class="lobby-actions">
-            {% if is_creator %}
-            <button id="startMatchingBtn" class="btn-primary">
-                ▶️ Start Matching
-            </button>
-            {% endif %}
-            <button id="leaveLobbyBtn" class="btn-secondary">
-                🚪 Leave Lobby
-            </button>
         </div>
     </div>
 
@@ -47,13 +355,12 @@
         const groupId = '{{ group.id }}';
         const groupCode = '{{ group_code }}';
         const isCreator = {{ is_creator|yesno:"true,false" }};
-        
-        // Load Group Details
+
         async function loadGroupDetails() {
             try {
                 const response = await fetch(`/api/groups/${groupId}`);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     displayMembers(result.data.members);
                     updateMemberCount(result.data.memberCount);
@@ -64,36 +371,33 @@
                 console.error('Error loading group details:', error);
             }
         }
-        
-        // Show Member List
+
         function displayMembers(members) {
             const membersList = document.getElementById('membersList');
-            
+
             if (members.length === 0) {
                 membersList.innerHTML = '<div class="no-members">No members yet</div>';
                 return;
             }
-            
+
             membersList.innerHTML = members.map(member => `
                 <div class="member-item">
                     <div class="member-info">
-                        <span class="member-avatar">${member.name ? member.name[0].toUpperCase() : member.username[0].toUpperCase()}</span>
+                        <div class="member-avatar">${member.name ? member.name[0].toUpperCase() : member.username[0].toUpperCase()}</div>
                         <div class="member-details">
-                            <span class="member-name">${member.name || member.username}</span>
-                            <span class="member-username">@${member.username}</span>
+                            <div class="member-name">${member.name || member.username}</div>
+                            <div class="member-username">@${member.username}</div>
                         </div>
                     </div>
                     <span class="member-role ${member.role.toLowerCase()}">${member.role}</span>
                 </div>
             `).join('');
         }
-        
-        // Update Member Count
+
         function updateMemberCount(count) {
-            document.getElementById('memberCount').textContent = `(${count})`;
+            document.getElementById('memberCount').textContent = count;
         }
-        
-        // Copy Group Code
+
         document.getElementById('copyCodeBtn').addEventListener('click', async () => {
             try {
                 await navigator.clipboard.writeText(groupCode);
@@ -111,88 +415,30 @@
             }
         });
 
-        // Start matching (visible only to the creator)
         if (isCreator) {
             document.getElementById('startMatchingBtn').addEventListener('click', () => {
                 showNotification('Start matching functionality coming soon!', 'info');
             });
         }
 
-        // leave the lobby
         document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to leave this group?')) {
                 window.location.href = '/profile/';
             }
         });
 
-        // Notification system
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
+            notification.className = `notification ${type}`;
             notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 16px 24px;
-                border-radius: 8px;
-                font-weight: 600;
-                z-index: 1000;
-                animation: slideIn 0.3s ease;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            `;
-
-            if (type === 'success') {
-                notification.style.background = '#d4edda';
-                notification.style.color = '#155724';
-                notification.style.border = '1px solid #c3e6cb';
-            } else if (type === 'error') {
-                notification.style.background = '#f8d7da';
-                notification.style.color = '#721c24';
-                notification.style.border = '1px solid #f5c6cb';
-            } else if (type === 'info') {
-                notification.style.background = '#d1ecf1';
-                notification.style.color = '#0c5460';
-                notification.style.border = '1px solid #bee5eb';
-            }
-
             document.body.appendChild(notification);
 
             setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
+                notification.remove();
             }, 3000);
         }
 
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            @keyframes slideOut {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Retrieve group details when the page loads
         loadGroupDetails();
-        
-        // 每5秒自动刷新成员列表
         setInterval(loadGroupDetails, 5000);
     </script>
 </body>

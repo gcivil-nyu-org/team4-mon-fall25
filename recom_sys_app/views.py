@@ -321,8 +321,24 @@ def profile_view(request):
         defaults={"name": request.user.username}
     )
 
+    # Get user's group memberships
+    user_groups = GroupMember.objects.filter(
+        user=request.user,
+        is_active=True
+    ).select_related('group_session').order_by('-joined_at')
+
+    # Get created groups
+    created_groups = GroupSession.objects.filter(
+        creator=request.user,
+        is_active=True
+    ).order_by('-created_at')
+
     get_token(request)  # ensure CSRF cookie
-    return render(request, "recom_sys_app/profile.html", {"profile": profile})
+    return render(request, "recom_sys_app/profile.html", {
+        "profile": profile,
+        "user_groups": user_groups,
+        "created_groups": created_groups,
+    })
 
 
 @login_required
