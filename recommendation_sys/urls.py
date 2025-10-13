@@ -3,13 +3,14 @@ URL configuration for recommendation_sys project.
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
+from django.http import HttpResponse
 
-def root_redirect(request):
-    return redirect("login")
+def health_check(request):
+    """Health check for AWS ELB - returns 200 OK"""
+    return HttpResponse("OK", status=200)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", root_redirect),
-    path("", include("recom_sys_app.urls")),  # ← Changed from "api/" to ""
+    path("", health_check),  # Health check at root for ELB
+    path("", include("recom_sys_app.urls")),  # App routes
 ]

@@ -637,8 +637,17 @@ def home_view(request):
     """
     if request.user.is_authenticated:
         return redirect("profile")
-    
+
     return render(request, "recom_sys_app/home.html")
+
+
+def health_check(request):
+    """
+    Simple health check endpoint for AWS ELB.
+    Returns 200 OK without requiring authentication.
+    """
+    from django.http import HttpResponse
+    return HttpResponse("OK", status=200)
 
 
 
