@@ -1,0 +1,344 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - CineMatch</title>
+  <link href="{% static 'recom_sys_app/profile.css' %}" rel="stylesheet">
+</head>
+<body>
+  <!-- Header Navigation -->
+  <nav class="header-nav">
+    <a href="{% url 'profile' %}" class="logo-link">
+      <div class="logo-icon-small">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+        </svg>
+      </div>
+      <div class="logo-text-small">CineMatch</div>
+    </a>
+
+    <div class="nav-actions">
+      <a href="{% url 'recommend' %}" class="btn btn-secondary">Browse Movies</a>
+      <a href="{% url 'profile_edit' %}" class="btn btn-primary">Edit Profile</a>
+      <form method="post" action="{% url 'logout' %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-logout">Sign Out</button>
+      </form>
+    </div>
+  </nav>
+
+  <div class="profile-container">
+    <div class="profile-grid">
+      <!-- Left Sidebar: Profile Card -->
+      <div class="profile-card">
+        <div class="profile-avatar">
+          {{ user.profile.name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+        </div>
+        <h1 class="profile-name">{{ user.profile.name|default:user.username }}</h1>
+        <p class="profile-username">@{{ user.username }}</p>
+
+        <div class="profile-stats">
+          <div class="stat-item">
+            <div class="stat-value" id="likedCount">0</div>
+            <div class="stat-label">Liked</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="watchedCount">0</div>
+            <div class="stat-label">Watched</div>
+          </div>
+        </div>
+
+        <div class="profile-info">
+          {% if user.profile.age %}
+          <div class="info-item">
+            <div class="info-icon">🎂</div>
+            <div class="info-content">
+              <div class="info-label">Age</div>
+              <div class="info-value">{{ user.profile.age }} years old</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if user.profile.sex and user.profile.sex != 'N' %}
+          <div class="info-item">
+            <div class="info-icon">👤</div>
+            <div class="info-content">
+              <div class="info-label">Gender</div>
+              <div class="info-value">{{ user.profile.get_sex_display }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if user.profile.country %}
+          <div class="info-item">
+            <div class="info-icon">🌍</div>
+            <div class="info-content">
+              <div class="info-label">Country</div>
+              <div class="info-value">{{ user.profile.country }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if user.email %}
+          <div class="info-item">
+            <div class="info-icon">📧</div>
+            <div class="info-content">
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ user.email }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div>
+        <!-- Group Sessions Section -->
+        <div class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <span>🎬</span>
+              Group Sessions
+            </h2>
+          </div>
+
+          <div class="group-actions-grid">
+            <div class="action-card" id="createGroupCard">
+              <div class="action-icon">✨</div>
+              <h3 class="action-title">Create New Group</h3>
+              <p class="action-desc">Start a movie night with friends</p>
+            </div>
+
+            <div class="action-card join" id="joinGroupCard">
+              <div class="action-icon">🚪</div>
+              <h3 class="action-title">Join Group</h3>
+              <p class="action-desc">Enter a group code to join</p>
+            </div>
+          </div>
+
+          <!-- Join Form (Hidden by default) -->
+          <div id="joinFormContainer" class="join-form-container">
+            <div class="form-group">
+              <label for="groupCodeInput">Group Code</label>
+              <input
+                type="text"
+                id="groupCodeInput"
+                class="code-input"
+                placeholder="ABC123"
+                maxlength="6"
+                pattern="[A-Za-z0-9]{6}"
+              >
+            </div>
+            <div class="form-actions">
+              <button id="submitJoinBtn" class="btn btn-primary">Join Group</button>
+              <button id="cancelJoinBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Movie Preferences Section -->
+        <div class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <span>🎭</span>
+              Movie Preferences
+            </h2>
+          </div>
+
+          {% if user.profile.favourite_genre1 or user.profile.favourite_genre2 %}
+          <h3 style="margin-bottom: 12px; color: var(--muted); font-size: 14px; font-weight: 600;">FAVORITE GENRES</h3>
+          <div class="genres-list">
+            {% if user.profile.favourite_genre1 %}
+            <span class="genre-tag">{{ user.profile.favourite_genre1 }}</span>
+            {% endif %}
+            {% if user.profile.favourite_genre2 %}
+            <span class="genre-tag">{{ user.profile.favourite_genre2 }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if user.profile.liked_g1_title or user.profile.liked_g2_title %}
+          <h3 style="margin: 24px 0 12px; color: var(--muted); font-size: 14px; font-weight: 600;">FAVORITE MOVIES</h3>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% if user.profile.liked_g1_title %}
+            <div style="padding: 12px 16px; background: #0f1320; border: 1px solid var(--border); border-radius: 10px;">
+              <span style="color: var(--fg); font-weight: 600;">{{ user.profile.liked_g1_title }}</span>
+              {% if user.profile.favourite_genre1 %}
+              <span style="color: var(--muted); font-size: 14px; margin-left: 8px;">({{ user.profile.favourite_genre1 }})</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if user.profile.liked_g2_title %}
+            <div style="padding: 12px 16px; background: #0f1320; border: 1px solid var(--border); border-radius: 10px;">
+              <span style="color: var(--fg); font-weight: 600;">{{ user.profile.liked_g2_title }}</span>
+              {% if user.profile.favourite_genre2 %}
+              <span style="color: var(--muted); font-size: 14px; margin-left: 8px;">({{ user.profile.favourite_genre2 }})</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <div class="empty-state-icon">🎬</div>
+            <p class="empty-state-text">No movie preferences set yet. Edit your profile to add some!</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Load user stats
+    async function loadUserStats() {
+      try {
+        const response = await fetch('/api/user/stats');
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('likedCount').textContent = result.stats.interactions.liked;
+          document.getElementById('watchedCount').textContent = result.stats.interactions.watched;
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Create group
+    document.getElementById('createGroupCard').addEventListener('click', async () => {
+      const card = document.getElementById('createGroupCard');
+      const originalHTML = card.innerHTML;
+
+      card.style.opacity = '0.6';
+      card.style.pointerEvents = 'none';
+      card.innerHTML = '<div class="action-icon">⏳</div><h3 class="action-title">Creating...</h3>';
+
+      try {
+        const response = await fetch('/api/groups', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert(`✅ Group created!\n\nGroup Code: ${result.data.groupCode}\n\nShare this code with friends!`);
+          window.location.href = result.data.redirectUrl;
+        } else {
+          alert('❌ Failed: ' + result.message);
+          card.innerHTML = originalHTML;
+          card.style.opacity = '1';
+          card.style.pointerEvents = 'auto';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ An error occurred. Please try again.');
+        card.innerHTML = originalHTML;
+        card.style.opacity = '1';
+        card.style.pointerEvents = 'auto';
+      }
+    });
+
+    // Toggle join form
+    const joinForm = document.getElementById('joinFormContainer');
+    const joinGroupCard = document.getElementById('joinGroupCard');
+    const cancelJoinBtn = document.getElementById('cancelJoinBtn');
+
+    joinGroupCard.addEventListener('click', () => {
+      joinForm.classList.add('active');
+      document.getElementById('groupCodeInput').focus();
+    });
+
+    cancelJoinBtn.addEventListener('click', () => {
+      joinForm.classList.remove('active');
+      document.getElementById('groupCodeInput').value = '';
+    });
+
+    // Join group
+    document.getElementById('submitJoinBtn').addEventListener('click', async () => {
+      const input = document.getElementById('groupCodeInput');
+      const groupCode = input.value.trim().toUpperCase();
+
+      if (!groupCode) {
+        alert('⚠️ Please enter a group code');
+        return;
+      }
+
+      if (groupCode.length !== 6) {
+        alert('⚠️ Group code must be exactly 6 characters');
+        return;
+      }
+
+      const btn = document.getElementById('submitJoinBtn');
+      const originalText = btn.textContent;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Joining...';
+
+      try {
+        const response = await fetch('/api/groups/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ groupCode: groupCode })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const message = result.data.alreadyMember
+            ? `ℹ️ You are already in group ${groupCode}`
+            : result.data.rejoined
+            ? `✅ Rejoined group ${groupCode}!`
+            : `✅ Successfully joined group ${groupCode}!`;
+
+          alert(message);
+          window.location.href = result.data.redirectUrl;
+        } else {
+          alert('❌ ' + result.message);
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    // Enter key to submit
+    document.getElementById('groupCodeInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('submitJoinBtn').click();
+      }
+    });
+
+    // Load stats on page load
+    loadUserStats();
+  </script>
+</body>
+</html>

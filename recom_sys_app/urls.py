@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 
 # Import existing views
-from .views import recommend_view, profile_view, set_interaction_view
+from .views import recommend_view, profile_view, profile_edit_view, set_interaction_view
 from .views_auth import signup_view
 
 # Import new views (you'll need to add these)
@@ -35,10 +35,14 @@ urlpatterns = [
     
     # Profile & Recommendations
     path("profile/", profile_view, name="profile"),
+    path("profile/edit/", profile_edit_view, name="profile_edit"),
     path("recommend/", recommend_view, name="recommend"),
     
     # Interactions
     path("interact/<int:tmdb_id>/<str:status>/", set_interaction_view, name="set_interaction"),
+
+    # User Stats
+    path("api/user/stats", views.user_stats_view, name="user_stats"),
 
     # ============ Group Matching URLs (NEW) ============
     # API endpoints

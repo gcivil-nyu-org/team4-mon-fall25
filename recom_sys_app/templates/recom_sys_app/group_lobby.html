@@ -2,134 +2,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Lobby - {{ group_code }}</title>
-    <link rel="stylesheet" href="{% static 'css/group.css' %}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Lobby - {{ group_code }}</title>
+  <link href="{% static 'recom_sys_app/group_lobby.css' %}" rel="stylesheet">
 </head>
 <body>
-    <div class="group-lobby-container">
-        <!-- Head area -->
-        <div class="lobby-header">
-            <h1>🎬 Group Lobby</h1>
-            <div class="group-code-display">
-                <div class="code-label">Group Code</div>
-                <div class="code-value">{{ group_code }}</div>
-                <button id="copyCodeBtn" class="btn-copy" title="Copy group code">
-                    📋 Copy
-                </button>
-            </div>
-            <p class="invite-text">Share this code with friends to invite them!</p>
+  <div class="lobby-container">
+    <!-- Header -->
+    <div class="lobby-header">
+      <h1 class="lobby-title">
+        <span>🎬</span>
+        Group Lobby
+      </h1>
+
+      <div class="group-code-display">
+        <div>
+          <div class="code-label">Group Code</div>
+          <div class="code-value">{{ group_code }}</div>
         </div>
-        
-        <!-- member list area -->
-        <div class="members-section">
-            <h2>👥 Members <span id="memberCount" class="member-count">(0)</span></h2>
-            <div id="membersList" class="members-list">
-                <div class="loading">Loading members...</div>
-            </div>
-        </div>
-        
-        <!-- operation button -->
-        <div class="lobby-actions">
-            {% if is_creator %}
-            <button id="startMatchingBtn" class="btn-primary">
-                ▶️ Start Matching
-            </button>
-            {% endif %}
-            <button id="leaveLobbyBtn" class="btn-secondary">
-                🚪 Leave Lobby
-            </button>
-        </div>
+        <button id="copyCodeBtn" class="btn-copy" title="Copy group code">
+          📋 Copy
+        </button>
+      </div>
+
+      <p class="invite-text">Share this code with friends to invite them to your movie session!</p>
     </div>
 
-    <script>
-        const groupId = '{{ group.id }}';
-        const groupCode = '{{ group_code }}';
-        const isCreator = {{ is_creator|yesno:"true,false" }};
-        
-        // Load Group Details
-        async function loadGroupDetails() {
-            try {
-                const response = await fetch(`/api/groups/${groupId}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    displayMembers(result.data.members);
-                    updateMemberCount(result.data.memberCount);
-                } else {
-                    console.error('Failed to load group details:', result.message);
-                }
-            } catch (error) {
-                console.error('Error loading group details:', error);
-            }
+    <!-- Members Section -->
+    <div class="members-section">
+      <div class="members-header">
+        <h2 class="members-title">
+          <span>👥</span>
+          Members
+        </h2>
+        <span id="memberCount" class="member-count">0</span>
+      </div>
+
+      <div id="membersList" class="members-list">
+        <div class="loading">Loading members...</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="lobby-actions">
+      {% if is_creator %}
+      <button id="startMatchingBtn" class="btn-primary">
+        ▶️ Start Matching
+      </button>
+      {% endif %}
+      <button id="leaveLobbyBtn" class="btn-danger">
+        🚪 Leave Lobby
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const groupId = '{{ group.id }}';
+    const groupCode = '{{ group_code }}';
+    const isCreator = {{ is_creator|yesno:"true,false" }};
+
+    // Load Group Details
+    async function loadGroupDetails() {
+      try {
+        const response = await fetch(`/api/groups/${groupId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          displayMembers(result.data.members);
+          updateMemberCount(result.data.memberCount);
+        } else {
+          console.error('Failed to load group details:', result.message);
         }
-        
-        // Show Member List
-        function displayMembers(members) {
-            const membersList = document.getElementById('membersList');
-            
-            if (members.length === 0) {
-                membersList.innerHTML = '<div class="no-members">No members yet</div>';
-                return;
-            }
-            
-            membersList.innerHTML = members.map(member => `
-                <div class="member-item">
-                    <div class="member-info">
-                        <span class="member-avatar">${member.name ? member.name[0].toUpperCase() : member.username[0].toUpperCase()}</span>
-                        <div class="member-details">
-                            <span class="member-name">${member.name || member.username}</span>
-                            <span class="member-username">@${member.username}</span>
-                        </div>
-                    </div>
-                    <span class="member-role ${member.role.toLowerCase()}">${member.role}</span>
-                </div>
-            `).join('');
+      } catch (error) {
+        console.error('Error loading group details:', error);
+      }
+    }
+
+    // Display Members
+    function displayMembers(members) {
+      const membersList = document.getElementById('membersList');
+
+      if (members.length === 0) {
+        membersList.innerHTML = '<div class="no-members">No members yet. Share the group code to invite friends!</div>';
+        return;
+      }
+
+      membersList.innerHTML = members.map(member => {
+        const displayName = member.name || member.username;
+        const initial = displayName.charAt(0).toUpperCase();
+
+        return `
+          <div class="member-item">
+            <div class="member-info">
+              <div class="member-avatar">${initial}</div>
+              <div class="member-details">
+                <span class="member-name">${displayName}</span>
+                <span class="member-username">@${member.username}</span>
+              </div>
+            </div>
+            <span class="member-role ${member.role.toLowerCase()}">${member.role}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update Member Count
+    function updateMemberCount(count) {
+      document.getElementById('memberCount').textContent = count;
+    }
+
+    // Copy Group Code
+    document.getElementById('copyCodeBtn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(groupCode);
+        const btn = document.getElementById('copyCodeBtn');
+        const originalText = btn.textContent;
+
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (error) {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = groupCode;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          alert('Group code copied: ' + groupCode);
+        } catch (err) {
+          alert('Failed to copy. Group code: ' + groupCode);
         }
-        
-        // Update Member Count
-        function updateMemberCount(count) {
-            document.getElementById('memberCount').textContent = `(${count})`;
-        }
-        
-        // Copy Group Code
-        document.getElementById('copyCodeBtn').addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(groupCode);
-                const btn = document.getElementById('copyCodeBtn');
-                const originalText = btn.textContent;
-                btn.textContent = '✓ Copied!';
-                btn.classList.add('copied');
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.classList.remove('copied');
-                }, 2000);
-            } catch (error) {
-                alert('Failed to copy: ' + error.message);
-            }
-        });
-        
-        // Start matching (visible only to the creator)
-        if (isCreator) {
-            document.getElementById('startMatchingBtn').addEventListener('click', () => {
-                alert('Start matching functionality coming soon!');
-            });
-        }
-        
-        // leave the lobby
-        document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to leave this group?')) {
-                window.location.href = '/profile/';
-            }
-        });
-        
-        // Retrieve group details when the page loads
-        loadGroupDetails();
-        
-        // 每5秒自动刷新成员列表
-        setInterval(loadGroupDetails, 5000);
-    </script>
+        document.body.removeChild(textArea);
+      }
+    });
+
+    // Start Matching (Creator only)
+    if (isCreator) {
+      document.getElementById('startMatchingBtn').addEventListener('click', () => {
+        // TODO: Implement start matching functionality
+        alert('🎬 Start matching functionality coming soon!\n\nThis will help you and your group find the perfect movie to watch together.');
+      });
+    }
+
+    // Leave Lobby
+    document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to leave this group?')) {
+        window.location.href = '/profile/';
+      }
+    });
+
+    // Load group details on page load
+    loadGroupDetails();
+
+    // Auto-refresh members list every 5 seconds
+    setInterval(loadGroupDetails, 5000);
+  </script>
 </body>
 </html>

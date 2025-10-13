@@ -1,0 +1,290 @@
+/* ===== CineMatch Authentication Pages ===================================== */
+:root {
+  --bg: #0b0b10;
+  --fg: #e9eaf2;
+  --muted: #b5b8c3;
+  --card: #151822;
+  --card-elev: #1a1e2b;
+  --border: #262a3d;
+  --accent: #7aa2f7;
+  --accent-hover: #8fb2f9;
+  --error: #f7768e;
+  --success: #9ece6a;
+
+  --radius: 14px;
+  --shadow: 0 10px 40px rgba(0,0,0,.5);
+  --ring: 0 0 0 3px rgba(122,162,247,.4);
+
+  --font: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(1200px 800px at 20% -20%, #121525, transparent 55%),
+              radial-gradient(1000px 600px at 120% 0%, #0e111a, transparent 50%),
+              var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 var(--font);
+  padding: 20px;
+}
+
+/* ===== Auth Container ===================================================== */
+.auth-container {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(180deg, var(--card-elev) 0%, var(--card) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ===== Logo Section ======================================================= */
+.auth-header {
+  text-align: center;
+  padding: 48px 40px 32px;
+  background: linear-gradient(180deg, rgba(122,162,247,.08), transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #7aa2f7, #9d7cd8);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(122,162,247,.3);
+}
+
+.logo-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: white;
+}
+
+.logo-text {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #7aa2f7, #bb9af7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+
+.auth-subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ===== Form Styles ======================================================== */
+.auth-form {
+  padding: 40px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--fg);
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  background: #0f1320;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+.form-group input::placeholder {
+  color: #6b7089;
+}
+
+/* Error messages */
+.error-message {
+  color: var(--error);
+  font-size: 13px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.non-field-errors {
+  background: rgba(247,118,142,.12);
+  border: 1px solid rgba(247,118,142,.35);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: var(--error);
+  font-size: 14px;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--accent), #9d7cd8);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 4px 12px rgba(122,162,247,.3);
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(122,162,247,.4);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+.submit-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* ===== Footer Links ======================================================= */
+.auth-footer {
+  padding: 24px 40px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  background: rgba(11,11,16,.5);
+}
+
+.auth-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color .2s ease;
+}
+
+.auth-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* ===== Two Column Layout (for signup) ===================================== */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ===== Mobile Responsive ================================================== */
+@media (max-width: 600px) {
+  body {
+    padding: 0;
+    align-items: flex-start;
+  }
+
+  .auth-container {
+    max-width: 100%;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  .auth-header {
+    padding: 32px 24px 24px;
+  }
+
+  .auth-form {
+    padding: 24px;
+  }
+
+  .logo-text {
+    font-size: 28px;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* ===== Animation ========================================================== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-container {
+  animation: fadeInUp 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .auth-container { animation: none; }
+}

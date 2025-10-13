@@ -4,13 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - CineMatch</title>
+  <title>Edit Profile - CineMatch</title>
   <link href="{% static 'recom_sys_app/auth.css' %}" rel="stylesheet">
+  <style>
+    .auth-container {
+      max-width: 600px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <div class="auth-container">
     <!-- Header with Logo -->
     <div class="auth-header">
+      <a href="{% url 'profile' %}" class="back-link">← Back to Profile</a>
       <div class="logo-container">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -19,23 +35,17 @@
         </div>
         <div class="logo-text">CineMatch</div>
       </div>
-      <h1 class="auth-title">Create Your Account</h1>
-      <p class="auth-subtitle">Start discovering movies tailored to your taste</p>
+      <h1 class="auth-title">Edit Your Profile</h1>
+      <p class="auth-subtitle">Update your movie preferences and personal information</p>
     </div>
 
-    <!-- Signup Form -->
+    <!-- Edit Profile Form -->
     <form method="post" class="auth-form">
       {% csrf_token %}
 
       {% if form.non_field_errors %}
         <div class="non-field-errors">
           {{ form.non_field_errors }}
-        </div>
-      {% endif %}
-
-      {% if form.errors and not form.non_field_errors %}
-        <div class="non-field-errors">
-          Please correct the errors below.
         </div>
       {% endif %}
 
@@ -50,35 +60,6 @@
             <div class="error-message">{{ form.name.errors|striptags }}</div>
           {% endif %}
         </div>
-
-        <div class="form-group">
-          {{ form.email.label_tag }}
-          {{ form.email }}
-          {% if form.email.errors %}
-            <div class="error-message">{{ form.email.errors|striptags }}</div>
-          {% endif %}
-        </div>
-
-        <div class="form-group">
-          {{ form.password1.label_tag }}
-          {{ form.password1 }}
-          {% if form.password1.errors %}
-            <div class="error-message">{{ form.password1.errors|striptags }}</div>
-          {% endif %}
-        </div>
-
-        <div class="form-group">
-          {{ form.password2.label_tag }}
-          {{ form.password2 }}
-          {% if form.password2.errors %}
-            <div class="error-message">{{ form.password2.errors|striptags }}</div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Personal Details Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">Personal Details</h3>
 
         <div class="form-row">
           <div class="form-group">
@@ -105,6 +86,16 @@
             <div class="error-message">{{ form.sex.errors|striptags }}</div>
           {% endif %}
         </div>
+
+        {% if form.date_of_birth %}
+        <div class="form-group">
+          {{ form.date_of_birth.label_tag }}
+          {{ form.date_of_birth }}
+          {% if form.date_of_birth.errors %}
+            <div class="error-message">{{ form.date_of_birth.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
       </div>
 
       <!-- Movie Preferences Section -->
@@ -142,14 +133,36 @@
             <div class="error-message">{{ form.liked_g2_title.errors|striptags }}</div>
           {% endif %}
         </div>
+
+        {% if form.language %}
+        <div class="form-row">
+          <div class="form-group">
+            {{ form.language.label_tag }}
+            {{ form.language }}
+            {% if form.language.errors %}
+              <div class="error-message">{{ form.language.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          {% if form.timezone %}
+          <div class="form-group">
+            {{ form.timezone.label_tag }}
+            {{ form.timezone }}
+            {% if form.timezone.errors %}
+              <div class="error-message">{{ form.timezone.errors|striptags }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
       </div>
 
-      <button type="submit" class="submit-btn">Create Account</button>
+      <button type="submit" class="submit-btn">Save Changes</button>
     </form>
 
     <!-- Footer -->
     <div class="auth-footer">
-      <p>Already have an account? <a href="{% url 'login' %}" class="auth-link">Log in</a></p>
+      <p><a href="{% url 'profile' %}" class="auth-link">Cancel and go back</a></p>
     </div>
   </div>
 </body>

@@ -1,12 +1,65 @@
-<form method="post" action="{% url 'login' %}">
-  {% csrf_token %}
-  {% load static %}
-  <a href="{% url 'signup' %}">Sign up</a>
-    <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
-  {% if form.non_field_errors %}<div style="color:#b00;">{{ form.non_field_errors }}</div>{% endif %}
-  <p>{{ form.username.label_tag }} {{ form.username }}</p>
-  <p>{{ form.password.label_tag }} {{ form.password }}</p>
-  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-  <button type="submit">Log in</button>
-</form>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - CineMatch</title>
+  <link href="{% static 'recom_sys_app/auth.css' %}" rel="stylesheet">
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Header with Logo -->
+    <div class="auth-header">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+          </svg>
+        </div>
+        <div class="logo-text">CineMatch</div>
+      </div>
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to continue your movie journey</p>
+    </div>
 
+    <!-- Login Form -->
+    <form method="post" action="{% url 'login' %}" class="auth-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="non-field-errors">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="error-message">{{ form.username.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="error-message">{{ form.password.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      <button type="submit" class="submit-btn">Log In</button>
+    </form>
+
+    <!-- Footer -->
+    <div class="auth-footer">
+      <p>Don't have an account? <a href="{% url 'signup' %}" class="auth-link">Sign up</a></p>
+    </div>
+  </div>
+</body>
+</html>
