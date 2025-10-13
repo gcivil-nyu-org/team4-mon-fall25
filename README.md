@@ -1,2 +1,4 @@
-# CINEMATCH
-An Agentic AI movie recommendation system that suggests you movies based on your previous liking : )
+# Team Project repo
+Team 4 CineMatch Project Setup
+
+![Preview](https://github.com/gcivil-nyu-org/team4-mon-fall25/blob/sirish/Preview.jpg?raw=true)
