@@ -101,29 +101,93 @@
                 const originalText = btn.textContent;
                 btn.textContent = '✓ Copied!';
                 btn.classList.add('copied');
-                
+
                 setTimeout(() => {
                     btn.textContent = originalText;
                     btn.classList.remove('copied');
                 }, 2000);
             } catch (error) {
-                alert('Failed to copy: ' + error.message);
+                showNotification('Failed to copy code', 'error');
             }
         });
-        
+
         // Start matching (visible only to the creator)
         if (isCreator) {
             document.getElementById('startMatchingBtn').addEventListener('click', () => {
-                alert('Start matching functionality coming soon!');
+                showNotification('Start matching functionality coming soon!', 'info');
             });
         }
-        
+
         // leave the lobby
         document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to leave this group?')) {
                 window.location.href = '/profile/';
             }
         });
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            `;
+
+            if (type === 'success') {
+                notification.style.background = '#d4edda';
+                notification.style.color = '#155724';
+                notification.style.border = '1px solid #c3e6cb';
+            } else if (type === 'error') {
+                notification.style.background = '#f8d7da';
+                notification.style.color = '#721c24';
+                notification.style.border = '1px solid #f5c6cb';
+            } else if (type === 'info') {
+                notification.style.background = '#d1ecf1';
+                notification.style.color = '#0c5460';
+                notification.style.border = '1px solid #bee5eb';
+            }
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
         
         // Retrieve group details when the page loads
         loadGroupDetails();

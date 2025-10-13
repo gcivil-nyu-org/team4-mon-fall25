@@ -311,18 +311,33 @@ def _build_recommendation_agent(user, groq_api_key: str):
 # ============================================
 
 @login_required
-@require_http_methods(["GET", "POST"])
 def profile_view(request):
     """
-    User profile view for template rendering.
-    GET: Display profile form
+    User profile dashboard view.
+    Display user info and group options (no edit form).
+    """
+    profile, _ = UserProfile.objects.get_or_create(
+        user=request.user,
+        defaults={"name": request.user.username}
+    )
+
+    get_token(request)  # ensure CSRF cookie
+    return render(request, "recom_sys_app/profile.html", {"profile": profile})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_profile_view(request):
+    """
+    Edit profile view for updating user preferences.
+    GET: Display profile edit form
     POST: Update profile
     """
     profile, _ = UserProfile.objects.get_or_create(
         user=request.user,
         defaults={"name": request.user.username}
     )
-    
+
     if request.method == "POST":
         form = UserProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -331,9 +346,8 @@ def profile_view(request):
             return redirect("profile")
     else:
         form = UserProfileForm(instance=profile)
-    
-    get_token(request)  # ensure CSRF cookie
-    return render(request, "recom_sys_app/profile_form.html", {"form": form})
+
+    return render(request, "recom_sys_app/edit_profile.html", {"form": form})
 
 
 @login_required
