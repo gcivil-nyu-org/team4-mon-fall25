@@ -9,4 +9,3 @@ EOF
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
-.ebextensions/03_env_vars.config
