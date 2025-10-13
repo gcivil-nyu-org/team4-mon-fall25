@@ -289,7 +289,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-content">
-        <h1>🎬 Welcome, {{ user.username }}!</h1>
+        <h1>🎬 Welcome, {{ profile.name }}!</h1>
         <p>Discover movies with friends</p>
       </div>
       <div class="header-actions">
@@ -340,6 +340,32 @@
         <div id="statusMessage" class="status-message"></div>
       </div>
     </div>
+
+    <!-- My Groups Card -->
+    {% if user_groups %}
+    <div class="card">
+      <div class="card-title">📋 My Groups</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for membership in user_groups %}
+        <div style="background: #f7fafc; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 8px; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px; font-size: 1.1rem;">
+              {{ membership.group_session.group_code }}
+            </span>
+            {% if membership.role == 'CREATOR' %}
+            <span style="background: #ffd700; color: #2d3748; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Creator</span>
+            {% else %}
+            <span style="background: #e2e8f0; color: #4a5568; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Member</span>
+            {% endif %}
+          </div>
+          <a href="/group/{{ membership.group_session.id }}/" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+            Enter Lobby →
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <script>
