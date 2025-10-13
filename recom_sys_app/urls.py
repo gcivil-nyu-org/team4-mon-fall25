@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 
 # Import existing views
-from .views import recommend_view, profile_view, set_interaction_view
+from .views import recommend_view, profile_view, edit_profile_view, set_interaction_view
 from .views_auth import signup_view
 
 # Import new views (you'll need to add these)
@@ -35,6 +35,7 @@ urlpatterns = [
     
     # Profile & Recommendations
     path("profile/", profile_view, name="profile"),
+    path("profile/edit/", edit_profile_view, name="edit_profile"),
     path("recommend/", recommend_view, name="recommend"),
     
     # Interactions
