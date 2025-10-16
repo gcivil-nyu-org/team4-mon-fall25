@@ -1,11 +1,19 @@
-cat >> .gitignore << 'EOF'
 __pycache__/
 *.pyc
 *.pyo
 .env
 *.sqlite3
-EOF
+
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+# Environment config with secrets
+.ebextensions/03_env_vars.config
+
+# Static files (generated)
+staticfiles/
+
+# Claude Code settings
+.claude/settings.local.json
