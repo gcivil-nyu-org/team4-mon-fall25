@@ -6,7 +6,8 @@
       "Bash(git commit:*)",
       "Bash(eb status:*)",
       "Bash(python manage.py collectstatic:*)",
-      "Bash(eb deploy:*)"
+      "Bash(eb deploy:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
