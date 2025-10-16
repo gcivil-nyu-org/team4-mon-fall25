@@ -1,0 +1,193 @@
+/* ===== Theme & Resets ===================================================== */
+:root {
+  --bg: #0b0b10;
+  --fg: #e9eaf2;
+  --muted: #b5b8c3;
+  --card: #151822;
+  --card-elev: #1a1e2b;
+  --border: #262a3d;
+  --accent: #7aa2f7;      /* primary accent */
+  --accent-2: #9ece6a;    /* success */
+  --accent-3: #f7768e;    /* danger */
+  --warning: #e0af68;
+  --link: #a0b9ff;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --ring: 0 0 0 2px rgba(122,162,247,.6);
+
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+  --space-5: 24px;
+
+  --font: -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(1200px 800px at 20% -20%, #121525, transparent 55%),
+              radial-gradient(1000px 600px at 120% 0%, #0e111a, transparent 50%),
+              var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 var(--font);
+}
+
+/* Prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ===== Layout ============================================================= */
+header {
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(26,30,43,.6), transparent);
+  position: sticky; top: 0; backdrop-filter: blur(8px);
+}
+
+header h1 { margin: 0; font-size: 20px; letter-spacing: .2px; }
+
+.nav { margin-top: var(--space-2); display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.nav a {
+  color: var(--link);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: border-color .2s ease, background-color .2s ease, color .2s ease;
+}
+.nav a:hover { border-color: var(--border); background: rgba(122,162,247,.06); }
+.nav a:focus-visible { outline: none; box-shadow: var(--ring); }
+
+.grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* ===== Cards ============================================================== */
+.card {
+  background: linear-gradient(180deg, var(--card-elev) 0%, var(--card) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  will-change: transform;
+}
+.card:hover { transform: translateY(-2px); border-color: #2f3550; }
+.card:focus-within { border-color: #3a4166; box-shadow: 0 0 0 1px #3a4166, var(--shadow); }
+
+/* Poster - keep aspect and allow missing state */
+.poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;              /* keeps 300x450-ish ratio */
+  object-fit: cover;
+  background: #171a25;
+  display: block;
+}
+.poster.missing {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ===== Card Body ========================================================== */
+.meta { padding: var(--space-3) var(--space-3) var(--space-4); }
+h3 { margin: 0 0 6px; font-size: 18px; line-height: 1.25; }
+.year { font-weight: 600; color: var(--muted); font-size: 14px; margin-left: 6px; }
+
+.ov {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  max-height: 6.5em;
+  overflow: hidden;
+  mask-image: linear-gradient(#000 70%, transparent);
+}
+
+.stats { display: flex; gap: 12px; color: #c9cbe0; font-size: 14px; }
+
+/* ===== Messages (Django messages framework) =============================== */
+.messages { margin: 10px auto 0; padding: 0; list-style: none; max-width: 1120px; }
+.messages li {
+  margin: 10px var(--space-5) 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+.messages .success { background: rgba(158,206,106,.12); border-color: rgba(158,206,106,.35); color: var(--accent-2); }
+.messages .error   { background: rgba(247,118,142,.12); border-color: rgba(247,118,142,.35); color: var(--accent-3); }
+.messages .warning { background: rgba(224,175,104,.14); border-color: rgba(224,175,104,.35); color: var(--warning); }
+
+/* ===== Actions (no-JS forms) ============================================= */
+.actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.actions form { display: inline; }
+
+/* Button base */
+button,
+.actions button,
+input[type="submit"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0f1320;
+  color: var(--fg);
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .12s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+button:hover { background: #12162a; border-color: #343b5f; }
+button:active { transform: translateY(1px); }
+button:focus-visible { outline: none; box-shadow: var(--ring); }
+
+/* Semantic action tints */
+button[data-status="LIKE"]         { border-color: rgba(158,206,106,.45); }
+button[data-status="LIKE"]:hover   { background: rgba(158,206,106,.12); }
+
+button[data-status="DISLIKE"]         { border-color: rgba(247,118,142,.45); }
+button[data-status="DISLIKE"]:hover   { background: rgba(247,118,142,.10); }
+
+button[data-status="WATCH_LATER"]         { border-color: rgba(224,175,104,.45); }
+button[data-status="WATCH_LATER"]:hover   { background: rgba(224,175,104,.10); }
+
+button[data-status="WATCHED"]         { border-color: rgba(122,162,247,.45); }
+button[data-status="WATCHED"]:hover   { background: rgba(122,162,247,.12); }
+
+/* Active state (if you add .active class server-side later) */
+button.active {
+  background: linear-gradient(180deg, rgba(122,162,247,.18), rgba(122,162,247,.08));
+  border-color: #6276b9;
+}
+
+/* ===== Footer / Pre ======================================================= */
+pre {
+  white-space: pre-wrap;
+  background: #0e1016;
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 10px;
+  overflow: auto;
+}
+
+/* ===== Small Screens Tweaks ============================================== */
+@media (max-width: 520px) {
+  header { padding: var(--space-4) var(--space-4) var(--space-3); }
+  .grid { padding: var(--space-4); gap: var(--space-3); }
+  h3 { font-size: 17px; }
+  .stats { font-size: 13px; }
+  .nav a { padding: 6px 8px; }
+}
