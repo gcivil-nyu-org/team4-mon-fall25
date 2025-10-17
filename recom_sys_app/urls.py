@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
+from .views_group import get_group_deck, swipe_like
 
 # Import existing views
 from .views import recommend_view, profile_view, edit_profile_view, set_interaction_view
@@ -54,6 +55,10 @@ urlpatterns = [
     path('api/groups/join', views.join_group, name='join_group'),  # 新增
     path('api/groups/<uuid:group_id>', views.get_group_details, name='group_details'),
     path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
+    
+    # New APIs related to groups
+    path('api/groups/<str:group_code>/deck/', get_group_deck, name='group_deck'),
+    path('api/groups/<str:group_code>/swipe/like/', swipe_like, name='swipe_like'),
 
 ]
 
