@@ -524,6 +524,30 @@ def movie_details_view(request, tmdb_id: int):
             interaction = Interaction.objects.get(user=request.user, tmdb_id=tmdb_id)
         except Interaction.DoesNotExist:
             pass
+        #this is the code for the movie details view
+        # Extract cast and crew information
+        cast = movie_data.get("credits", {}).get("cast", [])
+        crew = movie_data.get("credits", {}).get("crew", [])
+        
+        # Get main actors (top 5)
+        main_actors = [
+            {
+                "name": actor.get("name"),
+                "character": actor.get("character"),
+                "profile_path": (IMG_BASE + actor["profile_path"]) if actor.get("profile_path") else None
+            }
+            for actor in cast[:5]
+        ]
+        
+        # Get director
+        director = None
+        for person in crew:
+            if person.get("job") == "Director":
+                director = {
+                    "name": person.get("name"),
+                    "profile_path": (IMG_BASE + person["profile_path"]) if person.get("profile_path") else None
+                }
+                break
         
         # Format response
         response_data = {
@@ -542,6 +566,8 @@ def movie_details_view(request, tmdb_id: int):
                 "backdrop_url": (IMG_BASE + movie_data["backdrop_path"]) if movie_data.get("backdrop_path") else None,
                 "genres": [g.get("name") for g in movie_data.get("genres", [])],
                 "tagline": movie_data.get("tagline"),
+                "cast": main_actors, #this is the main actors for the movie details view   
+                "director": director, #this is the director for the movie details view
             },
             "user_interaction": {
                 "status": interaction.status if interaction else None,

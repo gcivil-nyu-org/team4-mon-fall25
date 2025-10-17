@@ -8,17 +8,63 @@
   <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
   <style>
     .actions { display:flex; gap:.5rem; margin-top:.5rem; flex-wrap: wrap; }
-    .actions form { display:inline; }
+    .action-btn { padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; color: #333; cursor: pointer; font-size: 0.9rem; transition: all 0.2s ease; }
+    .action-btn:hover { background: #e9ecef; transform: translateY(-1px); }
+    .action-btn:active { transform: translateY(0); }
+    .action-btn.selected { background: #d4edda !important; border-color: #c3e6cb !important; color: #155724 !important; }
+    .like-btn:hover { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+    .dislike-btn:hover { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+    .watch-later-btn:hover { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+    .watched-btn:hover { background: #d4edda; border-color: #c3e6cb; color: #155724; }
     .poster.missing { width:150px; height:225px; display:flex; align-items:center; justify-content:center; background:#eee; color:#666; border-radius:8px; }
     .poster { max-width:150px; border-radius:8px; }
-    .card { padding:.75rem; border:1px solid #eee; border-radius:10px; }
+    .card { padding:1rem; border:1px solid #eee; border-radius:10px; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; min-height: 300px; display: flex; flex-direction: column; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .meta { flex: 1; display: flex; flex-direction: column; }
     .meta h3 { margin:.25rem 0; }
     .year { color:#666; font-weight:400; margin-left:.25rem; }
-    .stats { font-size:.9rem; color:#444; display:flex; gap:1rem; }
+    .stats { font-size:.9rem; color:#444; display:flex; gap:1rem; margin-top: auto; }
+    .ov { color:#666; font-size:.9rem; line-height:1.5; margin:.5rem 0; max-height:6em; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:4; line-clamp:4; -webkit-box-orient:vertical; }
+    .ov.expanded { max-height:none; -webkit-line-clamp:unset; line-clamp:unset; }
+    .read-more { color:#007bff; font-size:.8rem; cursor:pointer; text-decoration:underline; margin-top:.25rem; display:inline-block; }
+    .read-more:hover { color:#0056b3; }
     .messages { margin:.5rem 0 1rem; padding:0; list-style:none; }
     .messages li { padding:.4rem .6rem; border-radius:6px; margin-bottom:.4rem; }
     .messages .success { background:#e8f6ee; border:1px solid #bde5cb; color:#0a7a3e; }
     .messages .error { background:#fdecea; border:1px solid #f5c2c0; color:#a30000; }
+    
+    /* Movie Details Modal Styles */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+    .modal-content { background-color: var(--card); margin: 5% auto; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { color: var(--fg); margin: 0; }
+    .close { color: var(--muted); font-size: 28px; font-weight: bold; cursor: pointer; }
+    .close:hover { color: var(--fg); }
+    .movie-details { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+    .movie-poster { text-align: center; }
+    .movie-poster img { max-width: 100%; border-radius: var(--radius-sm); }
+    .movie-info h2 { color: var(--fg); margin: 0 0 10px 0; }
+    .movie-info .tagline { color: var(--muted); font-style: italic; margin-bottom: 15px; }
+    .movie-info .overview { color: var(--fg); line-height: 1.6; margin-bottom: 20px; }
+    .movie-stats { display: flex; gap: 20px; margin-bottom: 20px; }
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 1.2em; font-weight: bold; color: var(--accent); }
+    .stat-label { font-size: 0.9em; color: var(--muted); }
+    .cast-section, .director-section { margin-bottom: 20px; }
+    .cast-section h3, .director-section h3 { color: var(--fg); margin-bottom: 10px; }
+    .cast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; }
+    .cast-member { text-align: center; }
+    .cast-member img { width: 60px; height: 90px; object-fit: cover; border-radius: 8px; }
+    .cast-member .name { font-size: 0.8em; color: var(--fg); margin-top: 5px; }
+    .cast-member .character { font-size: 0.7em; color: var(--muted); }
+    .director-info { display: flex; align-items: center; gap: 15px; }
+    .director-info img { width: 60px; height: 90px; object-fit: cover; border-radius: 8px; }
+    .director-name { color: var(--fg); font-weight: bold; }
+    
+    @media (max-width: 768px) {
+      .movie-details { grid-template-columns: 1fr; }
+      .modal-content { margin: 2% auto; width: 95%; }
+    }
   </style>
 </head>
 <body>
@@ -38,9 +84,12 @@
     </ul>
   {% endif %}
 
+  <!-- Hidden CSRF token for AJAX requests -->
+  {% csrf_token %}
+
   <main class="grid">
     {% for m in results %}
-      <article class="card">
+      <article class="card" {% if m.tmdb_id %}onclick="openMovieDetails({{ m.tmdb_id }})"{% endif %}>
         {% if m.found %}
           {% if m.poster_url %}
             <img class="poster" src="{{ m.poster_url }}" alt="Poster of {{ m.title }}">
@@ -50,7 +99,12 @@
 
           <div class="meta">
             <h3>{{ m.title }} <span class="year">{{ m.year }}</span></h3>
-            <p class="ov">{{ m.overview }}</p>
+            <div class="description-container">
+              <p class="ov" id="desc-{{ forloop.counter }}">{{ m.overview|default:"No description available." }}</p>
+              {% if m.overview and m.overview|length > 100 %}
+                <span class="read-more" data-card-index="{{ forloop.counter }}" id="toggle-{{ forloop.counter }}" onclick="event.stopPropagation(); event.preventDefault(); toggleDescription('{{ forloop.counter }}');">Read more</span>
+              {% endif %}
+            </div>
             <div class="stats">
               <span>Rating: {{ m.vote_average|default:"—" }}</span>
               <span>Votes: {{ m.vote_count|default:"—" }}</span>
@@ -58,22 +112,10 @@
 
             {% if m.tmdb_id %}
             <div class="actions" role="group" aria-label="Actions for {{ m.title }}">
-              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='LIKE' %}">
-                {% csrf_token %}
-                <button type="submit">Like</button>
-              </form>
-              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='DISLIKE' %}">
-                {% csrf_token %}
-                <button type="submit">Dislike</button>
-              </form>
-              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='WATCH_LATER' %}">
-                {% csrf_token %}
-                <button type="submit">Watch Later</button>
-              </form>
-              <form method="post" action="{% url 'set_interaction' tmdb_id=m.tmdb_id status='WATCHED' %}">
-                {% csrf_token %}
-                <button type="submit">Watched</button>
-              </form>
+              <button type="button" data-tmdb-id="{{ m.tmdb_id }}" data-action="LIKE" class="action-btn like-btn" onclick="event.stopPropagation(); event.preventDefault(); setInteraction('{{ m.tmdb_id }}', 'LIKE', this);">Like</button>
+              <button type="button" data-tmdb-id="{{ m.tmdb_id }}" data-action="DISLIKE" class="action-btn dislike-btn" onclick="event.stopPropagation(); event.preventDefault(); setInteraction('{{ m.tmdb_id }}', 'DISLIKE', this);">Dislike</button>
+              <button type="button" data-tmdb-id="{{ m.tmdb_id }}" data-action="WATCH_LATER" class="action-btn watch-later-btn" onclick="event.stopPropagation(); event.preventDefault(); setInteraction('{{ m.tmdb_id }}', 'WATCH_LATER', this);">Watch Later</button>
+              <button type="button" data-tmdb-id="{{ m.tmdb_id }}" data-action="WATCHED" class="action-btn watched-btn" onclick="event.stopPropagation(); event.preventDefault(); setInteraction('{{ m.tmdb_id }}', 'WATCHED', this);">Watched</button>
             </div>
             {% endif %}
           </div>
@@ -89,11 +131,237 @@
     {% endfor %}
   </main>
 
+  <!-- Movie Details Modal -->
+  <div id="movieModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Movie Details</h2>
+        <span class="close" onclick="closeMovieDetails()">&times;</span>
+      </div>
+      <div id="modalBody">
+        <!-- Movie details will be loaded here -->
+      </div>
+    </div>
+  </div>
+
   <footer>
     <details>
       <summary>Show raw agent markdown</summary>
       <pre>{{ agent_text }}</pre>
     </details>
   </footer>
+
+  <script>
+    // Django template functions - ignore linter warnings for template syntax
+    function toggleDescription(cardIndex) {
+      const descElement = document.getElementById(`desc-${cardIndex}`);
+      const toggleElement = document.getElementById(`toggle-${cardIndex}`);
+      
+      if (descElement.classList.contains('expanded')) {
+        descElement.classList.remove('expanded');
+        toggleElement.textContent = 'Read more';
+      } else {
+        descElement.classList.add('expanded');
+        toggleElement.textContent = 'Read less';
+      }
+    }
+    
+    // Direct onclick handlers are used instead of event delegation
+
+    function setInteraction(tmdbId, status, button) {
+      // Get CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      
+      // Show loading state on the button
+      const originalText = button.textContent;
+      button.textContent = 'Saving...';
+      button.disabled = true;
+      
+      fetch(`/interact/${tmdbId}/${status}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken
+        },
+        body: `csrfmiddlewaretoken=${csrfToken}`
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok) {
+          // Mark button as selected permanently
+          button.classList.add('selected');
+          button.textContent = '✓ ' + originalText;
+          button.style.background = '#d4edda';
+          button.style.borderColor = '#c3e6cb';
+          button.style.color = '#155724';
+          button.disabled = false;
+          
+          // Clear other buttons in the same action group
+          const actionGroup = button.closest('.actions');
+          actionGroup.querySelectorAll('.action-btn').forEach(btn => {
+            if (btn !== button) {
+              btn.classList.remove('selected');
+              btn.textContent = btn.textContent.replace('✓ ', '');
+              btn.style.background = '';
+              btn.style.borderColor = '';
+              btn.style.color = '';
+            }
+          });
+        } else {
+          throw new Error(data.error || 'Failed to save interaction');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        button.textContent = '✗ ' + originalText;
+        button.style.background = '#f8d7da';
+        button.style.borderColor = '#f5c6cb';
+        button.style.color = '#721c24';
+        button.disabled = false;
+        
+        // Reset after 3 seconds only on error
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '';
+          button.style.borderColor = '';
+          button.style.color = '';
+        }, 3000);
+      });
+    }
+    
+    function openMovieDetails(tmdbId) {
+      const modal = document.getElementById('movieModal');
+      const modalBody = document.getElementById('modalBody');
+      const modalTitle = document.getElementById('modalTitle');
+      
+      // Show loading state
+      modalTitle.textContent = 'Loading...';
+      modalBody.innerHTML = '<div style="text-align: center; padding: 20px;">Loading movie details...</div>';
+      modal.style.display = 'block';
+      
+      // Fetch movie details
+      fetch(`/movie/${tmdbId}/`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            displayMovieDetails(data.movie);
+          } else {
+            modalBody.innerHTML = `<div style="color: var(--accent-3); text-align: center; padding: 20px;">Error: ${data.error}</div>`;
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching movie details:', error);
+          modalBody.innerHTML = '<div style="color: var(--accent-3); text-align: center; padding: 20px;">Error loading movie details</div>';
+        });
+    }
+    
+    function displayMovieDetails(movie) {
+      const modalTitle = document.getElementById('modalTitle');
+      const modalBody = document.getElementById('modalBody');
+      
+      modalTitle.textContent = movie.title;
+      
+      // Format runtime
+      const runtime = movie.runtime ? `${movie.runtime} min` : 'N/A';
+      
+      // Format release date
+      const releaseDate = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A';
+      
+      // Format genres
+      const genres = movie.genres ? movie.genres.join(', ') : 'N/A';
+      
+      // Build cast HTML
+      let castHTML = '';
+      if (movie.cast && movie.cast.length > 0) {
+        castHTML = `
+          <div class="cast-section">
+            <h3>Cast</h3>
+            <div class="cast-grid">
+              ${movie.cast.map(actor => `
+                <div class="cast-member">
+                  ${actor.profile_path ? `<img src="${actor.profile_path}" alt="${actor.name}" onerror="this.style.display='none'">` : '<div style="width:60px;height:90px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:0.7em;">No Photo</div>'}
+                  <div class="name">${actor.name}</div>
+                  <div class="character">${actor.character || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      // Build director HTML
+      let directorHTML = '';
+      if (movie.director) {
+        directorHTML = `
+          <div class="director-section">
+            <h3>Director</h3>
+            <div class="director-info">
+              ${movie.director.profile_path ? `<img src="${movie.director.profile_path}" alt="${movie.director.name}" onerror="this.style.display='none'">` : '<div style="width:60px;height:90px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:0.7em;">No Photo</div>'}
+              <div class="director-name">${movie.director.name}</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      modalBody.innerHTML = `
+        <div class="movie-details">
+          <div class="movie-poster">
+            ${movie.poster_url ? `<img src="${movie.poster_url}" alt="${movie.title}">` : '<div style="width:200px;height:300px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;">No Poster</div>'}
+          </div>
+          <div class="movie-info">
+            <h2>${movie.title}</h2>
+            ${movie.tagline ? `<p class="tagline">"${movie.tagline}"</p>` : ''}
+            <p class="overview">${movie.overview || 'No overview available.'}</p>
+            
+            <div class="movie-stats">
+              <div class="stat-item">
+                <div class="stat-value">${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</div>
+                <div class="stat-label">Rating</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${movie.vote_count || 'N/A'}</div>
+                <div class="stat-label">Votes</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${releaseDate}</div>
+                <div class="stat-label">Year</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${runtime}</div>
+                <div class="stat-label">Runtime</div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <strong>Genres:</strong> ${genres}
+            </div>
+            
+            ${directorHTML}
+            ${castHTML}
+          </div>
+        </div>
+      `;
+    }
+    
+    function closeMovieDetails() {
+      const modal = document.getElementById('movieModal');
+      modal.style.display = 'none';
+    }
+    
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+      const modal = document.getElementById('movieModal');
+      if (event.target === modal) {
+        closeMovieDetails();
+      }
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeMovieDetails();
+      }
+    });
+  </script>
 </body>
 </html>

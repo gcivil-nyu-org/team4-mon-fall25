@@ -59,12 +59,13 @@ urlpatterns = [
 
 # ==================== NEW HELPER ROUTES (Optional - add if you created these views) ====================
 # Uncomment these if you added the helper views to views.py
-# urlpatterns += [
-#     path("", views.home_view, name="home"),
-#     path("stats/", views.user_stats_view, name="user_stats"),
-#     path("movie/<int:tmdb_id>/", views.movie_details_view, name="movie_details"),
-#     path("search/", views.search_movies_view, name="search_movies"),
-# ]
+
+urlpatterns += [
+    path("", views.home_view, name="home"),
+    path("stats/", views.user_stats_view, name="user_stats"),
+    path("movie/<int:tmdb_id>/", views.movie_details_view, name="movie_details"),
+    path("search/", views.search_movies_view, name="search_movies"),
+]
 
 # ==================== REST API ROUTES ====================
 if api_views:
