@@ -64,6 +64,7 @@ MIDDLEWARE = [
 # Put this around line 67 (replace the first REST_FRAMEWORK)
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        'rest_framework.authentication.BasicAuthentication', # NEW for 
         "rest_framework.authentication.TokenAuthentication",  # ← ADD THIS!
         "rest_framework.authentication.SessionAuthentication",
     ],
