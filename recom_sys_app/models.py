@@ -205,3 +205,79 @@ class GroupMember(models.Model):
     
     def __str__(self):
         return f"{self.user.username} in {self.group_session.group_code}"
+    
+
+    # ---- 4) Group Swipe & Match (NEW.1) ----
+class GroupSwipe(models.Model):
+    """群组中的滑动记录"""
+    
+    class Action(models.TextChoices):
+        LIKE = "LIKE", "Like"
+        DISLIKE = "DISLIKE", "Dislike"
+        SUPER_LIKE = "SUPER_LIKE", "Super Like"
+    
+    id = models.AutoField(primary_key=True)
+    group_session = models.ForeignKey(
+        GroupSession,
+        on_delete=models.CASCADE,
+        related_name='swipes'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='group_swipes'
+    )
+    tmdb_id = models.IntegerField(db_index=True)
+    action = models.CharField(max_length=12, choices=Action.choices)
+    
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    class Meta:
+        db_table = 'group_swipes'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['group_session', 'user', 'tmdb_id'],
+                name='uniq_group_user_movie_swipe'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['group_session', 'tmdb_id']),
+            models.Index(fields=['user', 'action']),
+            models.Index(fields=['-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} {self.action} movie {self.tmdb_id} in group {self.group_session.group_code}"
+
+
+class GroupMatch(models.Model):
+    """群组匹配成功的电影"""
+    
+    id = models.AutoField(primary_key=True)
+    group_session = models.ForeignKey(
+        GroupSession,
+        on_delete=models.CASCADE,
+        related_name='matches'
+    )
+    tmdb_id = models.IntegerField(db_index=True)
+    
+    # 可选：存储电影标题快照
+    movie_title = models.CharField(max_length=300, blank=True)
+    
+    matched_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    class Meta:
+        db_table = 'group_matches'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['group_session', 'tmdb_id'],
+                name='uniq_group_match'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['group_session', '-matched_at']),
+            models.Index(fields=['tmdb_id']),
+        ]
+    
+    def __str__(self):
+        return f"Match: Movie {self.tmdb_id} in group {self.group_session.group_code}"
