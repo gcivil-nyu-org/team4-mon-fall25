@@ -311,18 +311,49 @@ def _build_recommendation_agent(user, groq_api_key: str):
 # ============================================
 
 @login_required
-@require_http_methods(["GET", "POST"])
 def profile_view(request):
     """
-    User profile view for template rendering.
-    GET: Display profile form
+    User profile dashboard view.
+    Display user info and group options (no edit form).
+    """
+    profile, _ = UserProfile.objects.get_or_create(
+        user=request.user,
+        defaults={"name": request.user.username}
+    )
+
+    # Get user's group memberships
+    user_groups = GroupMember.objects.filter(
+        user=request.user,
+        is_active=True
+    ).select_related('group_session').order_by('-joined_at')
+
+    # Get created groups
+    created_groups = GroupSession.objects.filter(
+        creator=request.user,
+        is_active=True
+    ).order_by('-created_at')
+
+    get_token(request)  # ensure CSRF cookie
+    return render(request, "recom_sys_app/profile.html", {
+        "profile": profile,
+        "user_groups": user_groups,
+        "created_groups": created_groups,
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_profile_view(request):
+    """
+    Edit profile view for updating user preferences.
+    GET: Display profile edit form
     POST: Update profile
     """
     profile, _ = UserProfile.objects.get_or_create(
         user=request.user,
         defaults={"name": request.user.username}
     )
-    
+
     if request.method == "POST":
         form = UserProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -331,9 +362,8 @@ def profile_view(request):
             return redirect("profile")
     else:
         form = UserProfileForm(instance=profile)
-    
-    get_token(request)  # ensure CSRF cookie
-    return render(request, "recom_sys_app/profile_form.html", {"form": form})
+
+    return render(request, "recom_sys_app/edit_profile.html", {"form": form})
 
 
 @login_required
@@ -494,6 +524,30 @@ def movie_details_view(request, tmdb_id: int):
             interaction = Interaction.objects.get(user=request.user, tmdb_id=tmdb_id)
         except Interaction.DoesNotExist:
             pass
+        #this is the code for the movie details view
+        # Extract cast and crew information
+        cast = movie_data.get("credits", {}).get("cast", [])
+        crew = movie_data.get("credits", {}).get("crew", [])
+        
+        # Get main actors (top 5)
+        main_actors = [
+            {
+                "name": actor.get("name"),
+                "character": actor.get("character"),
+                "profile_path": (IMG_BASE + actor["profile_path"]) if actor.get("profile_path") else None
+            }
+            for actor in cast[:5]
+        ]
+        
+        # Get director
+        director = None
+        for person in crew:
+            if person.get("job") == "Director":
+                director = {
+                    "name": person.get("name"),
+                    "profile_path": (IMG_BASE + person["profile_path"]) if person.get("profile_path") else None
+                }
+                break
         
         # Format response
         response_data = {
@@ -512,6 +566,8 @@ def movie_details_view(request, tmdb_id: int):
                 "backdrop_url": (IMG_BASE + movie_data["backdrop_path"]) if movie_data.get("backdrop_path") else None,
                 "genres": [g.get("name") for g in movie_data.get("genres", [])],
                 "tagline": movie_data.get("tagline"),
+                "cast": main_actors, #this is the main actors for the movie details view   
+                "director": director, #this is the director for the movie details view
             },
             "user_interaction": {
                 "status": interaction.status if interaction else None,
@@ -607,8 +663,17 @@ def home_view(request):
     """
     if request.user.is_authenticated:
         return redirect("profile")
-    
+
     return render(request, "recom_sys_app/home.html")
+
+
+def health_check(request):
+    """
+    Simple health check endpoint for AWS ELB.
+    Returns 200 OK without requiring authentication.
+    """
+    from django.http import HttpResponse
+    return HttpResponse("OK", status=200)
 
 
 

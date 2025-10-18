@@ -3,16 +3,25 @@ from django.contrib.auth import views as auth_views
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 
-# Import existing views
-from .views import recommend_view, profile_view, set_interaction_view
+# Import views
+from .views import recommend_view, profile_view, edit_profile_view, set_interaction_view
 from .views_auth import signup_view
+from .views_group import (
+    get_group_deck, 
+    swipe_like, 
+    group_room_view,
+    group_deck_view,      # New: Swipe Card Page View
+    get_group_matches     # New: Retrieve matching records
+)
 
-# Import new views (you'll need to add these)
 from . import views  # For additional helper views
 try:
     from . import api_views  # REST API views
 except ImportError:
     api_views = None  # If not created yet
+
+# Application Namespace
+app_name = 'recom_sys'
 
 # ============================================
 # REST API Router (if api_views exists)
@@ -26,44 +35,54 @@ if api_views:
 # URL Patterns
 # ============================================
 urlpatterns = [
-    # ==================== EXISTING ROUTES (Template Views) ====================
-    # Authentication
+    # ==================== AUTHENTICATION ====================
     path("signup/", signup_view, name="signup"),
     path("login/", auth_views.LoginView.as_view(
         template_name="recom_sys_app/login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
     
-    # Profile & Recommendations
+    # ==================== PROFILE & RECOMMENDATIONS ====================
     path("profile/", profile_view, name="profile"),
+    path("profile/edit/", edit_profile_view, name="edit_profile"),
     path("recommend/", recommend_view, name="recommend"),
     
-    # Interactions
+    # ==================== INTERACTIONS ====================
     path("interact/<int:tmdb_id>/<str:status>/", set_interaction_view, name="set_interaction"),
 
-    # ============ Group Matching URLs (NEW) ============
-    # API endpoints
+    # ==================== GROUP MATCHING - PAGE VIEWS ====================
+    # Group Lobby (Original)
+    path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
+    
+    # Group Room (existing, using group_code)
+    path('groups/<str:group_code>/room/', group_room_view, name='group_room'),
+    
+    # Group Swipe Card Page (New)
+    path('groups/<str:group_code>/deck/', group_deck_view, name='group_deck_page'),
+
+    # ==================== GROUP MATCHING - API ENDPOINTS ====================
+    # Create and join groups (existing ones)
     path('api/groups', views.create_group, name='create_group'),
+    path('api/groups/join', views.join_group, name='join_group'),
     path('api/groups/<uuid:group_id>', views.get_group_details, name='group_details'),
     
-    # Page views
-    path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
-
-    # Group Matching URLs
-    path('api/groups', views.create_group, name='create_group'),
-    path('api/groups/join', views.join_group, name='join_group'),  # 新增
-    path('api/groups/<uuid:group_id>', views.get_group_details, name='group_details'),
-    path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
-
+    # Group Recommendation API (New)
+    path('api/groups/<str:group_code>/deck/', get_group_deck, name='api_group_deck'),
+    path('api/groups/<str:group_code>/swipe/like/', swipe_like, name='api_swipe_like'),
+    path('api/groups/<str:group_code>/matches/', get_group_matches, name='api_group_matches'),
 ]
 
-# ==================== NEW HELPER ROUTES (Optional - add if you created these views) ====================
-# Uncomment these if you added the helper views to views.py
-# urlpatterns += [
-#     path("", views.home_view, name="home"),
-#     path("stats/", views.user_stats_view, name="user_stats"),
-#     path("movie/<int:tmdb_id>/", views.movie_details_view, name="movie_details"),
-#     path("search/", views.search_movies_view, name="search_movies"),
-# ]
+# ==================== OPTIONAL HELPER ROUTES ====================
+# Uncomment if you have these views
+try:
+    urlpatterns += [
+        path("", views.home_view, name="home"),
+        path("stats/", views.user_stats_view, name="user_stats"),
+        path("movie/<int:tmdb_id>/", views.movie_details_view, name="movie_details"),
+        path("search/", views.search_movies_view, name="search_movies"),
+    ]
+except AttributeError:
+    # Views don't exist yet
+    pass
 
 # ==================== REST API ROUTES ====================
 if api_views:
@@ -89,37 +108,58 @@ if api_views:
     ]
 
 # ============================================
-# URL Reference
+# URL Reference Guide
 # ============================================
 """
-EXISTING TEMPLATE-BASED ROUTES:
-    /signup/                                - User signup page
-    /login/                                 - User login page
-    /logout/                                - User logout
-    /profile/                               - User profile page
-    /recommend/                             - Get recommendations page
-    /interact/<tmdb_id>/<status>/           - Set movie interaction
+TEMPLATE-BASED PAGE ROUTES:
+    /signup/                                    - User signup page
+    /login/                                     - User login page
+    /logout/                                    - User logout
+    /profile/                                   - User profile page
+    /recommend/                                 - Get recommendations page
+    /interact/<tmdb_id>/<status>/               - Set movie interaction
+    
+    === GROUP MATCHING PAGES ===
+    /group/<uuid:group_id>/                     - Group lobby (original)
+    /groups/<group_code>/room/                  - Group room (original)
+    /groups/<group_code>/deck/                  - Group movie deck (NEW) ⭐
 
-REST API ROUTES :
-    /api/health/                            - Health check
-    /api/options/                           - Get dropdown options
+GROUP MATCHING API ENDPOINTS:
+    /api/groups                                 - Create group (POST)
+    /api/groups/join                            - Join group (POST)
+    /api/groups/<uuid:group_id>                 - Get group details (GET)
     
-    /api/auth/register/                     - Register new user (REST)
-    /api/auth/login/                        - Get auth token
-    
-    /api/profile/                           - List/Get profile
-    /api/profile/<id>/                      - Update/Delete profile
-    
-    /api/interactions/                      - List/Create interactions
-    /api/interactions/<id>/                 - Get/Update/Delete interaction
-    /api/interactions/stats/                - Get interaction stats
-    /api/interactions/set/<tmdb_id>/<status>/ - Quick set status
-    
-    /api/recommendations/                   - Get AI recommendations
+    === NEW GROUP RECOMMENDATION APIs ===
+    /api/groups/<group_code>/deck/              - Get movie recommendations (GET) ⭐
+    /api/groups/<group_code>/swipe/like/        - Record like action (POST) ⭐
+    /api/groups/<group_code>/matches/           - Get all matches (GET) ⭐
 
-OPTIONAL HELPER ROUTES (uncomment if needed):
-    /                                       - Home/Landing page
-    /stats/                                 - User statistics
-    /movie/<tmdb_id>/                       - Movie details
-    /search/                                - Search movies
+REST API ROUTES (if api_views exists):
+    /api/health/                                - Health check
+    /api/options/                               - Get dropdown options
+    /api/auth/register/                         - Register new user
+    /api/auth/login/                            - Get auth token
+    /api/profile/                               - Profile CRUD
+    /api/interactions/                          - Interaction CRUD
+    /api/recommendations/                       - AI recommendations
+
+OPTIONAL HELPER ROUTES:
+    /                                           - Home/Landing page
+    /stats/                                     - User statistics
+    /movie/<tmdb_id>/                           - Movie details
+    /search/                                    - Search movies
+
+USAGE EXAMPLES:
+    1. User visits group deck page:
+       → http://localhost:8000/groups/ABC123/deck/
+       
+    2. Frontend fetches movie recommendations:
+       → GET /api/groups/ABC123/deck/?with_details=true&limit=20
+       
+    3. User swipes right (likes a movie):
+       → POST /api/groups/ABC123/swipe/like/
+       → Body: {"tmdb_id": 550, "movie_title": "Fight Club"}
+       
+    4. Check if there are any matches:
+       → GET /api/groups/ABC123/matches/
 """
