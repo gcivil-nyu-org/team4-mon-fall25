@@ -71,8 +71,8 @@
   <header>
     <h1>Recommended Movies</h1>
     <div class="nav" style="margin:.5rem 0 1rem;">
-      <a href="{% url 'profile' %}">← Back to Profile</a>
-      <a href="{% url 'recommend' %}">🔄 Refresh</a>
+      <a href="{% url 'recom_sys:profile' %}">← Back to Profile</a>
+      <a href="{% url 'recom_sys:recommend' %}">🔄 Refresh</a>
     </div>
   </header>
 
@@ -255,6 +255,76 @@
         });
     }
     
+    function buildWatchProvidersHTML(watchProviders) {
+      if (!watchProviders) return '';
+
+      const { flatrate = [], rent = [], buy = [], link = '' } = watchProviders;
+
+      // If no providers at all, return empty
+      if (flatrate.length === 0 && rent.length === 0 && buy.length === 0) {
+        return '';
+      }
+
+      let html = '<div class="watch-providers-section" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">';
+      html += '<h3 style="margin-top: 0; margin-bottom: 10px; color: #333;">🎬 Where to Watch</h3>';
+
+      // Streaming services (flatrate)
+      if (flatrate.length > 0) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<strong style="color: #28a745;">Stream:</strong>';
+        html += '<div class="provider-logos" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">';
+        flatrate.forEach(provider => {
+          const logoUrl = provider.logo_path ? `https://image.tmdb.org/t/p/w92${provider.logo_path}` : '';
+          html += `
+            <div class="provider-item" style="display: flex; align-items: center; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" title="${provider.provider_name}">
+              ${logoUrl ? `<img src="${logoUrl}" alt="${provider.provider_name}" style="height: 24px; width: auto; border-radius: 4px;">` : `<span style="font-size: 0.85em; color: #666;">${provider.provider_name}</span>`}
+            </div>
+          `;
+        });
+        html += '</div></div>';
+      }
+
+      // Rental options
+      if (rent.length > 0) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<strong style="color: #007bff;">Rent:</strong>';
+        html += '<div class="provider-logos" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">';
+        rent.slice(0, 5).forEach(provider => {
+          const logoUrl = provider.logo_path ? `https://image.tmdb.org/t/p/w92${provider.logo_path}` : '';
+          html += `
+            <div class="provider-item" style="display: flex; align-items: center; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" title="${provider.provider_name}">
+              ${logoUrl ? `<img src="${logoUrl}" alt="${provider.provider_name}" style="height: 24px; width: auto; border-radius: 4px;">` : `<span style="font-size: 0.85em; color: #666;">${provider.provider_name}</span>`}
+            </div>
+          `;
+        });
+        html += '</div></div>';
+      }
+
+      // Purchase options
+      if (buy.length > 0) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<strong style="color: #ffc107;">Buy:</strong>';
+        html += '<div class="provider-logos" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">';
+        buy.slice(0, 5).forEach(provider => {
+          const logoUrl = provider.logo_path ? `https://image.tmdb.org/t/p/w92${provider.logo_path}` : '';
+          html += `
+            <div class="provider-item" style="display: flex; align-items: center; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" title="${provider.provider_name}">
+              ${logoUrl ? `<img src="${logoUrl}" alt="${provider.provider_name}" style="height: 24px; width: auto; border-radius: 4px;">` : `<span style="font-size: 0.85em; color: #666;">${provider.provider_name}</span>`}
+            </div>
+          `;
+        });
+        html += '</div></div>';
+      }
+
+      // JustWatch link
+      if (link) {
+        html += `<div style="margin-top: 10px;"><a href="${link}" target="_blank" rel="noopener noreferrer" style="color: #007bff; font-size: 0.85em; text-decoration: none;">View all options on JustWatch →</a></div>`;
+      }
+
+      html += '</div>';
+      return html;
+    }
+
     function displayMovieDetails(movie) {
       const modalTitle = document.getElementById('modalTitle');
       const modalBody = document.getElementById('modalBody');
@@ -335,7 +405,9 @@
             <div style="margin-bottom: 20px;">
               <strong>Genres:</strong> ${genres}
             </div>
-            
+
+            ${buildWatchProvidersHTML(movie.watch_providers)}
+
             ${directorHTML}
             ${castHTML}
           </div>
