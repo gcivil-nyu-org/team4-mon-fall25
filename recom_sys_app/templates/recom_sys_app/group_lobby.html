@@ -46,16 +46,13 @@
 
     <!-- Actions -->
     <div class="lobby-actions">
-      {% if is_creator %}
       <button id="startMatchingBtn" class="btn-primary">
         ▶️ Start Matching
       </button>
-      {% endif %}
       <button id="leaveLobbyBtn" class="btn-danger">
         🚪 Leave Lobby
       </button>
     </div>
-  </div>
 
   <script>
     const groupId = '{{ group.id }}';
@@ -144,13 +141,11 @@
       }
     });
 
-    // Start Matching (Creator only)
-    if (isCreator) {
-      document.getElementById('startMatchingBtn').addEventListener('click', () => {
-        // TODO: Implement start matching functionality
-        alert('🎬 Start matching functionality coming soon!\n\nThis will help you and your group find the perfect movie to watch together.');
-      });
-    }
+    // Start Matching
+    document.getElementById('startMatchingBtn').addEventListener('click', () => {
+      // 直接跳转到 deck 页面
+      window.location.href = `/groups/${groupCode}/deck/`;
+    });
 
     // Leave Lobby
     document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
