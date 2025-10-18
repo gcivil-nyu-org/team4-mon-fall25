@@ -103,6 +103,34 @@ def _tmdb_details(movie_id: int, append: str = "videos,credits"):
     return r.json()
 
 
+def _tmdb_watch_providers(movie_id: int, region: str = "US"):
+    """
+    Get streaming platform availability for a movie from TMDB.
+    Returns watch provider data (Netflix, Hulu, etc.) for the specified region.
+    """
+    try:
+        r = requests.get(
+            f"{TMDB_BASE}/movie/{movie_id}/watch/providers",
+            headers=TMDB_HEADERS,
+            timeout=10,
+        )
+        r.raise_for_status()
+        data = r.json()
+
+        # Extract providers for the specified region
+        results = data.get("results", {}).get(region, {})
+
+        return {
+            "flatrate": results.get("flatrate", []),  # Subscription services (Netflix, Disney+, etc.)
+            "rent": results.get("rent", []),           # Rental options (iTunes, Google Play, etc.)
+            "buy": results.get("buy", []),             # Purchase options
+            "link": results.get("link", ""),           # JustWatch link
+        }
+    except Exception as e:
+        # Return empty dict if API call fails
+        return {"flatrate": [], "rent": [], "buy": [], "link": ""}
+
+
 def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
     """
     Fetch TMDB details for multiple movie titles.
@@ -517,7 +545,10 @@ def movie_details_view(request, tmdb_id: int):
     """
     try:
         movie_data = _tmdb_details(tmdb_id, append="videos,credits,recommendations")
-        
+
+        # Fetch watch providers (where to watch)
+        watch_providers = _tmdb_watch_providers(tmdb_id)
+
         # Check if user has interacted with this movie
         interaction = None
         try:
@@ -566,8 +597,9 @@ def movie_details_view(request, tmdb_id: int):
                 "backdrop_url": (IMG_BASE + movie_data["backdrop_path"]) if movie_data.get("backdrop_path") else None,
                 "genres": [g.get("name") for g in movie_data.get("genres", [])],
                 "tagline": movie_data.get("tagline"),
-                "cast": main_actors, #this is the main actors for the movie details view   
+                "cast": main_actors, #this is the main actors for the movie details view
                 "director": director, #this is the director for the movie details view
+                "watch_providers": watch_providers,  # WHERE TO WATCH INTEGRATION
             },
             "user_interaction": {
                 "status": interaction.status if interaction else None,
