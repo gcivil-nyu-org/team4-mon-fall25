@@ -26,5 +26,5 @@ def root_view(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", root_view),  # Smart root handler
-    path("", include("recom_sys_app.urls")),  # App routes
+    path("", include("recom_sys_app.urls", namespace='recom_sys')),  # App routes
 ]
