@@ -153,7 +153,22 @@ class GroupSession(models.Model):
         """覆盖 save 方法，自动生成 group_code"""
         if not self.group_code:
             self.group_code = self.generate_unique_code()
+        
+        # 判断是否是新创建的群组
+        is_new = self.pk is None
+        
         super().save(*args, **kwargs)
+        
+        # 如果是新创建的群组，自动添加创建者为成员
+        if is_new and self.creator:
+            GroupMember.objects.get_or_create(
+                group_session=self,
+                user=self.creator,
+                defaults={
+                    'role': GroupMember.Role.CREATOR,
+                    'is_active': True
+                }
+            )
     
     @staticmethod
     def generate_unique_code():
