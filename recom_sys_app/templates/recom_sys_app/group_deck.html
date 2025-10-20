@@ -67,33 +67,42 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen">
+<body style="min-height: 100vh; background: radial-gradient(1200px 800px at 20% -20%, #121525, transparent 55%), radial-gradient(1000px 600px at 120% 0%, #0e111a, transparent 50%), #0b0b10; margin: 0; color: #e9eaf2;">
     <div class="container mx-auto px-4 py-8 max-w-2xl">
         <!-- Header -->
         <div class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            <div class="flex items-center justify-between mb-4">
+                <a href="/groups/{{ group_code }}/room/" class="flex items-center gap-2 font-semibold transition-colors" style="color: #7aa2f7; text-decoration: none;">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Lobby
+                </a>
+                <span class="text-sm"></span>
+            </div>
+            <h1 class="text-3xl font-bold mb-2" style="color: #e9eaf2;">
                 Group Movie Recommendations
             </h1>
-            <div class="flex items-center justify-center gap-4 text-gray-600">
-                <span class="bg-white px-4 py-2 rounded-lg shadow">
-                    Group Code: <strong>{{ group_code }}</strong>
+            <div class="flex items-center justify-center gap-4" style="color: #b5b8c3;">
+                <span class="px-4 py-2 rounded-lg" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
+                    Group Code: <strong style="color: #7aa2f7;">{{ group_code }}</strong>
                 </span>
-                <span class="bg-white px-4 py-2 rounded-lg shadow">
-                    Member: <strong id="memberCount">{{ member_count }}</strong>
+                <span class="px-4 py-2 rounded-lg" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
+                    Member: <strong style="color: #7aa2f7;" id="memberCount">{{ member_count }}</strong>
                 </span>
             </div>
         </div>
 
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-20">
-            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
-            <p class="text-gray-600">Loading movie...</p>
+            <div class="animate-spin rounded-full h-16 w-16 mx-auto mb-4" style="border: 4px solid rgba(122,162,247,.2); border-top-color: #7aa2f7;"></div>
+            <p style="color: #b5b8c3;">Loading movie...</p>
         </div>
 
         <!-- Error State -->
-        <div id="errorState" class="hidden bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg">
+        <div id="errorState" class="hidden px-6 py-4 rounded-lg" style="background: rgba(247,118,142,.12); border: 1px solid rgba(247,118,142,.35); color: #f7768e;">
             <p id="errorMessage"></p>
-            <button onclick="location.reload()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            <button onclick="location.reload()" class="mt-4 px-4 py-2 rounded" style="background: #f7768e; color: white; border: none; cursor: pointer;">
                 Reload
             </button>
         </div>
@@ -106,23 +115,23 @@
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-20">
             <div class="text-6xl mb-4">🎬</div>
-            <h2 class="text-2xl font-bold text-gray-700 mb-2">There are no more movies!</h2>
-            <p class="text-gray-600 mb-6">You've finished watching all the recommendations.</p>
-            <button onclick="loadMoreMovies()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+            <h2 class="text-2xl font-bold mb-2" style="color: #e9eaf2;">There are no more movies!</h2>
+            <p class="mb-6" style="color: #b5b8c3;">You've finished watching all the recommendations.</p>
+            <button onclick="loadMoreMovies()" class="px-6 py-3 rounded-lg" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; border: none; font-weight: 600; cursor: pointer;">
                 Load More
             </button>
         </div>
 
         <!-- Action Buttons -->
         <div id="actionButtons" class="hidden flex justify-center gap-6 mt-6">
-            <button onclick="swipeLeft()" class="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onclick="swipeLeft()" class="w-16 h-16 rounded-full flex items-center justify-center transition-transform" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: pointer;">
+                <svg class="w-8 h-8" fill="none" stroke="#f7768e" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
-            
-            <button onclick="swipeRight()" class="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                <svg class="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+
+            <button onclick="swipeRight()" class="w-16 h-16 rounded-full flex items-center justify-center transition-transform" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: pointer;">
+                <svg class="w-8 h-8" fill="#9ece6a" viewBox="0 0 24 24">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
             </button>
@@ -130,13 +139,13 @@
     </div>
 
     <!-- Match Notification Modal -->
-    <div id="matchModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="match-modal bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+    <div id="matchModal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.8);">
+        <div class="match-modal rounded-2xl p-8 max-w-md mx-4 text-center" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
             <div class="text-6xl mb-4">🎉</div>
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">Match successful!</h2>
-            <p class="text-gray-600 mb-2">All members like:</p>
-            <p id="matchMovieTitle" class="text-xl font-semibold text-purple-600 mb-6"></p>
-            <button onclick="closeMatchModal()" class="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700">
+            <h2 class="text-3xl font-bold mb-2" style="color: #e9eaf2;">Match successful!</h2>
+            <p class="mb-2" style="color: #b5b8c3;">All members like:</p>
+            <p id="matchMovieTitle" class="text-xl font-semibold mb-6" style="color: #7aa2f7;"></p>
+            <button onclick="closeMatchModal()" class="px-8 py-3 rounded-lg" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; border: none; font-weight: 600; cursor: pointer;">
                 Awesome!
             </button>
         </div>
@@ -211,7 +220,9 @@
             const translateY = (index - currentIndex) * 10;
             
             const card = document.createElement('div');
-            card.className = 'movie-card absolute inset-0 bg-white rounded-2xl shadow-2xl overflow-hidden';
+            card.className = 'movie-card absolute inset-0 rounded-2xl shadow-2xl overflow-hidden';
+            card.style.background = 'linear-gradient(180deg, #1a1e2b 0%, #151822 100%)';
+            card.style.border = '1px solid #262a3d';
             card.style.zIndex = zIndex;
             card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             card.dataset.index = index;
@@ -235,9 +246,9 @@
                 </div>
                 
                 <div class="p-6 space-y-3">
-                    <h2 class="text-2xl font-bold text-gray-900 line-clamp-2">${movie.title}</h2>
+                    <h2 class="text-2xl font-bold line-clamp-2" style="color: #e9eaf2;">${movie.title}</h2>
                     
-                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                    <div class="flex items-center gap-4 text-sm" style="color: #b5b8c3;">
                         ${movie.release_date ? `
                             <div class="flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,27 +257,33 @@
                                 <span>${new Date(movie.release_date).getFullYear()}</span>
                             </div>
                         ` : ''}
-                        
+
                         ${movie.vote_average ? `
                             <div class="flex items-center gap-1">
                                 <svg class="w-4 h-4 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24">
                                     <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                                 </svg>
-                                <span>${movie.vote_average.toFixed(1)}</span>
+                                <span>Rating: ${movie.vote_average.toFixed(1)}</span>
+                            </div>
+                        ` : ''}
+
+                        ${movie.vote_count ? `
+                            <div class="flex items-center gap-1">
+                                <span>Votes: ${movie.vote_count}</span>
                             </div>
                         ` : ''}
                     </div>
 
                     ${movie.genres && movie.genres.length > 0 ? `
                         <div class="flex flex-wrap gap-2">
-                            ${movie.genres.slice(0, 3).map(genre => 
-                                `<span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">${genre}</span>`
+                            ${movie.genres.slice(0, 3).map(genre =>
+                                `<span class="px-3 py-1 text-xs rounded-full" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7;">${genre}</span>`
                             ).join('')}
                         </div>
                     ` : ''}
 
                     ${movie.overview ? `
-                        <p class="text-gray-700 text-sm line-clamp-3">${movie.overview}</p>
+                        <p class="text-sm line-clamp-3" style="color: #b5b8c3; line-height: 1.5;">${movie.overview}</p>
                     ` : ''}
                 </div>
             `;
