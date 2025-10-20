@@ -108,7 +108,7 @@
         </div>
 
         <!-- Movie Deck Container -->
-        <div id="deckContainer" class="hidden relative" style="height: 600px;">
+        <div id="deckContainer" class="hidden relative" style="min-height: 600px; height: auto; max-height: 800px;">
             <!-- Movie cards will be inserted here -->
         </div>
 
@@ -227,15 +227,16 @@
         // Create a movie card element
         function createMovieCard(movie, index) {
             const zIndex = 100 - (index - currentIndex);
-            const scale = 1 - (index - currentIndex) * 0.05;
             const translateY = (index - currentIndex) * 10;
-            
+            const opacity = index === currentIndex ? 1 : 0.7;
+
             const card = document.createElement('div');
             card.className = 'movie-card absolute inset-0 rounded-2xl shadow-2xl overflow-hidden';
             card.style.background = 'linear-gradient(180deg, #1a1e2b 0%, #151822 100%)';
             card.style.border = '1px solid #262a3d';
             card.style.zIndex = zIndex;
-            card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+            card.style.transform = `translateY(${translateY}px)`;
+            card.style.opacity = opacity;
             card.dataset.index = index;
             
             const posterUrl = movie.poster_path 
@@ -243,7 +244,7 @@
                 : 'https://via.placeholder.com/500x750?text=No+Poster';
             
             card.innerHTML = `
-                <div class="relative h-96 bg-gray-200" onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})">
+                <div class="relative bg-gray-200" onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})" style="height: 400px;">
                     <img src="${posterUrl}" alt="${movie.title}" class="w-full h-full object-cover" draggable="false">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
@@ -256,7 +257,7 @@
                     </div>
                 </div>
 
-                <div class="p-6 space-y-3">
+                <div class="p-4 space-y-2">
                     <h2 class="text-2xl font-bold line-clamp-2" style="color: #e9eaf2;">${movie.title}</h2>
 
                     <div class="flex items-center gap-4 text-sm" style="color: #b5b8c3;">
@@ -294,10 +295,10 @@
                     ` : ''}
 
                     ${movie.overview ? `
-                        <p class="text-sm line-clamp-3" style="color: #b5b8c3; line-height: 1.5;">${movie.overview}</p>
+                        <p class="text-sm line-clamp-2" style="color: #b5b8c3; line-height: 1.4;">${movie.overview}</p>
                     ` : ''}
 
-                    <button onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})" class="w-full px-4 py-2 rounded-lg mt-2" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7; font-weight: 600; cursor: pointer;">
+                    <button onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})" class="w-full px-3 py-2 rounded-lg text-sm" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7; font-weight: 600; cursor: pointer; margin-top: 8px;">
                         View Details & Where to Watch
                     </button>
                 </div>
@@ -517,7 +518,7 @@
             const genres = movie.genres ? movie.genres.join(', ') : 'N/A';
 
             let watchProvidersHTML = '';
-            if (movie.watch_providers) {
+            if (movie.watch_providers && Object.keys(movie.watch_providers).length > 0) {
                 const { flatrate = [], rent = [], buy = [], link = '' } = movie.watch_providers;
                 if (flatrate.length > 0 || rent.length > 0 || buy.length > 0) {
                     watchProvidersHTML = `
@@ -597,7 +598,12 @@
                             <strong style="color: #e9eaf2;">Genres:</strong> <span style="color: #b5b8c3;">${genres}</span>
                         </div>
 
-                        ${watchProvidersHTML}
+                        ${watchProvidersHTML || `
+                            <div style="margin-bottom: 20px; padding: 15px; background: #0f1320; border-radius: 8px; border: 1px solid #262a3d;">
+                                <h3 style="margin-top: 0; margin-bottom: 10px; color: #e9eaf2;">🎬 Where to Watch</h3>
+                                <p style="color: #b5b8c3; margin: 0;">No streaming information available for this movie in your region.</p>
+                            </div>
+                        `}
                     </div>
                 </div>
             `;
