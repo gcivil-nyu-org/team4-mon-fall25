@@ -20,8 +20,8 @@ def root_view(request):
 
     # Regular users: redirect based on authentication
     if request.user.is_authenticated:
-        return redirect("profile")
-    return redirect("login")
+        return redirect("recom_sys:profile")
+    return redirect("recom_sys:login")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
