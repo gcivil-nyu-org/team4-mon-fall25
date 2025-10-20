@@ -39,7 +39,7 @@ urlpatterns = [
     path("signup/", signup_view, name="signup"),
     path("login/", auth_views.LoginView.as_view(
         template_name="recom_sys_app/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
+    path("logout/", auth_views.LogoutView.as_view(next_page="recom_sys:login"), name="logout"),
     
     # ==================== PROFILE & RECOMMENDATIONS ====================
     path("profile/", profile_view, name="profile"),
