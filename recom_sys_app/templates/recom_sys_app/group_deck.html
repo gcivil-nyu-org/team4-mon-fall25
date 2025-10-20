@@ -227,16 +227,15 @@
         // Create a movie card element
         function createMovieCard(movie, index) {
             const zIndex = 100 - (index - currentIndex);
+            const scale = 1 - (index - currentIndex) * 0.05;
             const translateY = (index - currentIndex) * 10;
-            const opacity = index === currentIndex ? 1 : 0.7;
 
             const card = document.createElement('div');
             card.className = 'movie-card absolute inset-0 rounded-2xl shadow-2xl overflow-hidden';
             card.style.background = 'linear-gradient(180deg, #1a1e2b 0%, #151822 100%)';
             card.style.border = '1px solid #262a3d';
             card.style.zIndex = zIndex;
-            card.style.transform = `translateY(${translateY}px)`;
-            card.style.opacity = opacity;
+            card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             card.dataset.index = index;
             
             const posterUrl = movie.poster_path 
