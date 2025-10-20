@@ -187,7 +187,7 @@
       <p>Find your next favorite movie</p>
     </div>
 
-    <form method="post" action="{% url 'login' %}">
+    <form method="post" action="{% url 'recom_sys:login' %}">
       {% csrf_token %}
 
       {% if form.non_field_errors %}
@@ -232,7 +232,7 @@
     </div>
 
     <div class="signup-link">
-      Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
+      Don't have an account? <a href="{% url 'recom_sys:signup' %}">Sign up</a>
     </div>
   </div>
 </body>

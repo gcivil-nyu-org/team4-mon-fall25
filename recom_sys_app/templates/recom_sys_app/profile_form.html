@@ -207,12 +207,12 @@
 <body>
   <div class="profile-container">
     {% if user.is_authenticated %}
-      <form method="post" action="{% url 'logout' %}" style="display:inline; margin-right:10px;">
+      <form method="post" action="{% url 'recom_sys:logout' %}" style="display:inline; margin-right:10px;">
         {% csrf_token %}
         <button type="submit" class="nav-logout-btn">Sign out</button>
       </form>
     {% else %}
-      <a href="{% url 'signup' %}">Sign up</a>
+      <a href="{% url 'recom_sys:signup' %}">Sign up</a>
     {% endif %}
 
     <h1>🎬 My Profile</h1>
@@ -255,7 +255,7 @@
     </form>
     
     <div class="nav-links">
-      <a href="{% url 'recommend' %}">🎥 Go to Recommendations</a>
+      <a href="{% url 'recom_sys:recommend' %}">🎥 Go to Recommendations</a>
     </div>
   </div>
 

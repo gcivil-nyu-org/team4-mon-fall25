@@ -293,13 +293,13 @@
         <p>Discover movies with friends</p>
       </div>
       <div class="header-actions">
-        <a href="{% url 'recommend' %}" class="btn btn-primary">
+        <a href="{% url 'recom_sys:recommend' %}" class="btn btn-primary">
           🎥 Get Recommendations
         </a>
-        <a href="{% url 'edit_profile' %}" class="btn btn-secondary">
+        <a href="{% url 'recom_sys:edit_profile' %}" class="btn btn-secondary">
           ✏️ Edit Profile
         </a>
-        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        <form method="post" action="{% url 'recom_sys:logout' %}" style="display:inline;">
           {% csrf_token %}
           <button type="submit" class="btn btn-logout">🚪 Sign Out</button>
         </form>
