@@ -122,7 +122,7 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
         "OPTIONS": {
             "connect_timeout": 10,
-            "sslmode": "disable",  # Disable SSL for local development
+            "sslmode": "require" if os.getenv("POSTGRES_HOST") and "rds.amazonaws.com" in os.getenv("POSTGRES_HOST") else "disable",
         },
     }
 }
