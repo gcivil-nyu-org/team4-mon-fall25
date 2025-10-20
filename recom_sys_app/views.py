@@ -460,13 +460,14 @@ def recommend_view(request):
             "error": f"TMDB error: {e.__class__.__name__}: {e}"
         }, status=500)
     
+    import json
     context = {
         "agent_text": agent_text,
-        "results": tmdb_results,
+        "results": json.dumps(tmdb_results),  # Convert to JSON string for JavaScript
         "user_movies": _get_signup_movies(request.user),
         "user_genres": _get_signup_genre(request.user),
     }
-    
+
     return render(request, "recom_sys_app/recommend_cards.html", context)
 
 
