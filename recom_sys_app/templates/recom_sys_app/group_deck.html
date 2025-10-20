@@ -152,8 +152,8 @@
     </div>
 
     <!-- Movie Details Modal -->
-    <div id="movieModal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.8);">
-        <div class="rounded-2xl p-8 max-w-4xl mx-4 overflow-y-auto" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-height: 90vh;">
+    <div id="movieModal" class="hidden fixed inset-0 flex items-center justify-center" style="background: rgba(0,0,0,0.9); z-index: 9999;">
+        <div class="rounded-2xl p-8 max-w-4xl mx-4 overflow-y-auto" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-height: 90vh; position: relative; z-index: 10000;">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="modalTitle" class="text-2xl font-bold" style="color: #e9eaf2;"></h2>
                 <button onclick="closeMovieDetails()" class="text-3xl" style="color: #b5b8c3; background: none; border: none; cursor: pointer;">&times;</button>
