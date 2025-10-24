@@ -4,7 +4,7 @@ from django.db.models import Count, Q
 from collections import Counter
 import requests
 import os
-from .models import GroupSession, GroupMember, GroupSwipe  # ← 移除了 TasteProfile
+from .models import GroupSession, GroupMember, GroupSwipe, Interaction, UserProfile
 
 
 class RecommendationService:
@@ -59,7 +59,129 @@ class RecommendationService:
         cache.set(cache_key, filtered_movies, cls.CACHE_TIMEOUT)
         
         return filtered_movies[:limit]
-    
+
+    @classmethod
+    def get_solo_deck(cls, user, limit=50):
+        """
+        Generate personalized movie recommendations for solo mode
+
+        Args:
+            user: User instance
+            limit: Number of movies to return
+
+        Returns:
+            list: Movie tmdb_id list
+        """
+        # Check cache
+        cache_key = f'solo_deck_{user.id}'
+        cached_deck = cache.get(cache_key)
+        if cached_deck:
+            return cached_deck[:limit]
+
+        # Get user's interaction history
+        liked_interactions = Interaction.objects.filter(
+            user=user,
+            status=Interaction.Status.LIKE
+        ).values_list('tmdb_id', flat=True)
+
+        has_history = liked_interactions.count() > 0
+
+        if has_history:
+            # Returning user: use swipe history
+            movie_ids = cls._generate_solo_recommendations_from_history(
+                user, list(liked_interactions), limit * 2
+            )
+        else:
+            # New user: use onboarding preferences
+            movie_ids = cls._generate_solo_recommendations_from_profile(
+                user, limit * 2
+            )
+
+        # Filter out already-swiped movies
+        swiped_ids = set(
+            Interaction.objects.filter(user=user).values_list('tmdb_id', flat=True)
+        )
+
+        # Remove already-swiped movies
+        filtered_movies = [mid for mid in movie_ids if mid not in swiped_ids]
+
+        # Cache results
+        cache.set(cache_key, filtered_movies, cls.CACHE_TIMEOUT)
+
+        return filtered_movies[:limit]
+
+    @classmethod
+    def _generate_solo_recommendations_from_history(cls, user, liked_movie_ids, limit=100):
+        """
+        Generate recommendations based on user's like history
+
+        Strategy:
+        1. Analyze genres from liked movies
+        2. Recommend similar movies from those genres
+        """
+        if not liked_movie_ids:
+            return cls._get_popular_movies(limit)
+
+        # Extract genres from liked movies
+        all_genres = []
+        for tmdb_id in liked_movie_ids[:10]:  # Analyze up to 10 recent likes
+            movie_details = cls.get_movie_details(tmdb_id)
+            if movie_details and movie_details.get('genres'):
+                all_genres.extend(movie_details['genres'])
+
+        if not all_genres:
+            return cls._get_popular_movies(limit)
+
+        # Count genre frequency
+        genre_counter = Counter(all_genres)
+
+        # Get top 3 genres
+        top_genres = [genre for genre, _ in genre_counter.most_common(3)]
+
+        # Fetch movies from TMDB by those genres
+        genre_ids = cls._get_genre_ids_by_names(top_genres)
+
+        if genre_ids:
+            movie_ids = cls._get_movies_by_genres(genre_ids, limit)
+        else:
+            movie_ids = cls._get_popular_movies(limit)
+
+        return movie_ids
+
+    @classmethod
+    def _generate_solo_recommendations_from_profile(cls, user, limit=100):
+        """
+        Generate recommendations based on user's onboarding preferences
+
+        Strategy:
+        1. Use favourite_genre1 and favourite_genre2 from UserProfile
+        2. Fetch popular movies from those genres
+        """
+        try:
+            profile = UserProfile.objects.get(user=user)
+        except UserProfile.DoesNotExist:
+            return cls._get_popular_movies(limit)
+
+        # Get user's favorite genres from profile
+        favorite_genres = []
+        if profile.favourite_genre1:
+            favorite_genres.append(profile.favourite_genre1)
+        if profile.favourite_genre2:
+            favorite_genres.append(profile.favourite_genre2)
+
+        if not favorite_genres:
+            return cls._get_popular_movies(limit)
+
+        # Convert genre names to IDs
+        genre_ids = cls._get_genre_ids_by_names(favorite_genres)
+
+        if genre_ids:
+            movie_ids = cls._get_movies_by_genres(genre_ids, limit)
+        else:
+            movie_ids = cls._get_popular_movies(limit)
+
+        return movie_ids
+
     @classmethod
     def _generate_group_recommendations(cls, group_session, members, limit=100):
         """

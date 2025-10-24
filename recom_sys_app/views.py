@@ -14,6 +14,7 @@ from django.contrib.auth import login
 
 from .forms import UserProfileForm, SignUpForm
 from .models import UserProfile, Interaction
+from .services import RecommendationService
 
 # NEW for group
 
@@ -137,11 +138,11 @@ def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
     Returns a list of movie dictionaries with metadata.
     """
     out = []
-    
+
     for q in titles:
         if not q:
             continue
-        
+
         try:
             hit = _tmdb_search(q)
             if not hit:
@@ -151,7 +152,7 @@ def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
                     "reason": "No TMDB results"
                 })
                 continue
-            
+
             det = _tmdb_details(hit["id"])
             out.append({
                 "query": q,
@@ -173,7 +174,40 @@ def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
                 "found": False,
                 "reason": f"Error: {str(e)}"
             })
-    
+
+    return out
+
+
+def _tmdb_fetch_by_ids(movie_ids: list[int]) -> list[dict]:
+    """
+    Fetch TMDB details for multiple movie IDs.
+    Returns a list of movie dictionaries with metadata.
+    """
+    out = []
+
+    for tmdb_id in movie_ids:
+        if not tmdb_id:
+            continue
+
+        try:
+            det = _tmdb_details(tmdb_id)
+            out.append({
+                "found": True,
+                "title": det.get("title", ""),
+                "tmdb_id": det.get("id"),
+                "year": (det.get("release_date") or "")[:4],
+                "overview": det.get("overview"),
+                "vote_average": det.get("vote_average"),
+                "vote_count": det.get("vote_count"),
+                "poster_url": (IMG_BASE + det["poster_path"]) if det.get("poster_path") else None,
+                "backdrop_url": (IMG_BASE + det["backdrop_path"]) if det.get("backdrop_path") else None,
+                "genres": [g.get("name") for g in det.get("genres", [])],
+                "runtime": det.get("runtime"),
+            })
+        except Exception as e:
+            print(f"Error fetching movie {tmdb_id}: {e}")
+            continue
+
     return out
 
 
@@ -426,49 +460,32 @@ def set_interaction_view(request, tmdb_id: int, status: str):
 @login_required
 def recommend_view(request):
     """
-    Movie recommendation view for template rendering.
-    Generates recommendations using AI agent and TMDB.
+    Movie recommendation view for Solo mode.
+    Generates personalized recommendations based on user history or onboarding preferences.
     """
-    groq_api_key = (os.getenv("GROQ_API_KEY") or "").strip()
-    if not groq_api_key:
-        return JsonResponse({
-            "error": "GROQ_API_KEY missing in .env"
-        }, status=500)
-    
     try:
-        # Build and run recommendation agent
-        agent = _build_recommendation_agent(request.user, groq_api_key)
-        resp = agent.run("Recommend 3 movies I might love next.")
-    except Exception as e:
-        return JsonResponse({
-            "error": f"Agent error: {e.__class__.__name__}: {e}"
-        }, status=500)
-    
-    # Extract recommendations from agent response
-    agent_text = _as_text(resp) or ""
-    titles = _extract_titles(agent_text)
-    
-    # Fetch TMDB details for recommended movies
-    try:
-        tmdb_results = _tmdb_fetch_all(titles) if titles else []
-    except requests.HTTPError as e:
-        return JsonResponse({
-            "error": f"TMDB HTTP {e.response.status_code}: {e.response.text}"
-        }, status=502)
-    except Exception as e:
-        return JsonResponse({
-            "error": f"TMDB error: {e.__class__.__name__}: {e}"
-        }, status=500)
-    
-    import json
-    context = {
-        "agent_text": agent_text,
-        "results": json.dumps(tmdb_results),  # Convert to JSON string for JavaScript
-        "user_movies": _get_signup_movies(request.user),
-        "user_genres": _get_signup_genre(request.user),
-    }
+        # Use RecommendationService to get personalized solo deck
+        movie_ids = RecommendationService.get_solo_deck(request.user, limit=50)
 
-    return render(request, "recom_sys_app/recommend_cards.html", context)
+        # Fetch TMDB details for recommended movies
+        tmdb_results = _tmdb_fetch_by_ids(movie_ids) if movie_ids else []
+
+        # Filter to only successfully fetched movies
+        tmdb_results = [m for m in tmdb_results if m.get("found", False)]
+
+        context = {
+            "agent_text": "",  # No AI agent text in new implementation
+            "results": json.dumps(tmdb_results),  # Convert to JSON string for JavaScript
+            "user_movies": _get_signup_movies(request.user),
+            "user_genres": _get_signup_genre(request.user),
+        }
+
+        return render(request, "recom_sys_app/recommend_cards.html", context)
+
+    except Exception as e:
+        return JsonResponse({
+            "error": f"Recommendation error: {e.__class__.__name__}: {e}"
+        }, status=500)
 
 
 def signup_view(request):
