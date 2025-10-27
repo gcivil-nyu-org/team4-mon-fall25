@@ -58,7 +58,7 @@ try:
     print("\n✓ Database connection test passed!")
 
 except Exception as e:
-    print(f"\n✗ Connection failed!")
+    print("\n✗ Connection failed!")
     print(f"Error: {type(e).__name__}: {e}")
     print("\nPossible issues:")
     print("  1. Database name might be incorrect")

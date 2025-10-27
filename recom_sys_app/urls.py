@@ -130,7 +130,7 @@ TEMPLATE-BASED PAGE ROUTES:
     /profile/                                   - User profile page
     /recommend/                                 - Get recommendations page
     /interact/<tmdb_id>/<status>/               - Set movie interaction
-    
+
     === GROUP MATCHING PAGES ===
     /group/<uuid:group_id>/                     - Group lobby (original)
     /groups/<group_code>/room/                  - Group room (original)
@@ -140,7 +140,7 @@ GROUP MATCHING API ENDPOINTS:
     /api/groups                                 - Create group (POST)
     /api/groups/join                            - Join group (POST)
     /api/groups/<uuid:group_id>                 - Get group details (GET)
-    
+
     === NEW GROUP RECOMMENDATION APIs ===
     /api/groups/<group_code>/deck/              - Get movie recommendations (GET) ⭐
     /api/groups/<group_code>/swipe/like/        - Record like action (POST) ⭐
@@ -164,14 +164,14 @@ OPTIONAL HELPER ROUTES:
 USAGE EXAMPLES:
     1. User visits group deck page:
        → http://localhost:8000/groups/ABC123/deck/
-       
+
     2. Frontend fetches movie recommendations:
        → GET /api/groups/ABC123/deck/?with_details=true&limit=20
-       
+
     3. User swipes right (likes a movie):
        → POST /api/groups/ABC123/swipe/like/
        → Body: {"tmdb_id": 550, "movie_title": "Fight Club"}
-       
+
     4. Check if there are any matches:
        → GET /api/groups/ABC123/matches/
 """

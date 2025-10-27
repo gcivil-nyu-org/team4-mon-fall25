@@ -1,10 +1,9 @@
 # recom_sys_app/services.py
 from django.core.cache import cache
-from django.db.models import Count, Q
 from collections import Counter
 import requests
 import os
-from .models import GroupSession, GroupMember, GroupSwipe, Interaction, UserProfile
+from .models import GroupMember, GroupSwipe, Interaction, UserProfile
 
 
 class RecommendationService:

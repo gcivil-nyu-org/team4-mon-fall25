@@ -1,7 +1,11 @@
 from django.http import JsonResponse
 from django.conf import settings
 from django.shortcuts import render, redirect
-import os, re, json, ast, requests, html
+import os
+import re
+import json
+import ast
+import requests
 
 from dotenv import load_dotenv
 from phi.agent import Agent
@@ -134,7 +138,7 @@ def _tmdb_watch_providers(movie_id: int, region: str = "US"):
             "buy": results.get("buy", []),  # Purchase options
             "link": results.get("link", ""),  # JustWatch link
         }
-    except Exception as e:
+    except Exception:
         # Return empty dict if API call fails
         return {"flatrate": [], "rent": [], "buy": [], "link": ""}
 

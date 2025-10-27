@@ -112,14 +112,14 @@ def get_group_deck(request, group_code):
         limit = min(max(limit, 1), 100)
 
         # Get a list of recommended movies
-        print(f"🔍 DEBUG: calling RecommendationService.get_group_deck()")
+        print("🔍 DEBUG: calling RecommendationService.get_group_deck()")
         movie_ids = RecommendationService.get_group_deck(group_session, limit=limit)
 
         print(f"🔍 DEBUG: got {len(movie_ids)} movie IDs")
 
         # For detailed information, retrieve it from TMDB.
         if with_details:
-            print(f"🔍 DEBUG: fetching movie details from TMDB...")
+            print("🔍 DEBUG: fetching movie details from TMDB...")
             movies = []
             for tmdb_id in movie_ids:
                 movie_info = RecommendationService.get_movie_details(tmdb_id)

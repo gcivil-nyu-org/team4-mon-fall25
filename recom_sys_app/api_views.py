@@ -14,8 +14,6 @@ import os
 import requests
 
 from dotenv import load_dotenv
-from phi.agent import Agent
-from phi.model.groq import Groq
 
 from .models import UserProfile, Interaction
 from .serializers import (
@@ -427,6 +425,6 @@ Utility:
 Authentication:
     All endpoints except /health/, /options/, /auth/register/, and /auth/login/
     require authentication via Token in header:
-    
+
     Authorization: Token YOUR_TOKEN_HERE
 """

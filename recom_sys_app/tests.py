@@ -1,8 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import UserProfile, Interaction, GroupSession, GroupMember, Sex, Genre
 from datetime import date
-import json
+from .models import UserProfile, Interaction, GroupSession, GroupMember, Sex, Genre
 
 User = get_user_model()
 
@@ -117,3 +116,41 @@ class GroupMemberModelTest(TestCase):
         )
         self.assertEqual(member.role, GroupMember.Role.MEMBER)
         self.assertTrue(member.is_active)
+
+    def test_group_member_str_representation(self):
+        """Test the string representation of GroupMember"""
+        member = GroupMember.objects.create(
+            group_session=self.group, user=self.user, role=GroupMember.Role.MEMBER
+        )
+        expected = f"member in {self.group.group_code}"
+        self.assertEqual(str(member), expected)
+
+    def test_computed_age_property_with_dob(self):
+        """Test computed_age property with date of birth"""
+        profile = UserProfile.objects.create(
+            user=self.user,
+            name="Test User",
+            country="USA",
+            date_of_birth=date(1995, 1, 1),
+        )
+        self.assertIsNotNone(profile.computed_age)
+
+    def test_computed_age_property_without_dob(self):
+        """Test computed_age property without date of birth"""
+        profile = UserProfile.objects.create(
+            user=self.user, name="Test User", country="USA"
+        )
+        self.assertIsNone(profile.computed_age)
+
+    def test_interaction_unique_constraint(self):
+        """Test that user and tmdb_id must be unique together"""
+        Interaction.objects.create(
+            user=self.user, tmdb_id=12345, status=Interaction.Status.LIKE
+        )
+        interaction, created = Interaction.objects.update_or_create(
+            user=self.user,
+            tmdb_id=12345,
+            defaults={"status": Interaction.Status.DISLIKE},
+        )
+        self.assertFalse(created)
+        self.assertEqual(interaction.status, Interaction.Status.DISLIKE)
