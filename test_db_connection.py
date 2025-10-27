@@ -5,13 +5,15 @@ import psycopg
 
 # Database connection parameters
 db_params = {
-    'dbname': os.getenv('POSTGRES_DB', 'cinematch-db'),
-    'user': os.getenv('POSTGRES_USER', 'cinematch'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'Cinematch303'),
-    'host': os.getenv('POSTGRES_HOST', 'cinematch-db.cwdagky2eta9.us-east-1.rds.amazonaws.com'),
-    'port': os.getenv('POSTGRES_PORT', '5432'),
-    'sslmode': 'require',
-    'connect_timeout': 10
+    "dbname": os.getenv("POSTGRES_DB", "cinematch-db"),
+    "user": os.getenv("POSTGRES_USER", "cinematch"),
+    "password": os.getenv("POSTGRES_PASSWORD", "Cinematch303"),
+    "host": os.getenv(
+        "POSTGRES_HOST", "cinematch-db.cwdagky2eta9.us-east-1.rds.amazonaws.com"
+    ),
+    "port": os.getenv("POSTGRES_PORT", "5432"),
+    "sslmode": "require",
+    "connect_timeout": 10,
 }
 
 print("Testing PostgreSQL connection with parameters:")
@@ -34,12 +36,14 @@ try:
     print(f"✓ PostgreSQL version: {version[0]}")
 
     # Check if we can list tables
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public'
         ORDER BY table_name;
-    """)
+    """
+    )
     tables = cursor.fetchall()
 
     if tables:

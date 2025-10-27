@@ -23,8 +23,6 @@ from django.db import transaction
 from .models import GroupSession, GroupMember
 
 
-
-
 load_dotenv(settings.BASE_DIR / ".env")
 
 # ============================================
@@ -44,6 +42,7 @@ IMG_BASE = "https://image.tmdb.org/t/p/w500"
 # TMDB Helper Functions
 # ============================================
 
+
 def _normalize_title(s: str) -> str:
     """Normalize movie title for comparison"""
     s = s.lower().strip()
@@ -55,20 +54,24 @@ def _pick_best_hit(results, query_title: str):
     """Pick the best matching movie from TMDB search results"""
     qn = _normalize_title(query_title)
     best, best_score = None, -1
-    
+
     for r in results:
         title = r.get("title") or r.get("original_title") or ""
         tn = _normalize_title(title)
         rd = r.get("release_date") or ""
         year = int(rd[:4]) if rd[:4].isdigit() else 0
         pop = float(r.get("popularity") or 0)
-        
+
         # Scoring algorithm: exact match + recent + popularity
-        score = (100.0 if tn == qn else 0.0) + (20.0 if year >= 2020 else 0.0) + (pop / 50.0)
-        
+        score = (
+            (100.0 if tn == qn else 0.0)
+            + (20.0 if year >= 2020 else 0.0)
+            + (pop / 50.0)
+        )
+
         if score > best_score:
             best_score, best = score, r
-    
+
     return best
 
 
@@ -76,7 +79,7 @@ def _tmdb_search(title: str):
     """Search for a movie on TMDB"""
     if not TMDB_TOKEN:
         raise RuntimeError("TMDB_TOKEN missing in .env")
-    
+
     r = requests.get(
         f"{TMDB_BASE}/search/movie",
         params={"query": title, "include_adult": "True", "language": "en-US"},
@@ -84,11 +87,11 @@ def _tmdb_search(title: str):
         timeout=10,
     )
     r.raise_for_status()
-    
+
     results = r.json().get("results") or []
     if not results:
         return None
-    
+
     return _pick_best_hit(results, title)
 
 
@@ -122,10 +125,14 @@ def _tmdb_watch_providers(movie_id: int, region: str = "US"):
         results = data.get("results", {}).get(region, {})
 
         return {
-            "flatrate": results.get("flatrate", []),  # Subscription services (Netflix, Disney+, etc.)
-            "rent": results.get("rent", []),           # Rental options (iTunes, Google Play, etc.)
-            "buy": results.get("buy", []),             # Purchase options
-            "link": results.get("link", ""),           # JustWatch link
+            "flatrate": results.get(
+                "flatrate", []
+            ),  # Subscription services (Netflix, Disney+, etc.)
+            "rent": results.get(
+                "rent", []
+            ),  # Rental options (iTunes, Google Play, etc.)
+            "buy": results.get("buy", []),  # Purchase options
+            "link": results.get("link", ""),  # JustWatch link
         }
     except Exception as e:
         # Return empty dict if API call fails
@@ -146,34 +153,32 @@ def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
         try:
             hit = _tmdb_search(q)
             if not hit:
-                out.append({
-                    "query": q,
-                    "found": False,
-                    "reason": "No TMDB results"
-                })
+                out.append({"query": q, "found": False, "reason": "No TMDB results"})
                 continue
 
             det = _tmdb_details(hit["id"])
-            out.append({
-                "query": q,
-                "found": True,
-                "title": det.get("title") or hit.get("title") or q,
-                "tmdb_id": det.get("id"),
-                "year": (det.get("release_date") or "")[:4],
-                "overview": det.get("overview"),
-                "vote_average": det.get("vote_average"),
-                "vote_count": det.get("vote_count"),
-                "poster_url": (IMG_BASE + det["poster_path"]) if det.get("poster_path") else None,
-                "backdrop_url": (IMG_BASE + det["backdrop_path"]) if det.get("backdrop_path") else None,
-                "genres": [g.get("name") for g in det.get("genres", [])],
-                "runtime": det.get("runtime"),
-            })
+            out.append(
+                {
+                    "query": q,
+                    "found": True,
+                    "title": det.get("title") or hit.get("title") or q,
+                    "tmdb_id": det.get("id"),
+                    "year": (det.get("release_date") or "")[:4],
+                    "overview": det.get("overview"),
+                    "vote_average": det.get("vote_average"),
+                    "vote_count": det.get("vote_count"),
+                    "poster_url": (IMG_BASE + det["poster_path"])
+                    if det.get("poster_path")
+                    else None,
+                    "backdrop_url": (IMG_BASE + det["backdrop_path"])
+                    if det.get("backdrop_path")
+                    else None,
+                    "genres": [g.get("name") for g in det.get("genres", [])],
+                    "runtime": det.get("runtime"),
+                }
+            )
         except Exception as e:
-            out.append({
-                "query": q,
-                "found": False,
-                "reason": f"Error: {str(e)}"
-            })
+            out.append({"query": q, "found": False, "reason": f"Error: {str(e)}"})
 
     return out
 
@@ -191,19 +196,25 @@ def _tmdb_fetch_by_ids(movie_ids: list[int]) -> list[dict]:
 
         try:
             det = _tmdb_details(tmdb_id)
-            out.append({
-                "found": True,
-                "title": det.get("title", ""),
-                "tmdb_id": det.get("id"),
-                "year": (det.get("release_date") or "")[:4],
-                "overview": det.get("overview"),
-                "vote_average": det.get("vote_average"),
-                "vote_count": det.get("vote_count"),
-                "poster_url": (IMG_BASE + det["poster_path"]) if det.get("poster_path") else None,
-                "backdrop_url": (IMG_BASE + det["backdrop_path"]) if det.get("backdrop_path") else None,
-                "genres": [g.get("name") for g in det.get("genres", [])],
-                "runtime": det.get("runtime"),
-            })
+            out.append(
+                {
+                    "found": True,
+                    "title": det.get("title", ""),
+                    "tmdb_id": det.get("id"),
+                    "year": (det.get("release_date") or "")[:4],
+                    "overview": det.get("overview"),
+                    "vote_average": det.get("vote_average"),
+                    "vote_count": det.get("vote_count"),
+                    "poster_url": (IMG_BASE + det["poster_path"])
+                    if det.get("poster_path")
+                    else None,
+                    "backdrop_url": (IMG_BASE + det["backdrop_path"])
+                    if det.get("backdrop_path")
+                    else None,
+                    "genres": [g.get("name") for g in det.get("genres", [])],
+                    "runtime": det.get("runtime"),
+                }
+            )
         except Exception as e:
             print(f"Error fetching movie {tmdb_id}: {e}")
             continue
@@ -215,23 +226,25 @@ def _tmdb_fetch_by_ids(movie_ids: list[int]) -> list[dict]:
 # User Affinity Helper Functions
 # ============================================
 
+
 def _get_signup_movies(user):
     """
     Read the two movies captured during signup from UserProfile.
     Returns a de-duplicated list of movie titles.
     """
     try:
-        row = (UserProfile.objects
-               .filter(user=user)
-               .values_list("liked_g1_title", "liked_g2_title")
-               .first())
-        
+        row = (
+            UserProfile.objects.filter(user=user)
+            .values_list("liked_g1_title", "liked_g2_title")
+            .first()
+        )
+
         if not row:
             return []
-        
+
         m1, m2 = row
         titles = [t.strip() for t in (m1, m2) if t and t.strip()]
-        
+
         # Remove duplicates
         seen, out = set(), []
         for t in titles:
@@ -239,7 +252,7 @@ def _get_signup_movies(user):
             if key and key not in seen:
                 seen.add(key)
                 out.append(t)
-        
+
         return out
     except Exception as e:
         print(f"Error getting signup movies: {e}")
@@ -252,14 +265,15 @@ def _get_signup_genre(user):
     Returns a list of genre preferences.
     """
     try:
-        row = (UserProfile.objects
-               .filter(user=user)
-               .values_list("favourite_genre1", "favourite_genre2")
-               .first())
-        
+        row = (
+            UserProfile.objects.filter(user=user)
+            .values_list("favourite_genre1", "favourite_genre2")
+            .first()
+        )
+
         if not row:
             return []
-        
+
         g1, g2 = row
         genres = [t.strip() for t in (g1, g2) if t and t.strip()]
         return genres
@@ -275,10 +289,10 @@ def _get_user_interactions(user, status=None):
     """
     try:
         interactions = Interaction.objects.filter(user=user)
-        
+
         if status:
             interactions = interactions.filter(status=status.upper())
-        
+
         return [i.tmdb_id for i in interactions]
     except Exception as e:
         print(f"Error getting user interactions: {e}")
@@ -289,20 +303,21 @@ def _get_user_interactions(user, status=None):
 # AI Agent Helper Functions
 # ============================================
 
+
 def _as_text(resp):
     """Extract text content from agent response"""
     if isinstance(resp, str):
         return resp
-    
+
     text = getattr(resp, "content", None)
     if text:
         return text
-    
+
     msgs = getattr(resp, "messages", None) or []
     for m in reversed(msgs):
         if getattr(m, "role", "") == "assistant" and getattr(m, "content", None):
             return m.content
-    
+
     return str(resp)
 
 
@@ -314,16 +329,16 @@ def _extract_titles(agent_text: str) -> list[str]:
     matches = list(re.finditer(r"\[[^\]]+\]", agent_text, re.DOTALL))
     if not matches:
         return []
-    
+
     block = matches[-1].group(0)
-    
+
     # Try JSON parsing
     try:
         data = json.loads(block)
         return [s for s in data if isinstance(s, str)][:3]
     except Exception:
         pass
-    
+
     # Try literal_eval as fallback
     try:
         data = ast.literal_eval(block)
@@ -339,12 +354,18 @@ def _build_recommendation_agent(user, groq_api_key: str):
     movies = _get_signup_movies(user)
     genres = _get_signup_genre(user)
     liked_movies = _get_user_interactions(user, status="LIKE")
-    
+
     # Build context about user preferences
-    affinity_text = f"The user has affinity to movies like: {', '.join(movies)}" if movies else "The user has not provided a movie affinity list."
+    affinity_text = (
+        f"The user has affinity to movies like: {', '.join(movies)}"
+        if movies
+        else "The user has not provided a movie affinity list."
+    )
     genre_text = f"The user prefers {' and '.join(genres)} genres." if genres else ""
-    liked_text = f"The user has liked {len(liked_movies)} movies." if liked_movies else ""
-    
+    liked_text = (
+        f"The user has liked {len(liked_movies)} movies." if liked_movies else ""
+    )
+
     instructions = [
         "You are a movie recommendation agent.",
         affinity_text,
@@ -355,22 +376,23 @@ def _build_recommendation_agent(user, groq_api_key: str):
         "For each movie provide a score of match out of 100% based on reviews and comparison with the user's movies affinity.",
         "Format each as: Title — Reason (Match: NN%).",
         "Use markdown to format your answers.",
-        "Return the three movies at the end as a JSON array of strings like: [\"Movie 1\", \"Movie 2\", \"Movie 3\"]",
+        'Return the three movies at the end as a JSON array of strings like: ["Movie 1", "Movie 2", "Movie 3"]',
     ]
-    
+
     agent = Agent(
         name="Recommendation Agent",
         model=Groq(id="openai/gpt-oss-120b", api_key=groq_api_key, temperature=0.9),
         instructions=instructions,
         markdown=True,
     )
-    
+
     return agent
 
 
 # ============================================
 # Template-Based Views (Original)
 # ============================================
+
 
 @login_required
 def profile_view(request):
@@ -379,28 +401,31 @@ def profile_view(request):
     Display user info and group options (no edit form).
     """
     profile, _ = UserProfile.objects.get_or_create(
-        user=request.user,
-        defaults={"name": request.user.username}
+        user=request.user, defaults={"name": request.user.username}
     )
 
     # Get user's group memberships
-    user_groups = GroupMember.objects.filter(
-        user=request.user,
-        is_active=True
-    ).select_related('group_session').order_by('-joined_at')
+    user_groups = (
+        GroupMember.objects.filter(user=request.user, is_active=True)
+        .select_related("group_session")
+        .order_by("-joined_at")
+    )
 
     # Get created groups
     created_groups = GroupSession.objects.filter(
-        creator=request.user,
-        is_active=True
-    ).order_by('-created_at')
+        creator=request.user, is_active=True
+    ).order_by("-created_at")
 
     get_token(request)  # ensure CSRF cookie
-    return render(request, "recom_sys_app/profile.html", {
-        "profile": profile,
-        "user_groups": user_groups,
-        "created_groups": created_groups,
-    })
+    return render(
+        request,
+        "recom_sys_app/profile.html",
+        {
+            "profile": profile,
+            "user_groups": user_groups,
+            "created_groups": created_groups,
+        },
+    )
 
 
 @login_required
@@ -412,8 +437,7 @@ def edit_profile_view(request):
     POST: Update profile
     """
     profile, _ = UserProfile.objects.get_or_create(
-        user=request.user,
-        defaults={"name": request.user.username}
+        user=request.user, defaults={"name": request.user.username}
     )
 
     if request.method == "POST":
@@ -437,24 +461,19 @@ def set_interaction_view(request, tmdb_id: int, status: str):
     """
     status = status.upper()
     valid = {c for c, _ in Interaction.Status.choices}
-    
+
     if status not in valid:
-        return JsonResponse({
-            "ok": False,
-            "error": f"Invalid status {status}"
-        }, status=400)
-    
+        return JsonResponse(
+            {"ok": False, "error": f"Invalid status {status}"}, status=400
+        )
+
     obj, _created = Interaction.objects.update_or_create(
         user=request.user,
         tmdb_id=tmdb_id,
-        defaults={"status": status, "source": "solo"}
+        defaults={"status": status, "source": "solo"},
     )
-    
-    return JsonResponse({
-        "ok": True,
-        "tmdb_id": tmdb_id,
-        "status": obj.status
-    })
+
+    return JsonResponse({"ok": True, "tmdb_id": tmdb_id, "status": obj.status})
 
 
 @login_required
@@ -475,7 +494,9 @@ def recommend_view(request):
 
         context = {
             "agent_text": "",  # No AI agent text in new implementation
-            "results": json.dumps(tmdb_results),  # Convert to JSON string for JavaScript
+            "results": json.dumps(
+                tmdb_results
+            ),  # Convert to JSON string for JavaScript
             "user_movies": _get_signup_movies(request.user),
             "user_genres": _get_signup_genre(request.user),
         }
@@ -483,9 +504,9 @@ def recommend_view(request):
         return render(request, "recom_sys_app/recommend_cards.html", context)
 
     except Exception as e:
-        return JsonResponse({
-            "error": f"Recommendation error: {e.__class__.__name__}: {e}"
-        }, status=500)
+        return JsonResponse(
+            {"error": f"Recommendation error: {e.__class__.__name__}: {e}"}, status=500
+        )
 
 
 def signup_view(request):
@@ -501,13 +522,14 @@ def signup_view(request):
             return redirect("profile")
     else:
         form = SignUpForm()
-    
+
     return render(request, "recom_sys_app/signup.html", {"form": form})
 
 
 # ============================================
 # Additional Helper Views
 # ============================================
+
 
 @login_required
 def user_stats_view(request):
@@ -518,13 +540,12 @@ def user_stats_view(request):
     try:
         profile = UserProfile.objects.get(user=request.user)
         interactions = Interaction.objects.filter(user=request.user)
-        
+
         stats = {
             "profile": {
                 "name": profile.name,
                 "favourite_genres": [
-                    g for g in [profile.favourite_genre1, profile.favourite_genre2]
-                    if g
+                    g for g in [profile.favourite_genre1, profile.favourite_genre2] if g
                 ],
                 "onboarding_complete": profile.onboarding_complete,
             },
@@ -538,21 +559,17 @@ def user_stats_view(request):
             "preferences": {
                 "movies": _get_signup_movies(request.user),
                 "genres": _get_signup_genre(request.user),
-            }
+            },
         }
-        
+
         return JsonResponse({"success": True, "stats": stats})
-    
+
     except UserProfile.DoesNotExist:
-        return JsonResponse({
-            "success": False,
-            "error": "Profile not found"
-        }, status=404)
+        return JsonResponse(
+            {"success": False, "error": "Profile not found"}, status=404
+        )
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": str(e)
-        }, status=500)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
 @login_required
@@ -573,31 +590,35 @@ def movie_details_view(request, tmdb_id: int):
             interaction = Interaction.objects.get(user=request.user, tmdb_id=tmdb_id)
         except Interaction.DoesNotExist:
             pass
-        #this is the code for the movie details view
+        # this is the code for the movie details view
         # Extract cast and crew information
         cast = movie_data.get("credits", {}).get("cast", [])
         crew = movie_data.get("credits", {}).get("crew", [])
-        
+
         # Get main actors (top 5)
         main_actors = [
             {
                 "name": actor.get("name"),
                 "character": actor.get("character"),
-                "profile_path": (IMG_BASE + actor["profile_path"]) if actor.get("profile_path") else None
+                "profile_path": (IMG_BASE + actor["profile_path"])
+                if actor.get("profile_path")
+                else None,
             }
             for actor in cast[:5]
         ]
-        
+
         # Get director
         director = None
         for person in crew:
             if person.get("job") == "Director":
                 director = {
                     "name": person.get("name"),
-                    "profile_path": (IMG_BASE + person["profile_path"]) if person.get("profile_path") else None
+                    "profile_path": (IMG_BASE + person["profile_path"])
+                    if person.get("profile_path")
+                    else None,
                 }
                 break
-        
+
         # Format response
         response_data = {
             "success": True,
@@ -611,32 +632,35 @@ def movie_details_view(request, tmdb_id: int):
                 "vote_average": movie_data.get("vote_average"),
                 "vote_count": movie_data.get("vote_count"),
                 "popularity": movie_data.get("popularity"),
-                "poster_url": (IMG_BASE + movie_data["poster_path"]) if movie_data.get("poster_path") else None,
-                "backdrop_url": (IMG_BASE + movie_data["backdrop_path"]) if movie_data.get("backdrop_path") else None,
+                "poster_url": (IMG_BASE + movie_data["poster_path"])
+                if movie_data.get("poster_path")
+                else None,
+                "backdrop_url": (IMG_BASE + movie_data["backdrop_path"])
+                if movie_data.get("backdrop_path")
+                else None,
                 "genres": [g.get("name") for g in movie_data.get("genres", [])],
                 "tagline": movie_data.get("tagline"),
-                "cast": main_actors, #this is the main actors for the movie details view
-                "director": director, #this is the director for the movie details view
+                "cast": main_actors,  # this is the main actors for the movie details view
+                "director": director,  # this is the director for the movie details view
                 "watch_providers": watch_providers,  # WHERE TO WATCH INTEGRATION
             },
             "user_interaction": {
                 "status": interaction.status if interaction else None,
                 "rating": interaction.rating if interaction else None,
-            } if interaction else None,
+            }
+            if interaction
+            else None,
         }
-        
+
         return JsonResponse(response_data)
-    
+
     except requests.HTTPError as e:
-        return JsonResponse({
-            "success": False,
-            "error": f"TMDB API error: {e.response.status_code}"
-        }, status=502)
+        return JsonResponse(
+            {"success": False, "error": f"TMDB API error: {e.response.status_code}"},
+            status=502,
+        )
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": str(e)
-        }, status=500)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
 @login_required
@@ -646,65 +670,69 @@ def search_movies_view(request):
     Query parameter: ?q=movie+title
     """
     query = request.GET.get("q", "").strip()
-    
+
     if not query:
-        return JsonResponse({
-            "success": False,
-            "error": "Query parameter 'q' is required"
-        }, status=400)
-    
+        return JsonResponse(
+            {"success": False, "error": "Query parameter 'q' is required"}, status=400
+        )
+
     try:
         if not TMDB_TOKEN:
             raise RuntimeError("TMDB_TOKEN missing in .env")
-        
+
         r = requests.get(
             f"{TMDB_BASE}/search/movie",
             params={
                 "query": query,
                 "include_adult": "False",
                 "language": "en-US",
-                "page": 1
+                "page": 1,
             },
             headers=TMDB_HEADERS,
             timeout=10,
         )
         r.raise_for_status()
-        
+
         results = r.json().get("results", [])
-        
+
         # Format results
-        formatted_results = [{
-            "tmdb_id": movie.get("id"),
-            "title": movie.get("title"),
-            "release_date": movie.get("release_date"),
-            "year": movie.get("release_date", "")[:4],
-            "overview": movie.get("overview"),
-            "vote_average": movie.get("vote_average"),
-            "poster_url": (IMG_BASE + movie["poster_path"]) if movie.get("poster_path") else None,
-        } for movie in results[:10]]  # Limit to top 10 results
-        
-        return JsonResponse({
-            "success": True,
-            "query": query,
-            "count": len(formatted_results),
-            "results": formatted_results
-        })
-    
+        formatted_results = [
+            {
+                "tmdb_id": movie.get("id"),
+                "title": movie.get("title"),
+                "release_date": movie.get("release_date"),
+                "year": movie.get("release_date", "")[:4],
+                "overview": movie.get("overview"),
+                "vote_average": movie.get("vote_average"),
+                "poster_url": (IMG_BASE + movie["poster_path"])
+                if movie.get("poster_path")
+                else None,
+            }
+            for movie in results[:10]
+        ]  # Limit to top 10 results
+
+        return JsonResponse(
+            {
+                "success": True,
+                "query": query,
+                "count": len(formatted_results),
+                "results": formatted_results,
+            }
+        )
+
     except requests.HTTPError as e:
-        return JsonResponse({
-            "success": False,
-            "error": f"TMDB API error: {e.response.status_code}"
-        }, status=502)
+        return JsonResponse(
+            {"success": False, "error": f"TMDB API error: {e.response.status_code}"},
+            status=502,
+        )
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": str(e)
-        }, status=500)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
 # ============================================
 # Home / Landing Page
 # ============================================
+
 
 def home_view(request):
     """
@@ -723,13 +751,14 @@ def health_check(request):
     Returns 200 OK without requiring authentication.
     """
     from django.http import HttpResponse
-    return HttpResponse("OK", status=200)
 
+    return HttpResponse("OK", status=200)
 
 
 # ============================================
 # Group Matching Views (NEW)
 # ============================================
+
 
 @login_required
 @require_http_methods(["POST"])
@@ -742,36 +771,38 @@ def create_group(request):
         with transaction.atomic():
             # 生成唯一代码
             group_code = GroupSession.generate_unique_code()
-            
+
             # 创建群组
             group_session = GroupSession.objects.create(
-                group_code=group_code,
-                creator=request.user
+                group_code=group_code, creator=request.user
             )
-            
+
             # 将创建者添加为群组成员
             GroupMember.objects.create(
                 group_session=group_session,
                 user=request.user,
-                role=GroupMember.Role.CREATOR
+                role=GroupMember.Role.CREATOR,
             )
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Group created successfully',
-                'data': {
-                    'groupId': str(group_session.id),
-                    'groupCode': group_session.group_code,
-                    'createdAt': group_session.created_at.isoformat(),
-                    'redirectUrl': f'/group/{group_session.id}/'
-                }
-            }, status=201)
-            
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Group created successfully",
+                    "data": {
+                        "groupId": str(group_session.id),
+                        "groupCode": group_session.group_code,
+                        "createdAt": group_session.created_at.isoformat(),
+                        "redirectUrl": f"/group/{group_session.id}/",
+                    },
+                },
+                status=201,
+            )
+
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Failed to create group: {str(e)}'
-        }, status=500)
+        return JsonResponse(
+            {"success": False, "message": f"Failed to create group: {str(e)}"},
+            status=500,
+        )
 
 
 @login_required
@@ -783,60 +814,55 @@ def get_group_details(request, group_id):
     """
     try:
         group = GroupSession.objects.get(id=group_id, is_active=True)
-        
+
         # 检查用户是否是该群组成员
         is_member = GroupMember.objects.filter(
-            group_session=group,
-            user=request.user,
-            is_active=True
+            group_session=group, user=request.user, is_active=True
         ).exists()
-        
+
         if not is_member:
-            return JsonResponse({
-                'success': False,
-                'message': 'You are not a member of this group'
-            }, status=403)
-        
+            return JsonResponse(
+                {"success": False, "message": "You are not a member of this group"},
+                status=403,
+            )
+
         # 获取所有活跃成员
         members = GroupMember.objects.filter(
-            group_session=group,
-            is_active=True
-        ).select_related('user', 'user__profile')
-        
+            group_session=group, is_active=True
+        ).select_related("user", "user__profile")
+
         members_data = []
         for member in members:
             member_info = {
-                'username': member.user.username,
-                'role': member.role,
-                'joinedAt': member.joined_at.isoformat()
+                "username": member.user.username,
+                "role": member.role,
+                "joinedAt": member.joined_at.isoformat(),
             }
             # 如果有 profile，添加显示名称
-            if hasattr(member.user, 'profile'):
-                member_info['name'] = member.user.profile.name
+            if hasattr(member.user, "profile"):
+                member_info["name"] = member.user.profile.name
             members_data.append(member_info)
-        
-        return JsonResponse({
-            'success': True,
-            'data': {
-                'groupId': str(group.id),
-                'groupCode': group.group_code,
-                'creator': group.creator.username,
-                'createdAt': group.created_at.isoformat(),
-                'members': members_data,
-                'memberCount': len(members_data)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "data": {
+                    "groupId": str(group.id),
+                    "groupCode": group.group_code,
+                    "creator": group.creator.username,
+                    "createdAt": group.created_at.isoformat(),
+                    "members": members_data,
+                    "memberCount": len(members_data),
+                },
             }
-        })
-        
+        )
+
     except GroupSession.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': 'Group not found'
-        }, status=404)
+        return JsonResponse(
+            {"success": False, "message": "Group not found"}, status=404
+        )
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': str(e)
-        }, status=500)
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
 @login_required
@@ -844,28 +870,26 @@ def group_lobby(request, group_id):
     """群组大厅页面"""
     try:
         group = get_object_or_404(GroupSession, id=group_id, is_active=True)
-        
+
         # 检查用户是否是该群组成员
         membership = GroupMember.objects.filter(
-            group_session=group,
-            user=request.user,
-            is_active=True
+            group_session=group, user=request.user, is_active=True
         ).first()
-        
+
         if not membership:
             # 如果不是成员，重定向到个人资料页
-            return redirect('profile')
-        
+            return redirect("profile")
+
         context = {
-            'group': group,
-            'group_code': group.group_code,
-            'is_creator': membership.role == GroupMember.Role.CREATOR,
+            "group": group,
+            "group_code": group.group_code,
+            "is_creator": membership.role == GroupMember.Role.CREATOR,
         }
-        
-        return render(request, 'recom_sys_app/group_lobby.html', context)
-        
+
+        return render(request, "recom_sys_app/group_lobby.html", context)
+
     except GroupSession.DoesNotExist:
-        return redirect('profile')
+        return redirect("profile")
 
 
 @login_required
@@ -878,87 +902,90 @@ def join_group(request):
     """
     try:
         data = json.loads(request.body)
-        group_code = data.get('groupCode', '').strip().upper()
-        
+        group_code = data.get("groupCode", "").strip().upper()
+
         if not group_code:
-            return JsonResponse({
-                'success': False,
-                'message': 'Group code is required'
-            }, status=400)
-        
+            return JsonResponse(
+                {"success": False, "message": "Group code is required"}, status=400
+            )
+
         # 查找群组
         try:
-            group = GroupSession.objects.get(
-                group_code=group_code,
-                is_active=True
-            )
+            group = GroupSession.objects.get(group_code=group_code, is_active=True)
         except GroupSession.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'message': 'Invalid group code. Please check and try again.'
-            }, status=404)
-        
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Invalid group code. Please check and try again.",
+                },
+                status=404,
+            )
+
         # 检查用户是否已经是成员
         existing_member = GroupMember.objects.filter(
-            group_session=group,
-            user=request.user
+            group_session=group, user=request.user
         ).first()
-        
+
         if existing_member:
             if existing_member.is_active:
                 # 已经是活跃成员，直接返回群组信息
-                return JsonResponse({
-                    'success': True,
-                    'message': 'You are already a member of this group',
-                    'data': {
-                        'groupId': str(group.id),
-                        'groupCode': group.group_code,
-                        'alreadyMember': True,
-                        'redirectUrl': f'/group/{group.id}/'
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": "You are already a member of this group",
+                        "data": {
+                            "groupId": str(group.id),
+                            "groupCode": group.group_code,
+                            "alreadyMember": True,
+                            "redirectUrl": f"/group/{group.id}/",
+                        },
                     }
-                })
+                )
             else:
                 # 之前离开过，重新激活
                 existing_member.is_active = True
                 existing_member.save()
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Rejoined group successfully',
-                    'data': {
-                        'groupId': str(group.id),
-                        'groupCode': group.group_code,
-                        'rejoined': True,
-                        'redirectUrl': f'/group/{group.id}/'
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": "Rejoined group successfully",
+                        "data": {
+                            "groupId": str(group.id),
+                            "groupCode": group.group_code,
+                            "rejoined": True,
+                            "redirectUrl": f"/group/{group.id}/",
+                        },
                     }
-                })
-        
+                )
+
         # 添加为新成员
         with transaction.atomic():
             GroupMember.objects.create(
                 group_session=group,
                 user=request.user,
                 role=GroupMember.Role.MEMBER,
-                is_active=True
+                is_active=True,
             )
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Joined group successfully',
-            'data': {
-                'groupId': str(group.id),
-                'groupCode': group.group_code,
-                'creator': group.creator.username,
-                'redirectUrl': f'/group/{group.id}/'
-            }
-        }, status=201)
-        
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Joined group successfully",
+                "data": {
+                    "groupId": str(group.id),
+                    "groupCode": group.group_code,
+                    "creator": group.creator.username,
+                    "redirectUrl": f"/group/{group.id}/",
+                },
+            },
+            status=201,
+        )
+
     except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'message': 'Invalid JSON data'
-        }, status=400)
+        return JsonResponse(
+            {"success": False, "message": "Invalid JSON data"}, status=400
+        )
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Failed to join group: {str(e)}'
-        }, status=500)
+        return JsonResponse(
+            {"success": False, "message": f"Failed to join group: {str(e)}"}, status=500
+        )
