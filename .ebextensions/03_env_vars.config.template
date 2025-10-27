@@ -1,0 +1,14 @@
+option_settings:
+  aws:elasticbeanstalk:application:environment:
+    SECRET_KEY: "your-django-secret-key-here"
+    DEBUG: "False"
+    ALLOWED_HOSTS: ".elasticbeanstalk.com,your-app-url.elasticbeanstalk.com"
+    POSTGRES_DB: "your-database-name"
+    POSTGRES_USER: "your-database-user"
+    POSTGRES_PASSWORD: "your-database-password"
+    POSTGRES_HOST: "your-database-host.rds.amazonaws.com"
+    POSTGRES_PORT: "5432"
+    GROQ_API_KEY: "your-groq-api-key-here"
+    TMDB_TOKEN: "your-tmdb-token-here"
+    TMDB_API_KEY: "your-tmdb-api-key-here"
+    MOVIES_PATH: "movies.txt"
