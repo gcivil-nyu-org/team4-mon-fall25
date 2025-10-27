@@ -10,7 +10,6 @@ db_params = {
     "password": os.getenv("POSTGRES_PASSWORD", ""),
     "host": os.getenv("POSTGRES_HOST", "localhost"),
     "port": os.getenv("POSTGRES_PORT", "5432"),
- BENNETT
     "sslmode": os.getenv("POSTGRES_SSLMODE", "disable"),
     "connect_timeout": 10,
 }
