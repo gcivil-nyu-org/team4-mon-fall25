@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Movie(models.Model):
     tmdb_id = models.IntegerField(unique=True)
     title = models.CharField(max_length=255)
@@ -16,7 +17,7 @@ class Movie(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-popularity', '-vote_average']
+        ordering = ["-popularity", "-vote_average"]
 
     def __str__(self):
         return f"{self.title} ({self.release_date.year if self.release_date else 'Unknown'})"
@@ -25,6 +26,7 @@ class Movie(models.Model):
     def poster_url(self):
         if self.poster_path:
             from django.conf import settings
+
             return f"{settings.TMDB_IMAGE_BASE_URL}{self.poster_path}"
         return None
 
@@ -32,5 +34,6 @@ class Movie(models.Model):
     def backdrop_url(self):
         if self.backdrop_path:
             from django.conf import settings
+
             return f"{settings.TMDB_IMAGE_BASE_URL}{self.backdrop_path}"
         return None
