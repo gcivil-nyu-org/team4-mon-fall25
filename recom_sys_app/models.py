@@ -296,3 +296,33 @@ class GroupMatch(models.Model):
     
     def __str__(self):
         return f"Match: Movie {self.tmdb_id} in group {self.group_session.group_code}"
+    
+class GroupChatMessage(models.Model):
+    """群组聊天消息模型"""
+    
+    id = models.AutoField(primary_key=True)
+    group_session = models.ForeignKey(
+        GroupSession,
+        on_delete=models.CASCADE,
+        related_name='chat_messages'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sent_messages'
+    )
+    content = models.TextField()
+    
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    class Meta:
+        db_table = 'group_chat_messages'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['group_session', 'created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        preview = self.content[:50] + '...' if len(self.content) > 50 else self.content
+        return f"{self.user.username}: {preview}"

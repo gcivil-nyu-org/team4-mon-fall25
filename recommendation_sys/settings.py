@@ -37,12 +37,14 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Must be placed at the very front
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels', # Enable Django Channels for handling WebSocket and asynchronous tasks
     'recom_sys_app',
     'corsheaders',
     'django_filters',
@@ -87,6 +89,7 @@ ROOT_URLCONF = 'recommendation_sys.urls'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost:8000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
@@ -163,6 +166,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# Tell Django where to find static files (for development debugging)
+STATICFILES_DIRS = [
+    BASE_DIR / "recom_sys_app" / "static"
+]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
@@ -173,4 +180,22 @@ LOGIN_URL = "recom_sys:login"
 LOGIN_REDIRECT_URL = "recom_sys:profile"
 LOGOUT_REDIRECT_URL = "recom_sys:login"
 
-# settings.py
+# ============================================================================
+# WebSocket and Django Channels Configuration
+# ============================================================================
+# ASGI Application
+ASGI_APPLICATION = 'recommendation_sys.asgi.application'
+
+# Channel Layers Configuration (Using Redis as Backend)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Local Redis server
+        },
+    },
+}
+
+# WebSocket-related settings
+WEBSOCKET_ACCEPT_ALL = False  # Production environments should be set to False.
+WEBSOCKET_MAX_MESSAGE_SIZE = 1024 * 1024  # 1MB
