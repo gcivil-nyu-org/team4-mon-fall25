@@ -1,0 +1,56 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}Movies - CineMatch{% endblock %}
+
+{% block content %}
+<div class="movie-grid">
+    {% for movie in page_obj %}
+    <div class="movie-card">
+        <a href="{% url 'movies:movie_detail' movie.id %}" style="text-decoration: none; color: inherit;">
+            {% if movie.poster_url %}
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster">
+            {% else %}
+                <div class="movie-poster" style="background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999;">
+                    No Image
+                </div>
+            {% endif %}
+            <div class="movie-info">
+                <div class="movie-title">{{ movie.title }}</div>
+                <div class="movie-year">
+                    {% if movie.release_date %}
+                        {{ movie.release_date.year }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </div>
+                <div class="movie-rating">★ {{ movie.vote_average|floatformat:1 }}/10</div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align: center; color: #666; padding: 40px;">
+        <h3>No movies found</h3>
+        <p>Try populating the database with movies using the management command:</p>
+        <code>python manage.py populate_movies</code>
+    </div>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <span class="current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

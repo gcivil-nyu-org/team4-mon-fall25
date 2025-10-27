@@ -132,10 +132,12 @@ if False:  # Change to True to use PostgreSQL
             "CONN_MAX_AGE": 60,
             "OPTIONS": {
                 "connect_timeout": 10,
-                "sslmode": "require"
-                if os.getenv("POSTGRES_HOST")
-                and "rds.amazonaws.com" in os.getenv("POSTGRES_HOST")
-                else "disable",
+                "sslmode": (
+                    "require"
+                    if os.getenv("POSTGRES_HOST")
+                    and "rds.amazonaws.com" in os.getenv("POSTGRES_HOST")
+                    else "disable"
+                ),
             },
         }
     }

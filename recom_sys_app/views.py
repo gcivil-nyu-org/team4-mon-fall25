@@ -171,12 +171,16 @@ def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
                     "overview": det.get("overview"),
                     "vote_average": det.get("vote_average"),
                     "vote_count": det.get("vote_count"),
-                    "poster_url": (IMG_BASE + det["poster_path"])
-                    if det.get("poster_path")
-                    else None,
-                    "backdrop_url": (IMG_BASE + det["backdrop_path"])
-                    if det.get("backdrop_path")
-                    else None,
+                    "poster_url": (
+                        (IMG_BASE + det["poster_path"])
+                        if det.get("poster_path")
+                        else None
+                    ),
+                    "backdrop_url": (
+                        (IMG_BASE + det["backdrop_path"])
+                        if det.get("backdrop_path")
+                        else None
+                    ),
                     "genres": [g.get("name") for g in det.get("genres", [])],
                     "runtime": det.get("runtime"),
                 }
@@ -209,12 +213,16 @@ def _tmdb_fetch_by_ids(movie_ids: list[int]) -> list[dict]:
                     "overview": det.get("overview"),
                     "vote_average": det.get("vote_average"),
                     "vote_count": det.get("vote_count"),
-                    "poster_url": (IMG_BASE + det["poster_path"])
-                    if det.get("poster_path")
-                    else None,
-                    "backdrop_url": (IMG_BASE + det["backdrop_path"])
-                    if det.get("backdrop_path")
-                    else None,
+                    "poster_url": (
+                        (IMG_BASE + det["poster_path"])
+                        if det.get("poster_path")
+                        else None
+                    ),
+                    "backdrop_url": (
+                        (IMG_BASE + det["backdrop_path"])
+                        if det.get("backdrop_path")
+                        else None
+                    ),
                     "genres": [g.get("name") for g in det.get("genres", [])],
                     "runtime": det.get("runtime"),
                 }
@@ -604,9 +612,11 @@ def movie_details_view(request, tmdb_id: int):
             {
                 "name": actor.get("name"),
                 "character": actor.get("character"),
-                "profile_path": (IMG_BASE + actor["profile_path"])
-                if actor.get("profile_path")
-                else None,
+                "profile_path": (
+                    (IMG_BASE + actor["profile_path"])
+                    if actor.get("profile_path")
+                    else None
+                ),
             }
             for actor in cast[:5]
         ]
@@ -617,9 +627,11 @@ def movie_details_view(request, tmdb_id: int):
             if person.get("job") == "Director":
                 director = {
                     "name": person.get("name"),
-                    "profile_path": (IMG_BASE + person["profile_path"])
-                    if person.get("profile_path")
-                    else None,
+                    "profile_path": (
+                        (IMG_BASE + person["profile_path"])
+                        if person.get("profile_path")
+                        else None
+                    ),
                 }
                 break
 
@@ -636,24 +648,30 @@ def movie_details_view(request, tmdb_id: int):
                 "vote_average": movie_data.get("vote_average"),
                 "vote_count": movie_data.get("vote_count"),
                 "popularity": movie_data.get("popularity"),
-                "poster_url": (IMG_BASE + movie_data["poster_path"])
-                if movie_data.get("poster_path")
-                else None,
-                "backdrop_url": (IMG_BASE + movie_data["backdrop_path"])
-                if movie_data.get("backdrop_path")
-                else None,
+                "poster_url": (
+                    (IMG_BASE + movie_data["poster_path"])
+                    if movie_data.get("poster_path")
+                    else None
+                ),
+                "backdrop_url": (
+                    (IMG_BASE + movie_data["backdrop_path"])
+                    if movie_data.get("backdrop_path")
+                    else None
+                ),
                 "genres": [g.get("name") for g in movie_data.get("genres", [])],
                 "tagline": movie_data.get("tagline"),
                 "cast": main_actors,  # this is the main actors for the movie details view
                 "director": director,  # this is the director for the movie details view
                 "watch_providers": watch_providers,  # WHERE TO WATCH INTEGRATION
             },
-            "user_interaction": {
-                "status": interaction.status if interaction else None,
-                "rating": interaction.rating if interaction else None,
-            }
-            if interaction
-            else None,
+            "user_interaction": (
+                {
+                    "status": interaction.status if interaction else None,
+                    "rating": interaction.rating if interaction else None,
+                }
+                if interaction
+                else None
+            ),
         }
 
         return JsonResponse(response_data)
@@ -708,9 +726,11 @@ def search_movies_view(request):
                 "year": movie.get("release_date", "")[:4],
                 "overview": movie.get("overview"),
                 "vote_average": movie.get("vote_average"),
-                "poster_url": (IMG_BASE + movie["poster_path"])
-                if movie.get("poster_path")
-                else None,
+                "poster_url": (
+                    (IMG_BASE + movie["poster_path"])
+                    if movie.get("poster_path")
+                    else None
+                ),
             }
             for movie in results[:10]
         ]  # Limit to top 10 results

@@ -38,7 +38,7 @@ install:
 # Pre-submit CI - runs on every push
 script:
   # Run black for code formatting
-  - black --check --diff .
+  - black --check .
 
   # Run flake8 for linting
   - flake8 . --max-line-length=120 --exclude=migrations,__pycache__,venv,env --config=.flake8
@@ -48,7 +48,7 @@ script:
   - python manage.py migrate
 
   # Run unit tests with coverage
-  - coverage run --source='.' manage.py test recom_sys_app
+  - coverage run --source='recom_sys_app' manage.py test recom_sys_app
   - coverage report --fail-under=85
   - coverage xml
 
