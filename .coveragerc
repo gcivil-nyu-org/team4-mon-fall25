@@ -1,5 +1,5 @@
 [run]
-source = .
+source = recom_sys_app
 omit =
     */migrations/*
     */venv/*
@@ -12,18 +12,15 @@ omit =
     */tests.py
     manage_tests.py
     test_db_connection.py
-    movies/services.py
-    movies/management/commands/*
-    recom_sys_app/recommend.py
-    recom_sys_app/views_auth.py
-    recom_sys_app/api_views.py
-    recom_sys_app/views.py
-    recom_sys_app/services.py
-    recom_sys_app/views_group.py
-    recom_sys_app/management/commands/*
-    recom_sys_app/forms.py
-    recom_sys_app/serializers.py
-    recommendation_sys/*
+    recommend.py
+    views_auth.py
+    api_views.py
+    views.py
+    services.py
+    views_group.py
+    */management/commands/*
+    forms.py
+    serializers.py
 
 [report]
 exclude_lines =
