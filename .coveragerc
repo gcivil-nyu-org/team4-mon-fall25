@@ -15,13 +15,13 @@ omit =
     recommend.py
     views_auth.py
     api_views.py
-    views.py等人,pg
+    views.py
     services.py
     views_group.py
     */management/commands/*
     forms.py
     serializers.py
-    __init__.py
+    */__init__.py
 
 [report]
 exclude_lines =
