@@ -195,15 +195,24 @@ LOGOUT_REDIRECT_URL = "recom_sys:login"
 # ASGI Application
 ASGI_APPLICATION = 'recommendation_sys.asgi.application'
 
-# Channel Layers Configuration (Using Redis as Backend)
+# Channel Layers Configuration
+# Use InMemory channel layer for development (no Redis needed)
+# For production, use Redis instead
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],  # Local Redis server
-        },
-    },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
 }
+
+# Alternative (requires Redis):
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
 
 # WebSocket-related settings
 WEBSOCKET_ACCEPT_ALL = False  # Production environments should be set to False.

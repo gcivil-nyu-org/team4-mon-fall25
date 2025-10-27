@@ -10,8 +10,12 @@ from .models import GroupSession, GroupMember, GroupSwipe, Interaction, UserProf
 class RecommendationService:
     """群组电影推荐服务"""
     
-    TMDB_API_KEY = os.getenv('TMDB_API_KEY')
+    TMDB_TOKEN = os.getenv('TMDB_TOKEN') or os.getenv('TMDB_API_KEY')
     TMDB_BASE_URL = 'https://api.themoviedb.org/3'
+    TMDB_HEADERS = {
+        'Authorization': f'Bearer {TMDB_TOKEN}',
+        'Accept': 'application/json',
+    } if TMDB_TOKEN else {}
     CACHE_TIMEOUT = 3600  # 1小时缓存
     
     @classmethod
@@ -281,7 +285,6 @@ class RecommendationService:
             genre_str = '|'.join(map(str, genre_ids))
             
             params = {
-                'api_key': cls.TMDB_API_KEY,
                 'with_genres': genre_str,
                 'sort_by': 'vote_average.desc',
                 'vote_count.gte': 100,  # 至少100个投票
@@ -291,6 +294,7 @@ class RecommendationService:
             response = requests.get(
                 f'{cls.TMDB_BASE_URL}/discover/movie',
                 params=params,
+                headers=cls.TMDB_HEADERS,
                 timeout=10
             )
             response.raise_for_status()
@@ -304,6 +308,7 @@ class RecommendationService:
                 response = requests.get(
                     f'{cls.TMDB_BASE_URL}/discover/movie',
                     params=params,
+                    headers=cls.TMDB_HEADERS,
                     timeout=10
                 )
                 response.raise_for_status()
@@ -323,13 +328,13 @@ class RecommendationService:
         """
         try:
             params = {
-                'api_key': cls.TMDB_API_KEY,
                 'page': 1
             }
             
             response = requests.get(
                 f'{cls.TMDB_BASE_URL}/movie/popular',
                 params=params,
+                headers=cls.TMDB_HEADERS,
                 timeout=10
             )
             response.raise_for_status()
@@ -368,8 +373,12 @@ class RecommendationService:
             action=GroupSwipe.Action.LIKE
         ).count()
         
+        print(f"[DEBUG check_group_match] active_members: {active_member_count}, likes: {like_count}, tmdb_id: {tmdb_id}")
+        
         # 检查是否所有人都喜欢
-        return like_count >= active_member_count and active_member_count > 0
+        is_match = like_count >= active_member_count and active_member_count > 0
+        print(f"[DEBUG check_group_match] Result: {is_match}")
+        return is_match
     
     @classmethod
     def get_movie_details(cls, tmdb_id):
@@ -389,11 +398,9 @@ class RecommendationService:
             return cached_data
         
         try:
-            params = {'api_key': cls.TMDB_API_KEY}
-            
             response = requests.get(
                 f'{cls.TMDB_BASE_URL}/movie/{tmdb_id}',
-                params=params,
+                headers=cls.TMDB_HEADERS,
                 timeout=10
             )
             response.raise_for_status()

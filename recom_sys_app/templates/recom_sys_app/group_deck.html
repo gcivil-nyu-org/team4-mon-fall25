@@ -139,12 +139,13 @@
     </div>
 
     <!-- Match Notification Modal -->
-    <div id="matchModal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.8);">
-        <div class="match-modal rounded-2xl p-8 max-w-md mx-4 text-center" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
+    <div id="matchModal" class="hidden fixed inset-0 flex items-center justify-center" style="z-index: 9999; background: rgba(0,0,0,0.85);">
+        <div class="match-modal rounded-2xl p-8 max-w-md mx-4 text-center" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); position: relative; z-index: 10000;">
             <div class="text-6xl mb-4">🎉</div>
             <h2 class="text-3xl font-bold mb-2" style="color: #e9eaf2;">Match successful!</h2>
             <p class="mb-2" style="color: #b5b8c3;">All members like:</p>
-            <p id="matchMovieTitle" class="text-xl font-semibold mb-6" style="color: #7aa2f7;"></p>
+            <p id="matchMovieTitle" class="text-xl font-semibold mb-4" style="color: #7aa2f7;"></p>
+            <div id="matchModalBody" class="mb-6"></div>
             <button onclick="closeMatchModal()" class="px-8 py-3 rounded-lg" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; border: none; font-weight: 600; cursor: pointer;">
                 Awesome!
             </button>
@@ -180,9 +181,51 @@
         const actionButtons = document.getElementById('actionButtons');
         const matchModal = document.getElementById('matchModal');
 
+        // WebSocket connection
+        let matchSocket = null;
+        
+        function initializeWebSocket() {
+            // Get WebSocket protocol (ws or wss)
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws/match/${GROUP_CODE}/`;
+            
+            console.log(`[WebSocket] Connecting to ${wsUrl}`);
+            
+            matchSocket = new WebSocket(wsUrl);
+            
+            matchSocket.onopen = function(event) {
+                console.log('[WebSocket] Connection opened');
+            };
+            
+            matchSocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('[WebSocket] Received:', data);
+                
+                if (data.type === 'connection_established') {
+                    console.log(`[WebSocket] Connected to group: ${data.group_code}`);
+                } else if (data.type === 'match_found') {
+                    console.log('[WebSocket] Match found!', data);
+                    showMatchModal(data);
+                } else if (data.type === 'error') {
+                    console.error('[WebSocket] Error:', data.message);
+                }
+            };
+            
+            matchSocket.onerror = function(error) {
+                console.error('[WebSocket] Error:', error);
+            };
+            
+            matchSocket.onclose = function(event) {
+                console.log('[WebSocket] Connection closed');
+                // Reconnect after 3 seconds
+                setTimeout(initializeWebSocket, 3000);
+            };
+        }
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             fetchMovieDeck();
+            initializeWebSocket();
         });
 
         // Fetch movie deck from API
@@ -412,8 +455,10 @@
 
                     if (response.ok) {
                         const data = await response.json();
+                        console.log('[DEBUG] Swipe response:', data);
                         if (data.is_match && data.match_data) {
-                            showMatchModal(data.match_data.movie_title);
+                            console.log('[DEBUG] Match detected! Showing modal with:', data.match_data);
+                            showMatchModal(data.match_data);
                         }
                     }
                 } catch (error) {
@@ -435,9 +480,47 @@
         }
 
         // Show match notification
-        function showMatchModal(movieTitle) {
-            document.getElementById('matchMovieTitle').textContent = movieTitle;
+        function showMatchModal(matchData) {
+            // Handle both old format (string) and new format (object)
+            const title = typeof matchData === 'string' ? matchData : matchData.movie_title;
+            const tmdbId = typeof matchData === 'object' ? matchData.tmdb_id : null;
+            const posterUrl = typeof matchData === 'object' ? matchData.poster_url : null;
+            const year = typeof matchData === 'object' ? matchData.year : null;
+            const genres = typeof matchData === 'object' ? (matchData.genres || []) : [];
+            const message = typeof matchData === 'object' ? matchData.message : 'Match found!';
+            
+            document.getElementById('matchMovieTitle').textContent = title;
+            
+            // Update modal with movie details if available
+            const modalBody = document.getElementById('matchModalBody');
+            if (modalBody && typeof matchData === 'object') {
+                let modalContent = `<div class="mb-4">`;
+                
+                if (posterUrl) {
+                    modalContent += `<img src="${posterUrl}" alt="${title}" class="mx-auto rounded-lg" style="max-width: 200px; max-height: 300px;">`;
+                }
+                
+                modalContent += `</div>`;
+                
+                if (year) {
+                    modalContent += `<div class="text-lg mb-2" style="color: #b5b8c3;">${year}</div>`;
+                }
+                
+                if (genres.length > 0) {
+                    modalContent += `<div class="flex flex-wrap gap-2 justify-center mb-4">`;
+                    genres.slice(0, 3).forEach(genre => {
+                        modalContent += `<span class="px-3 py-1 text-xs rounded-full" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7;">${genre}</span>`;
+                    });
+                    modalContent += `</div>`;
+                }
+                
+                modalContent += `<p class="text-sm" style="color: #b5b8c3;">${message}</p>`;
+                modalBody.innerHTML = modalContent;
+            }
+            
             matchModal.classList.remove('hidden');
+            
+            // Don't auto-hide - let the user click the button to close it
         }
 
         function closeMatchModal() {
