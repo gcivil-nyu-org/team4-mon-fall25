@@ -48,7 +48,7 @@ script:
   - python manage.py migrate
 
   # Run unit tests with coverage
-  - coverage run --source='.' manage.py test recom_sys_app
+  - coverage run --source='recom_sys_app' manage.py test recom_sys_app
   - coverage report --fail-under=85
   - coverage xml
 
