@@ -1,0 +1,90 @@
+language: python
+python:
+  - "3.11"
+  - "3.12"
+
+# Services
+services:
+  - postgresql
+
+# Environment variables
+env:
+  - DJANGO_VERSION=5.2.6
+  - POSTGRES_DB=cinematch_test
+  - POSTGRES_USER=postgres
+  - POSTGRES_PASSWORD=postgres
+
+# Cache dependencies
+cache:
+  - pip
+
+# Before install
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y postgresql postgresql-contrib
+  - sudo service postgresql start
+  - sudo -u postgres psql -c "CREATE DATABASE cinematch_test;" || true
+  - sudo -u postgres psql -c "CREATE USER cinematch_user WITH PASSWORD 'cinematch_password';" || true
+  - sudo -u postgres psql -c "ALTER USER cinematch_user CREATEDB;" || true
+  - sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE cinematch_test TO cinematch_user;" || true
+  - sudo -u postgres psql -c "ALTER USER cinematch_user SUPERUSER;" || true
+
+# Install dependencies
+install:
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+  - pip install black flake8 coverage coveralls
+
+# Pre-submit CI - runs on every push
+script:
+  # Run black for code formatting
+  - black --check --diff .
+
+  # Run flake8 for linting
+  - flake8 . --max-line-length=120 --exclude=migrations,__pycache__,venv,env --config=.flake8
+
+  # Run Django migrations
+  - python manage.py makemigrations
+  - python manage.py migrate
+
+  # Run unit tests with coverage
+  - coverage run --source='.' manage.py test
+  - coverage report --fail-under=85
+  - coverage xml
+
+# Send coverage to Coveralls
+after_success:
+  - coveralls
+
+# Post-submit CI - cron job (runs once a day on main branch)
+# Configure in Travis settings: https://app.travis-ci.com/github/gcivil-nyu-org/team4-mon-fall25/settings
+
+# CD Deployment (commented out for now)
+# Uncomment when ready to deploy to AWS
+# deploy:
+#   provider: elasticbeanstalk
+#   access_key_id: $AWS_ACCESS_KEY_ID
+#   secret_access_key: $AWS_SECRET_ACCESS_KEY
+#   region: us-east-1
+#   app: cinematch-app
+#   env: cinematch-integration
+#   on:
+#     branch: develop
+# 
+# - provider: elasticbeanstalk
+#   access_key_id: $AWS_ACCESS_KEY_ID
+#   secret_access_key: $AWS_SECRET_ACCESS_KEY
+#   region: us-east-1
+#   app: cinematch-app
+#   env: cinematch-production
+#   on:
+#     branch: main
+
+# Notifications
+notifications:
+  email:
+    recipients:
+      - your-team-email@example.com  # Update with actual team email
+    on_success: change
+    on_failure: always
+
