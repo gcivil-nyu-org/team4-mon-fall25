@@ -113,7 +113,16 @@ WSGI_APPLICATION = 'recommendation_sys.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Use PostgreSQL if configured
+if False:  # Change to True to use PostgreSQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv("POSTGRES_DB","cinematch_d"),
         "USER": os.getenv("POSTGRES_USER", "cinematch"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "cinematch123"),
