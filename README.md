@@ -14,6 +14,14 @@ An Agentic AI movie recommendation system that suggests you movies based on your
 [![Coverage Status](https://coveralls.io/repos/github/gcivil-nyu-org/team4-mon-fall25/badge.svg?branch=main)](https://coveralls.io/github/gcivil-nyu-org/team4-mon-fall25?branch=main)
 [![Coverage Status](https://coveralls.io/repos/github/gcivil-nyu-org/team4-mon-fall25/badge.svg?branch=develop)](https://coveralls.io/github/gcivil-nyu-org/team4-mon-fall25?branch=develop)
 
+## Code Quality Tools
+
+Our CI/CD pipeline includes:
+- **Black**: Code formatting
+- **Flake8**: Linting
+- **Bandit**: Security vulnerability scanning
+- **Coverage**: Test coverage reporting (85%+)
+
 ## Project Description
 
 CineMatch is a movie recommendation system that uses AI to suggest movies based on user preferences. The system integrates with TMDb for movie data and uses machine learning to provide personalized recommendations.
