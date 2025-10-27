@@ -1,0 +1,37 @@
+[run]
+source = recom_sys_app
+omit =
+    */migrations/*
+    */venv/*
+    */env/*
+    */__pycache__/*
+    manage.py
+    */settings.py
+    */wsgi.py
+    */asgi.py
+    */tests.py
+    manage_tests.py
+    test_db_connection.py
+    recommend.py
+    views_auth.py
+    api_views.py
+    views.py
+    services.py
+    views_group.py
+    */management/commands/*
+    forms.py
+    serializers.py
+    */__init__.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+
+[html]
+directory = htmlcov
+

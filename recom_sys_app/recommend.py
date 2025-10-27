@@ -10,12 +10,15 @@ HEADERS = {
     "Accept": "application/json",
 }
 
+
 class TMDBError(RuntimeError):
     pass
+
 
 def _check_token():
     if not TMDB_TOKEN:
         raise TMDBError("TMDB_TOKEN missing. Put it in your .env")
+
 
 def search_movie(title: str) -> Dict[str, Any] | None:
     """Return the *best* search hit for a title, or None if not found."""
@@ -34,6 +37,7 @@ def search_movie(title: str) -> Dict[str, Any] | None:
     # Pick the result with the highest popularity (more stable than index 0)
     return max(results, key=lambda r: r.get("popularity") or 0)
 
+
 def movie_details(movie_id: int, append: str = "videos,credits") -> Dict[str, Any]:
     """Get movie details; optionally append extra sections."""
     _check_token()
@@ -46,6 +50,7 @@ def movie_details(movie_id: int, append: str = "videos,credits") -> Dict[str, An
     resp.raise_for_status()
     return resp.json()
 
+
 def fetch_for_titles(titles: Iterable[str]) -> List[Dict[str, Any]]:
     """Loop over titles → search → details. Returns a list of summaries."""
     out: List[Dict[str, Any]] = []
@@ -55,17 +60,23 @@ def fetch_for_titles(titles: Iterable[str]) -> List[Dict[str, Any]]:
             continue
         hit = search_movie(title)
         if not hit:
-            out.append({"title": title, "found": False, "reason": "No TMDB search results"})
+            out.append(
+                {"title": title, "found": False, "reason": "No TMDB search results"}
+            )
             continue
         details = movie_details(hit["id"])
-        out.append({
-            "title": details.get("title") or hit.get("title") or title,
-            "tmdb_id": details.get("id"),
-            "year": (details.get("release_date") or "")[:4],
-            "overview": details.get("overview"),
-            "vote_average": details.get("vote_average"),
-            "vote_count": details.get("vote_count"),
-            "poster_path": details.get("poster_path"),   # build an image URL later if you want
-            "found": True,
-        })
+        out.append(
+            {
+                "title": details.get("title") or hit.get("title") or title,
+                "tmdb_id": details.get("id"),
+                "year": (details.get("release_date") or "")[:4],
+                "overview": details.get("overview"),
+                "vote_average": details.get("vote_average"),
+                "vote_count": details.get("vote_count"),
+                "poster_path": details.get(
+                    "poster_path"
+                ),  # build an image URL later if you want
+                "found": True,
+            }
+        )
     return out
