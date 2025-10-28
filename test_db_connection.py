@@ -5,13 +5,13 @@ import psycopg
 
 # Database connection parameters
 db_params = {
-    'dbname': os.getenv('POSTGRES_DB', 'cinematch-db'),
-    'user': os.getenv('POSTGRES_USER', 'cinematch'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'Cinematch303'),
-    'host': os.getenv('POSTGRES_HOST', 'cinematch-db.cwdagky2eta9.us-east-1.rds.amazonaws.com'),
-    'port': os.getenv('POSTGRES_PORT', '5432'),
-    'sslmode': 'require',
-    'connect_timeout': 10
+    "dbname": os.getenv("POSTGRES_DB", "postgres"),
+    "user": os.getenv("POSTGRES_USER", "postgres"),
+    "password": os.getenv("POSTGRES_PASSWORD", ""),
+    "host": os.getenv("POSTGRES_HOST", "localhost"),
+    "port": os.getenv("POSTGRES_PORT", "5432"),
+    "sslmode": os.getenv("POSTGRES_SSLMODE", "disable"),
+    "connect_timeout": 10,
 }
 
 print("Testing PostgreSQL connection with parameters:")
@@ -34,12 +34,14 @@ try:
     print(f"✓ PostgreSQL version: {version[0]}")
 
     # Check if we can list tables
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public'
         ORDER BY table_name;
-    """)
+    """
+    )
     tables = cursor.fetchall()
 
     if tables:
@@ -54,11 +56,10 @@ try:
     print("\n✓ Database connection test passed!")
 
 except Exception as e:
-    print(f"\n✗ Connection failed!")
+    print("\n✗ Connection failed!")
     print(f"Error: {type(e).__name__}: {e}")
     print("\nPossible issues:")
     print("  1. Database name might be incorrect")
-    print("  2. Security group not allowing connections from EB")
-    print("  3. Wrong credentials")
-    print("  4. RDS endpoint is incorrect")
+    print("  2. Wrong credentials")
+    print("  3. Check environment variables")
     exit(1)

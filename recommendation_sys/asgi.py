@@ -11,7 +11,7 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'recommendation_sys.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "recommendation_sys.settings")
 
 # Initialize the Django ASGI application
 # Django must be initialized before importing routing to ensure the AppRegistry is populated.
