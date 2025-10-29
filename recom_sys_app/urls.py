@@ -7,29 +7,32 @@ from . import views_solo
 from .views import recommend_view, profile_view, edit_profile_view, set_interaction_view
 from .views_auth import signup_view
 from .views_group import (
-    get_group_deck, 
-    swipe_like, 
+    get_group_deck,
+    swipe_like,
     group_room_view,
-    group_deck_view,      # New: Swipe Card Page View
-    get_group_matches     # New: Retrieve matching records
+    group_deck_view,  # New: Swipe Card Page View
+    get_group_matches,  # New: Retrieve matching records
 )
 from . import views_group
 from . import views  # For additional helper views
+
 try:
     from . import api_views  # REST API views
 except ImportError:
     api_views = None  # If not created yet
 
 # Application Namespace
-app_name = 'recom_sys'
+app_name = "recom_sys"
 
 # ============================================
 # REST API Router (if api_views exists)
 # ============================================
 router = DefaultRouter()
 if api_views:
-    router.register(r'profile', api_views.UserProfileViewSet, basename='api_profile')
-    router.register(r'interactions', api_views.InteractionViewSet, basename='api_interaction')
+    router.register(r"profile", api_views.UserProfileViewSet, basename="api_profile")
+    router.register(
+        r"interactions", api_views.InteractionViewSet, basename="api_interaction"
+    )
 
 # ============================================
 # URL Patterns
@@ -44,25 +47,31 @@ urlpatterns = [
          name='send_chat_message'),
     # ==================== AUTHENTICATION ====================
     path("signup/", signup_view, name="signup"),
-    path("login/", auth_views.LoginView.as_view(
-        template_name="recom_sys_app/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="recom_sys:login"), name="logout"),
-    
+    path(
+        "login/",
+        auth_views.LoginView.as_view(template_name="recom_sys_app/login.html"),
+        name="login",
+    ),
+    path(
+        "logout/",
+        auth_views.LogoutView.as_view(next_page="recom_sys:login"),
+        name="logout",
+    ),
     # ==================== PROFILE & RECOMMENDATIONS ====================
     path("profile/", profile_view, name="profile"),
     path("profile/edit/", edit_profile_view, name="edit_profile"),
     path("recommend/", recommend_view, name="recommend"),
-    
     # ==================== INTERACTIONS ====================
-    path("interact/<int:tmdb_id>/<str:status>/", set_interaction_view, name="set_interaction"),
-
+    path(
+        "interact/<int:tmdb_id>/<str:status>/",
+        set_interaction_view,
+        name="set_interaction",
+    ),
     # ==================== GROUP MATCHING - PAGE VIEWS ====================
     # Group Lobby (Original)
-    path('group/<uuid:group_id>/', views.group_lobby, name='group_lobby'),
-    
+    path("group/<uuid:group_id>/", views.group_lobby, name="group_lobby"),
     # Group Room (existing, using group_code)
-    path('groups/<str:group_code>/room/', group_room_view, name='group_room'),
-    
+    path("groups/<str:group_code>/room/", group_room_view, name="group_room"),
     # Group Swipe Card Page (New)
     path('groups/<str:group_code>/deck/', group_deck_view, name='group_deck_page'),
     path('solo/genres/', views_solo.solo_genre_selection, name='solo_genre_selection'),
@@ -76,14 +85,17 @@ urlpatterns = [
 
     # ==================== GROUP MATCHING - API ENDPOINTS ====================
     # Create and join groups (existing ones)
-    path('api/groups', views.create_group, name='create_group'),
-    path('api/groups/join', views.join_group, name='join_group'),
-    path('api/groups/<uuid:group_id>', views.get_group_details, name='group_details'),
-    
+    path("api/groups", views.create_group, name="create_group"),
+    path("api/groups/join", views.join_group, name="join_group"),
+    path("api/groups/<uuid:group_id>", views.get_group_details, name="group_details"),
     # Group Recommendation API (New)
-    path('api/groups/<str:group_code>/deck/', get_group_deck, name='api_group_deck'),
-    path('api/groups/<str:group_code>/swipe/like/', swipe_like, name='api_swipe_like'),
-    path('api/groups/<str:group_code>/matches/', get_group_matches, name='api_group_matches'),
+    path("api/groups/<str:group_code>/deck/", get_group_deck, name="api_group_deck"),
+    path("api/groups/<str:group_code>/swipe/like/", swipe_like, name="api_swipe_like"),
+    path(
+        "api/groups/<str:group_code>/matches/",
+        get_group_matches,
+        name="api_group_matches",
+    ),
 ]
 
 # ==================== OPTIONAL HELPER ROUTES ====================
@@ -105,18 +117,19 @@ if api_views:
         # Health & Options
         path("health/", api_views.health_check, name="api_health"),
         path("options/", api_views.get_options, name="api_options"),
-        
         # Authentication
         path("auth/register/", api_views.RegisterView.as_view(), name="api_register"),
         path("auth/login/", obtain_auth_token, name="api_token_auth"),
-        
         # Recommendations
-        path("recommendations/", api_views.RecommendationsView.as_view(), name="api_recommendations"),
-        
+        path(
+            "recommendations/",
+            api_views.RecommendationsView.as_view(),
+            name="api_recommendations",
+        ),
         # Include router URLs (profile & interactions viewsets)
         path("", include(router.urls)),
     ]
-    
+
     # Add API routes under /api/ prefix
     urlpatterns += [
         path("api/", include(api_patterns)),
@@ -133,7 +146,7 @@ TEMPLATE-BASED PAGE ROUTES:
     /profile/                                   - User profile page
     /recommend/                                 - Get recommendations page
     /interact/<tmdb_id>/<status>/               - Set movie interaction
-    
+
     === GROUP MATCHING PAGES ===
     /group/<uuid:group_id>/                     - Group lobby (original)
     /groups/<group_code>/room/                  - Group room (original)
@@ -143,7 +156,7 @@ GROUP MATCHING API ENDPOINTS:
     /api/groups                                 - Create group (POST)
     /api/groups/join                            - Join group (POST)
     /api/groups/<uuid:group_id>                 - Get group details (GET)
-    
+
     === NEW GROUP RECOMMENDATION APIs ===
     /api/groups/<group_code>/deck/              - Get movie recommendations (GET) ⭐
     /api/groups/<group_code>/swipe/like/        - Record like action (POST) ⭐
@@ -167,14 +180,14 @@ OPTIONAL HELPER ROUTES:
 USAGE EXAMPLES:
     1. User visits group deck page:
        → http://localhost:8000/groups/ABC123/deck/
-       
+
     2. Frontend fetches movie recommendations:
        → GET /api/groups/ABC123/deck/?with_details=true&limit=20
-       
+
     3. User swipes right (likes a movie):
        → POST /api/groups/ABC123/swipe/like/
        → Body: {"tmdb_id": 550, "movie_title": "Fight Club"}
-       
+
     4. Check if there are any matches:
        → GET /api/groups/ABC123/matches/
 """
