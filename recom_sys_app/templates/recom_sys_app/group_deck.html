@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Movie Recommendations - {{ group_code }}</title>
+    <title>Group Movie Deck - {{ group_code }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .movie-card {
@@ -51,110 +51,280 @@
             opacity: 1;
         }
 
-        .match-modal {
-            animation: slideUp 0.5s ease-out;
+        /* Chat Styles */
+        .chat-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 600px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%);
+            border: 1px solid #262a3d;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
+        .chat-container.minimized {
+            max-height: 50px;
+        }
+
+        .chat-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #262a3d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: #1a1e2b;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+        }
+
+        .chat-container.minimized .chat-messages,
+        .chat-container.minimized .chat-input-container {
+            display: none;
+        }
+
+        .chat-message {
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .chat-message.own {
+            align-self: flex-end;
+            background: rgba(122,162,247,0.2);
+            border: 1px solid rgba(122,162,247,0.35);
+        }
+
+        .chat-message.other {
+            align-self: flex-start;
+            background: rgba(180,190,254,0.1);
+            border: 1px solid rgba(180,190,254,0.2);
+        }
+
+        .chat-message.system {
+            align-self: center;
+            background: rgba(224,175,104,0.1);
+            border: 1px solid rgba(224,175,104,0.2);
+            font-size: 0.85em;
+            font-style: italic;
+        }
+
+        .chat-input-container {
+            padding: 12px 16px;
+            border-top: 1px solid #262a3d;
+            background: #151822;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0f1320;
+            border: 1px solid #262a3d;
+            border-radius: 6px;
+            color: #e9eaf2;
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #7aa2f7;
+        }
+
+        .chat-badge {
+            background: #f7768e;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Image loading improvements */
+        .poster-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1e2b, #151822);
+        }
+
+        .poster-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            background: linear-gradient(135deg, #1a1e2b, #151822);
+        }
+
+        .poster-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1;
+        }
+
+        .poster-image.loaded {
+            opacity: 1;
+        }
+
+        .poster-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
+            text-align: center;
+            z-index: 3;
+            background: linear-gradient(135deg, #1a1e2b, #151822);
+        }
+
+        .match-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: linear-gradient(135deg, #9ece6a, #7aa2f7);
+            padding: 24px 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            animation: matchPop 0.5s ease-out;
+        }
+
+        @keyframes matchPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
                 opacity: 0;
             }
-            to {
-                transform: translateY(0);
+            100% {
+                transform: translate(-50%, -50%) scale(1);
                 opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 90%;
+                max-width: 350px;
+                right: 5%;
+            }
+            
+            .main-content {
+                margin-right: 0 !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .main-content {
+                margin-right: 400px;
             }
         }
     </style>
 </head>
 <body style="min-height: 100vh; background: radial-gradient(1200px 800px at 20% -20%, #121525, transparent 55%), radial-gradient(1000px 600px at 120% 0%, #0e111a, transparent 50%), #0b0b10; margin: 0; color: #e9eaf2;">
-    <div class="container mx-auto px-4 py-8 max-w-2xl">
+    
+    <!-- Chat Container -->
+    <div id="chatContainer" class="chat-container">
+        <div class="chat-header" onclick="toggleChat()">
+            <div class="flex items-center gap-2">
+                <span style="font-weight: 600; color: #e9eaf2;">💬 Group Chat</span>
+                <span id="chatBadge" class="chat-badge" style="display: none;">0</span>
+            </div>
+            <span id="chatToggleIcon" style="color: #b5b8c3;">▼</span>
+        </div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-container">
+            <form id="chatForm" onsubmit="sendMessage(event)">
+                <input 
+                    type="text" 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Type a message..."
+                    maxlength="500"
+                    autocomplete="off"
+                >
+            </form>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-2xl main-content">
         <!-- Header -->
         <div class="mb-8 text-center">
             <div class="flex items-center justify-between mb-4">
-                <a href="/group/{{ group_session.id }}/" class="flex items-center gap-2 font-semibold transition-colors" style="color: #7aa2f7; text-decoration: none;">
+                <a href="javascript:history.back()" class="flex items-center gap-2 font-semibold transition-colors" style="color: #7aa2f7; text-decoration: none;">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    Back to Lobby
+                    Back
                 </a>
-                <span class="text-sm"></span>
+                <div style="color: #7aa2f7;">
+                    <span style="font-weight: 600;">Group:</span> {{ group_code }}
+                </div>
             </div>
             <h1 class="text-3xl font-bold mb-2" style="color: #e9eaf2;">
-                Group Movie Recommendations
+                Group Movie Deck
             </h1>
-            <div class="flex items-center justify-center gap-4" style="color: #b5b8c3;">
-                <span class="px-4 py-2 rounded-lg" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
-                    Group Code: <strong style="color: #7aa2f7;">{{ group_code }}</strong>
-                </span>
-                <span class="px-4 py-2 rounded-lg" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
-                    Member: <strong style="color: #7aa2f7;" id="memberCount">{{ member_count }}</strong>
-                </span>
-            </div>
+            <p style="color: #b5b8c3;">Swipe together with your group!</p>
         </div>
 
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-20">
             <div class="animate-spin rounded-full h-16 w-16 mx-auto mb-4" style="border: 4px solid rgba(122,162,247,.2); border-top-color: #7aa2f7;"></div>
-            <p style="color: #b5b8c3;">Loading movie...</p>
-        </div>
-
-        <!-- Error State -->
-        <div id="errorState" class="hidden px-6 py-4 rounded-lg" style="background: rgba(247,118,142,.12); border: 1px solid rgba(247,118,142,.35); color: #f7768e;">
-            <p id="errorMessage"></p>
-            <button onclick="location.reload()" class="mt-4 px-4 py-2 rounded" style="background: #f7768e; color: white; border: none; cursor: pointer;">
-                Reload
-            </button>
+            <p style="color: #b5b8c3;">Loading movies...</p>
         </div>
 
         <!-- Movie Deck Container -->
-        <div id="deckContainer" class="hidden relative" style="height: 700px;">
+        <div id="deckContainer" class="relative hidden" style="height: 650px;">
             <!-- Movie cards will be inserted here -->
         </div>
 
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-20">
             <div class="text-6xl mb-4">🎬</div>
-            <h2 class="text-2xl font-bold mb-2" style="color: #e9eaf2;">There are no more movies!</h2>
-            <p class="mb-6" style="color: #b5b8c3;">You've finished watching all the recommendations.</p>
-            <button onclick="loadMoreMovies()" class="px-6 py-3 rounded-lg" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; border: none; font-weight: 600; cursor: pointer;">
-                Load More
+            <h2 class="text-2xl font-bold mb-2" style="color: #e9eaf2;">No more movies!</h2>
+            <p class="mb-6" style="color: #b5b8c3;">You've seen all the recommendations.</p>
+            <button onclick="location.reload()" class="px-6 py-3 rounded-lg inline-block" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; text-decoration: none; font-weight: 600; border: none; cursor: pointer;">
+                Refresh
             </button>
         </div>
 
         <!-- Action Buttons -->
-        <div id="actionButtons" class="hidden flex justify-center gap-6 mt-6">
-            <button onclick="swipeLeft()" class="w-16 h-16 rounded-full flex items-center justify-center transition-transform" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: pointer;">
-                <svg class="w-8 h-8" fill="none" stroke="#f7768e" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+        <div id="actionButtons" class="hidden flex justify-center gap-4 mt-6 flex-wrap">
+            <button onclick="swipeAction('DISLIKE')" class="px-6 py-3 rounded-lg flex items-center gap-2" style="background: rgba(247,118,142,.12); border: 1px solid rgba(247,118,142,.35); color: #f7768e; font-weight: 600; cursor: pointer;">
+                👎 Pass
             </button>
-
-            <button onclick="swipeRight()" class="w-16 h-16 rounded-full flex items-center justify-center transition-transform" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: pointer;">
-                <svg class="w-8 h-8" fill="#9ece6a" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- Match Notification Modal -->
-    <div id="matchModal" class="hidden fixed inset-0 flex items-center justify-center" style="z-index: 9999; background: rgba(0,0,0,0.85);">
-        <div class="match-modal rounded-2xl p-8 max-w-md mx-4 text-center" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); position: relative; z-index: 10000;">
-            <div class="text-6xl mb-4">🎉</div>
-            <h2 class="text-3xl font-bold mb-2" style="color: #e9eaf2;">Match successful!</h2>
-            <p class="mb-2" style="color: #b5b8c3;">All members like:</p>
-            <p id="matchMovieTitle" class="text-xl font-semibold mb-4" style="color: #7aa2f7;"></p>
-            <div id="matchModalBody" class="mb-6"></div>
-            <button onclick="closeMatchModal()" class="px-8 py-3 rounded-lg" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; border: none; font-weight: 600; cursor: pointer;">
-                Awesome!
+            <button onclick="swipeAction('LIKE')" class="px-6 py-3 rounded-lg flex items-center gap-2" style="background: rgba(158,206,106,.12); border: 1px solid rgba(158,206,106,.35); color: #9ece6a; font-weight: 600; cursor: pointer;">
+                👍 Like
             </button>
         </div>
     </div>
 
     <!-- Movie Details Modal -->
-    <div id="movieModal" class="hidden fixed inset-0 flex items-center justify-center" style="background: rgba(0,0,0,0.9); z-index: 9999;">
-        <div class="rounded-2xl p-8 max-w-4xl mx-4 overflow-y-auto" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-height: 90vh; position: relative; z-index: 10000;">
+    <div id="movieModal" class="hidden fixed inset-0 flex items-center justify-center" style="background: rgba(0,0,0,0.9); z-index: 9998;">
+        <div class="rounded-2xl p-8 max-w-4xl mx-4 overflow-y-auto" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-height: 90vh;">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="modalTitle" class="text-2xl font-bold" style="color: #e9eaf2;"></h2>
                 <button onclick="closeMovieDetails()" class="text-3xl" style="color: #b5b8c3; background: none; border: none; cursor: pointer;">&times;</button>
@@ -164,197 +334,423 @@
     </div>
 
     <script>
-        // Configuration
-        const GROUP_CODE = "{{ group_code }}";
-        const API_BASE = "/api/groups/" + GROUP_CODE;
-        
-        // State
-        let movies = [];
+        const GROUP_CODE = '{{ group_code }}';
+        const CURRENT_USER = '{{ user.username }}';
+        let MOVIES = [];
         let currentIndex = 0;
         let isAnimating = false;
-        
+        let chatSocket = null;
+        let matchSocket = null;
+        let isChatMinimized = false;
+        let unreadCount = 0;
+
         // DOM Elements
-        const loadingState = document.getElementById('loadingState');
-        const errorState = document.getElementById('errorState');
         const deckContainer = document.getElementById('deckContainer');
         const emptyState = document.getElementById('emptyState');
         const actionButtons = document.getElementById('actionButtons');
-        const matchModal = document.getElementById('matchModal');
+        const loadingState = document.getElementById('loadingState');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
 
-        // WebSocket connection
-        let matchSocket = null;
-        
-        function initializeWebSocket() {
-            // Get WebSocket protocol (ws or wss)
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${wsProtocol}//${window.location.host}/ws/match/${GROUP_CODE}/`;
-            
-            console.log(`[WebSocket] Connecting to ${wsUrl}`);
-            
-            matchSocket = new WebSocket(wsUrl);
-            
-            matchSocket.onopen = function(event) {
-                console.log('[WebSocket] Connection opened');
-            };
-            
-            matchSocket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                console.log('[WebSocket] Received:', data);
-                
-                if (data.type === 'connection_established') {
-                    console.log(`[WebSocket] Connected to group: ${data.group_code}`);
-                } else if (data.type === 'match_found') {
-                    console.log('[WebSocket] Match found!', data);
-                    showMatchModal(data);
-                } else if (data.type === 'error') {
-                    console.error('[WebSocket] Error:', data.message);
-                }
-            };
-            
-            matchSocket.onerror = function(error) {
-                console.error('[WebSocket] Error:', error);
-            };
-            
-            matchSocket.onclose = function(event) {
-                console.log('[WebSocket] Connection closed');
-                // Reconnect after 3 seconds
-                setTimeout(initializeWebSocket, 3000);
-            };
-        }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchMovieDeck();
-            initializeWebSocket();
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMovieDeck();
+            connectWebSockets();
+            loadChatHistory();
         });
 
-        // Fetch movie deck from API
-        async function fetchMovieDeck() {
-            try {
-                const response = await fetch(`${API_BASE}/deck/?with_details=true&limit=20`, {
-                    headers: {
-                        'Authorization': 'Bearer ' + getCookie('auth_token'),
-                    }
-                });
+        // ==================== WebSocket Functions ====================
 
-                if (!response.ok) throw new Error('Failed to retrieve movie list');
+        function connectWebSockets() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            
+            // Connect to chat WebSocket
+            const chatWsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${GROUP_CODE}/`;
+            chatSocket = new WebSocket(chatWsUrl);
 
-                const data = await response.json();
-                movies = data.movies;
+            chatSocket.onopen = function(e) {
+                console.log('[Chat] WebSocket connected');
+            };
+
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log('[Chat] Received:', data);
                 
-                loadingState.classList.add('hidden');
-                
-                if (movies.length === 0) {
-                    showEmptyState();
-                } else {
-                    renderMovieCards();
-                    deckContainer.classList.remove('hidden');
-                    actionButtons.classList.remove('hidden');
+                if (data.type === 'connection_established') {
+                    console.log('[Chat] Connection established:', data.message);
+                } else if (data.type === 'chat_message') {
+                    handleChatMessage(data);
+                } else if (data.type === 'typing_indicator') {
+                    handleTypingIndicator(data);
+                } else if (data.type === 'error') {
+                    console.error('[Chat] Error:', data.message);
                 }
-            } catch (error) {
-                showError(error.message);
+            };
+
+            chatSocket.onclose = function(e) {
+                console.log('[Chat] WebSocket closed:', e.code);
+                setTimeout(connectWebSockets, 3000);
+            };
+
+            chatSocket.onerror = function(e) {
+                console.error('[Chat] WebSocket error:', e);
+            };
+
+            // Connect to match WebSocket
+            const matchWsUrl = `${wsProtocol}//${window.location.host}/ws/match/${GROUP_CODE}/`;
+            matchSocket = new WebSocket(matchWsUrl);
+
+            matchSocket.onopen = function(e) {
+                console.log('[Match] WebSocket connected');
+            };
+
+            matchSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log('[Match] Received:', data);
+                
+                if (data.type === 'connection_established') {
+                    console.log('[Match] Connection established:', data.message);
+                } else if (data.type === 'match_found') {
+                    handleMatchNotification(data);
+                }
+            };
+
+            matchSocket.onclose = function(e) {
+                console.log('[Match] WebSocket closed:', e.code);
+                setTimeout(connectWebSockets, 3000);
+            };
+
+            matchSocket.onerror = function(e) {
+                console.error('[Match] WebSocket error:', e);
+            };
+        }
+
+        function handleChatMessage(data) {
+            if (data.type !== 'chat_message') {
+                return;
+            }
+
+            const messageDiv = document.createElement('div');
+            const isOwnMessage = data.username === CURRENT_USER;
+
+            messageDiv.className = `chat-message ${isOwnMessage ? 'own' : 'other'}`;
+            messageDiv.innerHTML = `
+                <div style="font-weight: 600; font-size: 0.85em; margin-bottom: 4px; color: ${isOwnMessage ? '#7aa2f7' : '#b5b8c3'};">
+                    ${escapeHtml(data.username)}
+                </div>
+                <div>${escapeHtml(data.message)}</div>
+                ${data.timestamp ? `<div style="font-size: 0.75em; color: #565f89; margin-top: 4px;">${formatTime(data.timestamp)}</div>` : ''}
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if (isChatMinimized && !isOwnMessage) {
+                unreadCount++;
+                updateChatBadge();
             }
         }
 
-        // Render movie cards
+        function handleTypingIndicator(data) {
+            if (data.is_typing) {
+                console.log(`${data.username} is typing...`);
+            }
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            const message = chatInput.value.trim();
+
+            if (message && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'chat_message',
+                    'message': message
+                }));
+                chatInput.value = '';
+            }
+        }
+
+        function toggleChat() {
+            isChatMinimized = !isChatMinimized;
+            const chatContainer = document.getElementById('chatContainer');
+            const toggleIcon = document.getElementById('chatToggleIcon');
+
+            if (isChatMinimized) {
+                chatContainer.classList.add('minimized');
+                toggleIcon.textContent = '▲';
+            } else {
+                chatContainer.classList.remove('minimized');
+                toggleIcon.textContent = '▼';
+                unreadCount = 0;
+                updateChatBadge();
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        function updateChatBadge() {
+            const badge = document.getElementById('chatBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(`/api/groups/${GROUP_CODE}/chat/history/`);
+                const data = await response.json();
+
+                if (data.success && data.messages) {
+                    data.messages.forEach(msg => {
+                        handleChatMessage({
+                            type: 'chat_message',
+                            username: msg.user,
+                            message: msg.message,
+                            timestamp: msg.created_at,
+                            is_system: msg.is_system_message
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('[Chat] Error loading history:', error);
+            }
+        }
+
+        function handleMatchNotification(data) {
+            const notification = document.createElement('div');
+            notification.className = 'match-notification';
+            notification.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 3em; margin-bottom: 16px;">🎉</div>
+                    <h2 style="font-size: 1.5em; font-weight: bold; margin-bottom: 8px; color: white;">It's a Match!</h2>
+                    <p style="font-size: 1.1em; color: white;">${escapeHtml(data.movie_title)}</p>
+                    <p style="font-size: 0.9em; margin-top: 8px; opacity: 0.9; color: white;">Everyone in the group liked this movie!</p>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'matchPop 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // ==================== Movie Deck Functions ====================
+
+        function preloadImages(movies) {
+            movies.forEach((movie, idx) => {
+                if (idx < 5) { // Preload first 5 images
+                    let posterUrl = '';
+                    if (movie.poster_url) {
+                        posterUrl = movie.poster_url;
+                    } else if (movie.poster_path) {
+                        posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+                    }
+                    
+                    if (posterUrl) {
+                        const img = new Image();
+                        img.src = posterUrl;
+                        console.log('[Preload] Loading image:', movie.title, posterUrl);
+                    }
+                }
+            });
+        }
+
+        async function loadMovieDeck() {
+            try {
+                const response = await fetch(`/api/groups/${GROUP_CODE}/deck/?limit=20&with_details=true`);
+                const data = await response.json();
+
+                console.log('[Deck] Loaded movies:', data);
+
+                if (data.movies && data.movies.length > 0) {
+                    MOVIES = data.movies;
+                    
+                    console.log('[DEBUG] First movie:', MOVIES[0]);
+                    console.log('[DEBUG] First movie poster_path:', MOVIES[0].poster_path);
+                    console.log('[DEBUG] First movie poster_url:', MOVIES[0].poster_url);
+                    console.log('[DEBUG] Total movies loaded:', MOVIES.length);
+                    
+                    preloadImages(MOVIES);
+                    
+                    loadingState.classList.add('hidden');
+                    deckContainer.classList.remove('hidden');
+                    actionButtons.classList.remove('hidden');
+                    renderMovieCards();
+                } else {
+                    loadingState.classList.add('hidden');
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('[Deck] Error loading movies:', error);
+                loadingState.innerHTML = `
+                    <div style="color: #f7768e;">
+                        <p>Error loading movies. Please try again.</p>
+                        <button onclick="location.reload()" class="mt-4 px-4 py-2 rounded" style="background: #7aa2f7; color: white; border: none; cursor: pointer;">Reload</button>
+                    </div>
+                `;
+            }
+        }
+
         function renderMovieCards() {
             deckContainer.innerHTML = '';
-            
-            // Render next 3 cards (for stacking effect)
-            for (let i = Math.min(currentIndex + 2, movies.length - 1); i >= currentIndex; i--) {
-                const card = createMovieCard(movies[i], i);
+
+            for (let i = Math.min(currentIndex + 2, MOVIES.length - 1); i >= currentIndex; i--) {
+                const card = createMovieCard(MOVIES[i], i);
                 deckContainer.appendChild(card);
             }
         }
 
-        // Create a movie card element
         function createMovieCard(movie, index) {
             const zIndex = 100 - (index - currentIndex);
             const scale = 1 - (index - currentIndex) * 0.05;
             const translateY = (index - currentIndex) * 10;
 
             const card = document.createElement('div');
-            card.className = 'movie-card absolute inset-0 rounded-2xl shadow-2xl overflow-hidden';
+            card.className = 'movie-card absolute inset-0 rounded-2xl shadow-2xl overflow-hidden cursor-pointer';
             card.style.background = 'linear-gradient(180deg, #1a1e2b 0%, #151822 100%)';
             card.style.border = '1px solid #262a3d';
             card.style.zIndex = zIndex;
             card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             card.dataset.index = index;
-            
-            const posterUrl = movie.poster_path 
-                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                : 'https://via.placeholder.com/500x750?text=No+Poster';
-            
-            card.innerHTML = `
-                <div class="relative bg-gray-200" onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})" style="height: 400px;">
-                    <img src="${posterUrl}" alt="${movie.title}" class="w-full h-full object-cover" draggable="false">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
-                    <!-- Like/Nope Indicators -->
-                    <div class="like-indicator like absolute top-8 right-8 bg-green-500 text-white px-6 py-3 rounded-lg font-bold text-xl transform rotate-12">
+            // Get poster URL - handle both poster_url and poster_path
+            let posterUrl = '';
+            if (movie.poster_url) {
+                posterUrl = movie.poster_url;
+                if (posterUrl.startsWith('http://')) {
+                    posterUrl = posterUrl.replace('http://', 'https://');
+                }
+            } else if (movie.poster_path) {
+                posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+            }
+            
+            const year = movie.release_date ? new Date(movie.release_date).getFullYear() : movie.year || '';
+            const genres = Array.isArray(movie.genres) ? movie.genres.slice(0, 3).join(', ') : '';
+
+            card.innerHTML = `
+                <div class="relative h-96" onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})">
+                    <div class="poster-container">
+                        <!-- Loading placeholder -->
+                        <div class="poster-loader">
+                            <div class="text-center">
+                                <div class="animate-pulse text-6xl mb-2">🎬</div>
+                                <div style="color: #565f89; font-size: 0.85em;">Loading...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actual image -->
+                        <img 
+                            src="${posterUrl || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}" 
+                            alt="${escapeHtml(movie.title)}" 
+                            class="poster-image"
+                            draggable="false"
+                            data-movie-title="${escapeHtml(movie.title)}"
+                            data-poster-url="${posterUrl}"
+                        >
+                        
+                        <!-- Fallback (hidden by default) -->
+                        <div class="poster-fallback" style="display: none;">
+                            <div class="text-6xl mb-4">🎬</div>
+                            <div style="color: #e9eaf2; font-size: 1.2em; font-weight: 600; margin-bottom: 8px;">${escapeHtml(movie.title)}</div>
+                            <div style="color: #565f89; font-size: 0.85em;">Poster unavailable</div>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" style="z-index: 4;"></div>
+
+                    <!-- Like/Pass Indicators -->
+                    <div class="like-indicator like absolute top-8 right-8 bg-green-500 text-white px-6 py-3 rounded-lg font-bold text-xl transform rotate-12" style="z-index: 5;">
                         LIKE
                     </div>
-                    <div class="like-indicator nope absolute top-8 left-8 bg-red-500 text-white px-6 py-3 rounded-lg font-bold text-xl transform -rotate-12">
-                        NOPE
+                    <div class="like-indicator nope absolute top-8 left-8 bg-red-500 text-white px-6 py-3 rounded-lg font-bold text-xl transform -rotate-12" style="z-index: 5;">
+                        PASS
                     </div>
                 </div>
 
-                <div class="p-4 space-y-2">
-                    <h2 class="text-2xl font-bold line-clamp-2" style="color: #e9eaf2;">${movie.title}</h2>
+                <div class="p-6 space-y-3">
+                    <h2 class="text-2xl font-bold line-clamp-2" style="color: #e9eaf2;">${escapeHtml(movie.title)}</h2>
 
-                    <div class="flex items-center gap-4 text-sm" style="color: #b5b8c3;">
-                        ${movie.release_date ? `
-                            <div class="flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <span>${new Date(movie.release_date).getFullYear()}</span>
-                            </div>
-                        ` : ''}
-
+                    <div class="flex items-center gap-4 text-sm flex-wrap" style="color: #b5b8c3;">
+                        ${year ? `<span>${year}</span>` : ''}
                         ${movie.vote_average ? `
                             <div class="flex items-center gap-1">
-                                <svg class="w-4 h-4 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 fill-yellow-400" viewBox="0 0 24 24">
                                     <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                                 </svg>
-                                <span>Rating: ${movie.vote_average.toFixed(1)}</span>
+                                <span>${movie.vote_average.toFixed(1)}</span>
                             </div>
                         ` : ''}
-
-                        ${movie.vote_count ? `
-                            <div class="flex items-center gap-1">
-                                <span>Votes: ${movie.vote_count}</span>
-                            </div>
-                        ` : ''}
+                        ${genres ? `<span>${genres}</span>` : ''}
                     </div>
 
-                    ${movie.genres && movie.genres.length > 0 ? `
-                        <div class="flex flex-wrap gap-2">
-                            ${movie.genres.slice(0, 3).map(genre =>
-                                `<span class="px-3 py-1 text-xs rounded-full" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7;">${genre}</span>`
-                            ).join('')}
-                        </div>
-                    ` : ''}
-
                     ${movie.overview ? `
-                        <p class="text-sm line-clamp-2" style="color: #b5b8c3; line-height: 1.4;">${movie.overview}</p>
+                        <p class="text-sm line-clamp-3" style="color: #b5b8c3; line-height: 1.5;">${escapeHtml(movie.overview)}</p>
                     ` : ''}
 
-                    <button onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})" class="w-full px-3 py-2 rounded-lg text-sm" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7; font-weight: 600; cursor: pointer; margin-top: 8px;">
-                        View Details & Where to Watch
+                    <button onclick="event.stopPropagation(); openMovieDetails(${movie.tmdb_id})" class="w-full px-4 py-2 rounded-lg mt-2" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7; font-weight: 600; cursor: pointer;">
+                        View Details
                     </button>
                 </div>
             `;
-            
-            // Add touch/mouse events only to top card
+
+            // Setup image loading after card is added to DOM
+            setTimeout(() => setupImageLoading(card), 0);
+
             if (index === currentIndex) {
                 addDragEvents(card);
             }
-            
+
             return card;
         }
 
-        // Add drag events to card
+        function setupImageLoading(card) {
+            const img = card.querySelector('.poster-image');
+            const loader = card.querySelector('.poster-loader');
+            const fallback = card.querySelector('.poster-fallback');
+            
+            if (!img || !loader || !fallback) return;
+
+            const posterUrl = img.dataset.posterUrl;
+            const movieTitle = img.dataset.movieTitle;
+
+            console.log('[Image] Setting up:', movieTitle, posterUrl);
+
+            if (!posterUrl || posterUrl === '') {
+                console.log('[Image] No poster URL, showing fallback');
+                loader.style.display = 'none';
+                fallback.style.display = 'flex';
+                return;
+            }
+
+            const testImg = new Image();
+            
+            testImg.onload = function() {
+                console.log('[Image] Loaded successfully:', movieTitle);
+                img.src = posterUrl;
+                img.classList.add('loaded');
+                loader.style.display = 'none';
+            };
+            
+            testImg.onerror = function() {
+                console.error('[Image] Failed to load:', posterUrl);
+                loader.style.display = 'none';
+                fallback.style.display = 'flex';
+            };
+            
+            setTimeout(() => {
+                if (!img.classList.contains('loaded')) {
+                    console.warn('[Image] Loading timeout:', movieTitle);
+                    loader.style.display = 'none';
+                    fallback.style.display = 'flex';
+                }
+            }, 10000);
+            
+            testImg.src = posterUrl;
+        }
+
         function addDragEvents(card) {
             let startX = 0;
             let currentX = 0;
@@ -374,9 +770,9 @@
                 currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
                 const diff = currentX - startX;
                 const rotation = diff * 0.1;
-                
+
                 card.style.transform = `translateX(${diff}px) rotate(${rotation}deg)`;
-                
+
                 if (diff > 50) {
                     card.classList.add('dragging-right');
                     card.classList.remove('dragging-left');
@@ -392,16 +788,15 @@
                 if (!isDragging) return;
                 isDragging = false;
                 card.classList.remove('swiping', 'dragging-right', 'dragging-left');
-                
+
                 const diff = currentX - startX;
                 const threshold = 100;
 
                 if (diff > threshold) {
-                    performSwipe('like', card);
+                    performSwipe('LIKE', card);
                 } else if (diff < -threshold) {
-                    performSwipe('dislike', card);
+                    performSwipe('DISLIKE', card);
                 } else {
-                    // Reset position
                     card.style.transform = '';
                 }
             };
@@ -415,37 +810,28 @@
             card.addEventListener('touchend', handleEnd);
         }
 
-        // Swipe functions
-        function swipeRight() {
-            if (isAnimating || currentIndex >= movies.length) return;
+        function swipeAction(action) {
+            if (isAnimating || currentIndex >= MOVIES.length) return;
             const card = deckContainer.querySelector(`[data-index="${currentIndex}"]`);
-            performSwipe('like', card);
+            performSwipe(action, card);
         }
 
-        function swipeLeft() {
-            if (isAnimating || currentIndex >= movies.length) return;
-            const card = deckContainer.querySelector(`[data-index="${currentIndex}"]`);
-            performSwipe('dislike', card);
-        }
-
-        // Perform swipe animation and API call
         async function performSwipe(action, card) {
             if (isAnimating) return;
             isAnimating = true;
 
-            // Animate card
-            card.classList.add(action === 'like' ? 'swipe-right' : 'swipe-left');
+            card.classList.add(action === 'LIKE' ? 'swipe-right' : 'swipe-left');
 
-            // Only send API request for likes
-            if (action === 'like') {
-                const movie = movies[currentIndex];
+            const movie = MOVIES[currentIndex];
+
+            if (action === 'LIKE') {
                 try {
-                    const response = await fetch(`${API_BASE}/swipe/like/`, {
+                    const csrfToken = getCookie('csrftoken');
+                    const response = await fetch(`/api/groups/${GROUP_CODE}/swipe/like/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + getCookie('auth_token'),
-                            'X-CSRFToken': getCookie('csrftoken')
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             tmdb_id: movie.tmdb_id,
@@ -453,25 +839,19 @@
                         })
                     });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('[DEBUG] Swipe response:', data);
-                        if (data.is_match && data.match_data) {
-                            console.log('[DEBUG] Match detected! Showing modal with:', data.match_data);
-                            showMatchModal(data.match_data);
-                        }
-                    }
+                    const data = await response.json();
+                    console.log('[Swipe] Response:', data);
+
                 } catch (error) {
-                    console.error('Swipe error:', error);
+                    console.error('[Swipe] Error:', error);
                 }
             }
 
-            // Wait for animation then show next card
             setTimeout(() => {
                 currentIndex++;
                 isAnimating = false;
 
-                if (currentIndex >= movies.length) {
+                if (currentIndex >= MOVIES.length) {
                     showEmptyState();
                 } else {
                     renderMovieCards();
@@ -479,93 +859,12 @@
             }, 500);
         }
 
-        // Show match notification
-        function showMatchModal(matchData) {
-            // Handle both old format (string) and new format (object)
-            const title = typeof matchData === 'string' ? matchData : matchData.movie_title;
-            const tmdbId = typeof matchData === 'object' ? matchData.tmdb_id : null;
-            const posterUrl = typeof matchData === 'object' ? matchData.poster_url : null;
-            const year = typeof matchData === 'object' ? matchData.year : null;
-            const genres = typeof matchData === 'object' ? (matchData.genres || []) : [];
-            const message = typeof matchData === 'object' ? matchData.message : 'Match found!';
-            
-            document.getElementById('matchMovieTitle').textContent = title;
-            
-            // Update modal with movie details if available
-            const modalBody = document.getElementById('matchModalBody');
-            if (modalBody && typeof matchData === 'object') {
-                let modalContent = `<div class="mb-4">`;
-                
-                if (posterUrl) {
-                    modalContent += `<img src="${posterUrl}" alt="${title}" class="mx-auto rounded-lg" style="max-width: 200px; max-height: 300px;">`;
-                }
-                
-                modalContent += `</div>`;
-                
-                if (year) {
-                    modalContent += `<div class="text-lg mb-2" style="color: #b5b8c3;">${year}</div>`;
-                }
-                
-                if (genres.length > 0) {
-                    modalContent += `<div class="flex flex-wrap gap-2 justify-center mb-4">`;
-                    genres.slice(0, 3).forEach(genre => {
-                        modalContent += `<span class="px-3 py-1 text-xs rounded-full" style="background: rgba(122,162,247,.12); border: 1px solid rgba(122,162,247,.35); color: #7aa2f7;">${genre}</span>`;
-                    });
-                    modalContent += `</div>`;
-                }
-                
-                modalContent += `<p class="text-sm" style="color: #b5b8c3;">${message}</p>`;
-                modalBody.innerHTML = modalContent;
-            }
-            
-            matchModal.classList.remove('hidden');
-            
-            // Don't auto-hide - let the user click the button to close it
-        }
-
-        function closeMatchModal() {
-            matchModal.classList.add('hidden');
-        }
-
-        // Show empty state
         function showEmptyState() {
             deckContainer.classList.add('hidden');
             actionButtons.classList.add('hidden');
             emptyState.classList.remove('hidden');
         }
 
-        // Show error
-        function showError(message) {
-            loadingState.classList.add('hidden');
-            errorState.classList.remove('hidden');
-            document.getElementById('errorMessage').textContent = message;
-        }
-
-        // Load more movies
-        function loadMoreMovies() {
-            currentIndex = 0;
-            emptyState.classList.add('hidden');
-            loadingState.classList.remove('hidden');
-            fetchMovieDeck();
-        }
-
-        // Utility: Get cookie
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        // Movie details modal functions
         function openMovieDetails(tmdbId) {
             const modal = document.getElementById('movieModal');
             const modalBody = document.getElementById('modalBody');
@@ -581,7 +880,7 @@
                     if (data.success) {
                         displayMovieDetails(data.movie);
                     } else {
-                        modalBody.innerHTML = `<div style="color: #f7768e; text-align: center; padding: 20px;">Error: ${data.error}</div>`;
+                        modalBody.innerHTML = `<div style="color: #f7768e; text-align: center; padding: 20px;">Error: ${escapeHtml(data.error)}</div>`;
                     }
                 })
                 .catch(error => {
@@ -599,72 +898,31 @@
             const releaseDate = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A';
             const genres = movie.genres ? movie.genres.join(', ') : 'N/A';
 
-            let watchProvidersHTML = '';
-            if (movie.watch_providers && Object.keys(movie.watch_providers).length > 0) {
-                const { flatrate = [], rent = [], buy = [], link = '' } = movie.watch_providers;
-                if (flatrate.length > 0 || rent.length > 0 || buy.length > 0) {
-                    watchProvidersHTML = `
-                        <div style="margin-bottom: 20px; padding: 15px; background: #0f1320; border-radius: 8px; border: 1px solid #262a3d;">
-                            <h3 style="margin-top: 0; margin-bottom: 10px; color: #e9eaf2;">🎬 Where to Watch</h3>
-                            ${flatrate.length > 0 ? `
-                                <div style="margin-bottom: 10px;">
-                                    <strong style="color: #9ece6a;">Stream:</strong>
-                                    <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                                        ${flatrate.map(p => `
-                                            <div style="background: #1a1e2b; padding: 6px 10px; border-radius: 6px; border: 1px solid #262a3d;" title="${p.provider_name}">
-                                                ${p.logo_path ? `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" alt="${p.provider_name}" style="height: 24px; border-radius: 4px;">` : `<span style="font-size: 0.85em; color: #b5b8c3;">${p.provider_name}</span>`}
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            ${rent.length > 0 ? `
-                                <div style="margin-bottom: 10px;">
-                                    <strong style="color: #7aa2f7;">Rent:</strong>
-                                    <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                                        ${rent.slice(0, 5).map(p => `
-                                            <div style="background: #1a1e2b; padding: 6px 10px; border-radius: 6px; border: 1px solid #262a3d;" title="${p.provider_name}">
-                                                ${p.logo_path ? `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" alt="${p.provider_name}" style="height: 24px; border-radius: 4px;">` : `<span style="font-size: 0.85em; color: #b5b8c3;">${p.provider_name}</span>`}
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            ${buy.length > 0 ? `
-                                <div style="margin-bottom: 10px;">
-                                    <strong style="color: #e0af68;">Buy:</strong>
-                                    <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                                        ${buy.slice(0, 5).map(p => `
-                                            <div style="background: #1a1e2b; padding: 6px 10px; border-radius: 6px; border: 1px solid #262a3d;" title="${p.provider_name}">
-                                                ${p.logo_path ? `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" alt="${p.provider_name}" style="height: 24px; border-radius: 4px;">` : `<span style="font-size: 0.85em; color: #b5b8c3;">${p.provider_name}</span>`}
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            ${link ? `<div style="margin-top: 10px;"><a href="${link}" target="_blank" rel="noopener noreferrer" style="color: #7aa2f7; font-size: 0.85em; text-decoration: none;">View all options on JustWatch →</a></div>` : ''}
-                        </div>
-                    `;
+            // Get poster URL - handle both poster_url and poster_path
+            let posterUrl = '';
+            if (movie.poster_url) {
+                posterUrl = movie.poster_url;
+                if (posterUrl.startsWith('http://')) {
+                    posterUrl = posterUrl.replace('http://', 'https://');
                 }
+            } else if (movie.poster_path) {
+                posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
             }
 
             modalBody.innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
                     <div style="text-align: center;">
-                        ${movie.poster_url ? `<img src="${movie.poster_url}" alt="${movie.title}" style="max-width: 100%; border-radius: 10px;">` : '<div style="width:200px;height:300px;background:#1a1e2b;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#b5b8c3;">No Poster</div>'}
+                        ${posterUrl ? `<img src="${posterUrl}" alt="${escapeHtml(movie.title)}" style="max-width: 100%; border-radius: 10px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="width:200px;height:300px;background:#1a1e2b;border-radius:10px;display:none;align-items:center;justify-content:center;color:#b5b8c3;flex-direction:column;"><div style="font-size:3em;margin-bottom:10px;">🎬</div><div>No Poster</div></div>` : '<div style="width:200px;height:300px;background:#1a1e2b;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#b5b8c3;flex-direction:column;"><div style="font-size:3em;margin-bottom:10px;">🎬</div><div>No Poster</div></div>'}
                     </div>
                     <div>
-                        ${movie.tagline ? `<p style="color: #b5b8c3; font-style: italic; margin-bottom: 15px;">"${movie.tagline}"</p>` : ''}
-                        <p style="color: #e9eaf2; line-height: 1.6; margin-bottom: 20px;">${movie.overview || 'No overview available.'}</p>
+                        ${movie.tagline ? `<p style="color: #b5b8c3; font-style: italic; margin-bottom: 15px;">"${escapeHtml(movie.tagline)}"</p>` : ''}
+                        <p style="color: #e9eaf2; line-height: 1.6; margin-bottom: 20px;">${escapeHtml(movie.overview || 'No overview available.')}</p>
 
                         <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
                             <div style="text-align: center;">
                                 <div style="font-size: 1.2em; font-weight: bold; color: #7aa2f7;">${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</div>
                                 <div style="font-size: 0.9em; color: #b5b8c3;">Rating</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 1.2em; font-weight: bold; color: #7aa2f7;">${movie.vote_count || 'N/A'}</div>
-                                <div style="font-size: 0.9em; color: #b5b8c3;">Votes</div>
                             </div>
                             <div style="text-align: center;">
                                 <div style="font-size: 1.2em; font-weight: bold; color: #7aa2f7;">${releaseDate}</div>
@@ -679,13 +937,6 @@
                         <div style="margin-bottom: 20px;">
                             <strong style="color: #e9eaf2;">Genres:</strong> <span style="color: #b5b8c3;">${genres}</span>
                         </div>
-
-                        ${watchProvidersHTML || `
-                            <div style="margin-bottom: 20px; padding: 15px; background: #0f1320; border-radius: 8px; border: 1px solid #262a3d;">
-                                <h3 style="margin-top: 0; margin-bottom: 10px; color: #e9eaf2;">🎬 Where to Watch</h3>
-                                <p style="color: #b5b8c3; margin: 0;">No streaming information available for this movie in your region.</p>
-                            </div>
-                        `}
                     </div>
                 </div>
             `;
@@ -695,7 +946,6 @@
             document.getElementById('movieModal').classList.add('hidden');
         }
 
-        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('movieModal');
             if (event.target === modal) {
@@ -703,12 +953,42 @@
             }
         }
 
-        // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeMovieDetails();
             }
         });
+
+        // ==================== Helper Functions ====================
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
+
+    {% csrf_token %}
 </body>
 </html>

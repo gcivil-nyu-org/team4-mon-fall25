@@ -137,6 +137,7 @@
       flex-direction: column;
       align-items: center;
       gap: 8px;
+      text-decoration: none;
     }
 
     .btn-create-group {
@@ -160,6 +161,18 @@
       background: #27ae60;
       transform: translateY(-3px);
       box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    }
+
+    .btn-solo-mode {
+      background: linear-gradient(135deg, #e94b3c 0%, #f45b69 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(233, 75, 60, 0.3);
+    }
+
+    .btn-solo-mode:hover {
+      background: linear-gradient(135deg, #d63a2d 0%, #e04b5a 100%);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(233, 75, 60, 0.4);
     }
 
     .join-form-container {
@@ -308,7 +321,7 @@
 
     <!-- Group Sessions Card -->
     <div class="card">
-      <div class="card-title">👥 Group Watch Sessions</div>
+      <div class="card-title">🎭 Movie Discovery Modes</div>
 
       <div class="group-actions-grid">
         <button id="createGroupBtn" class="group-btn btn-create-group">
@@ -319,6 +332,10 @@
           <span style="font-size: 2rem;">🚪</span>
           <span>Join Existing Group</span>
         </button>
+        <a href="{% url 'recom_sys:solo_genre_selection' %}" class="group-btn btn-solo-mode">
+          <span style="font-size: 2rem;">🎬</span>
+          <span>Go Solo Mode</span>
+        </a>
       </div>
 
       <!-- Join Group Form -->

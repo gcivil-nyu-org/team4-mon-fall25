@@ -2,7 +2,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
-
+from . import views_solo
 # Import views
 from .views import recommend_view, profile_view, edit_profile_view, set_interaction_view
 from .views_auth import signup_view
@@ -13,7 +13,7 @@ from .views_group import (
     group_deck_view,      # New: Swipe Card Page View
     get_group_matches     # New: Retrieve matching records
 )
-
+from . import views_group
 from . import views  # For additional helper views
 try:
     from . import api_views  # REST API views
@@ -35,6 +35,13 @@ if api_views:
 # URL Patterns
 # ============================================
 urlpatterns = [
+    path('api/groups/<str:group_code>/chat/history/', 
+         views_group.get_chat_history, 
+         name='get_chat_history'),
+    
+    path('api/groups/<str:group_code>/chat/send/', 
+         views_group.send_chat_message, 
+         name='send_chat_message'),
     # ==================== AUTHENTICATION ====================
     path("signup/", signup_view, name="signup"),
     path("login/", auth_views.LoginView.as_view(
@@ -58,6 +65,14 @@ urlpatterns = [
     
     # Group Swipe Card Page (New)
     path('groups/<str:group_code>/deck/', group_deck_view, name='group_deck_page'),
+    path('solo/genres/', views_solo.solo_genre_selection, name='solo_genre_selection'),
+    path('solo/deck/', views_solo.solo_deck_view, name='solo_deck'),
+    
+      # Solo Mode API Endpoints
+    path('api/solo/set-genres/', views_solo.set_solo_genres, name='set_solo_genres'),
+    path('api/solo/deck/', views_solo.get_solo_deck, name='get_solo_deck'),
+    path('api/solo/swipe/', views_solo.solo_swipe, name='solo_swipe'),
+    path('api/solo/likes/', views_solo.get_solo_likes, name='get_solo_likes'),
 
     # ==================== GROUP MATCHING - API ENDPOINTS ====================
     # Create and join groups (existing ones)
