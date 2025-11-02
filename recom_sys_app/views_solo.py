@@ -88,7 +88,7 @@ def solo_deck_view(request):
     
     if not selected_genres:
         # Redirect back to genre selection if no genres selected
-        return redirect('solo_genre_selection')
+        return redirect('recom_sys:solo_genre_selection')
     
     # Map genre IDs to names for display
     genre_map = {
@@ -272,7 +272,7 @@ def solo_swipe(request):
         
         if existing_interaction:
             # Update existing interaction
-            existing_interaction.liked = (action == 'like')
+            existing_interaction.status = action  # 'like' or 'dislike'
             existing_interaction.movie_title = movie_title
             existing_interaction.save()
         else:
@@ -323,7 +323,7 @@ def get_solo_likes(request):
         # Get all liked interactions for this user
         liked_interactions = Interaction.objects.filter(
             user=request.user,
-            liked=True
+            status='like'
         ).order_by('-timestamp')[:50]  # Get last 50 likes
         
         # Get unique tmdb_ids
