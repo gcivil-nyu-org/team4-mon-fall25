@@ -11,13 +11,13 @@ websocket_urlpatterns = [
     # Group Chat WebSocket Endpoint
     # URL format: ws://domain/ws/chat/<group_id>/
     re_path(
-        r'ws/chat/(?P<group_id>[\w-]+)/$',
+        r'^ws/chat/(?P<group_id>[\w-]+)/$',
         consumers.ChatConsumer.as_asgi()
     ),
     # Group Movie Matching WebSocket Endpoint
     # URL format: ws://domain/ws/match/<group_code>/
     re_path(
-        r'ws/match/(?P<group_code>[A-Z0-9]+)/$',
+        r'^ws/match/(?P<group_code>[\w-]+)/$',
         consumers.MatchConsumer.as_asgi()
     ),
 ]

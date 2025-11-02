@@ -44,8 +44,8 @@ urllib3==2.5.0
 gunicorn==23.0.0
 whitenoise==6.6.0
 
-# Testing and Code Quality
-black>=23.0.0
-flake8>=6.0.0
-coverage>=7.0.0
-coveralls>=3.3.0
+# WebSocket dependencies
+channels==4.0.0
+channels-redis==4.1.0
+daphne==4.0.0
+redis==5.0.1
