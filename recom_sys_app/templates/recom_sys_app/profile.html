@@ -15,38 +15,48 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(to bottom, #b794f6 0%, #e9d5ff 100%);
       min-height: 100vh;
       padding: 20px;
     }
 
     .profile-container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
     }
 
+    /* Header */
     .header {
-      background: white;
-      border-radius: 20px;
-      padding: 30px 40px;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 40px;
       flex-wrap: wrap;
       gap: 20px;
     }
 
-    .header-content h1 {
-      font-size: 2rem;
-      color: #2d3748;
-      margin-bottom: 5px;
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .header-content p {
-      color: #718096;
-      font-size: 1rem;
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4c1d95;
     }
 
     .header-actions {
@@ -70,229 +80,275 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
       color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
     }
 
     .btn-secondary {
-      background: #3498db;
-      color: white;
+      background: white;
+      color: #4c1d95;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .btn-secondary:hover {
-      background: #2980b9;
       transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .btn-logout {
-      background: #e53e3e;
+      background: #a85537;
       color: white;
     }
 
     .btn-logout:hover {
-      background: #c53030;
+      background: #92452a;
       transform: translateY(-2px);
     }
 
+    /* Welcome Section */
+    .welcome-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .welcome-title {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #4c1d95;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .welcome-subtitle {
+      font-size: 1.2rem;
+      color: #6b46c1;
+      font-weight: 400;
+    }
+
+    /* Mode Selection Tabs */
+    .mode-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .mode-tab {
+      padding: 14px 28px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      background: rgba(255, 255, 255, 0.5);
+      color: #6b46c1;
+    }
+
+    .mode-tab.active {
+      background: #4c1d95;
+      color: white;
+      box-shadow: 0 4px 12px rgba(76, 29, 149, 0.3);
+    }
+
+    .mode-tab:not(.active):hover {
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Community Mode Card */
     .card {
       background: white;
       border-radius: 20px;
       padding: 35px;
       margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     }
 
     .card-title {
       font-size: 1.5rem;
-      color: #2d3748;
-      margin-bottom: 25px;
+      color: #4c1d95;
+      margin-bottom: 15px;
       display: flex;
       align-items: center;
       gap: 10px;
+      font-weight: 700;
     }
 
-    .group-actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
+    .theater-masks {
+      display: flex;
+      gap: 4px;
+      font-size: 1.8rem;
+    }
+
+    .card-description {
+      color: #6b46c1;
+      margin-bottom: 25px;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .genre-select-container {
       margin-bottom: 25px;
     }
 
-    .group-btn {
-      padding: 20px;
+    .genre-select {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid #e5e7eb;
       border-radius: 12px;
-      font-weight: 600;
       font-size: 1rem;
-      border: none;
+      background: #f9fafb;
+      color: #4c1d95;
       cursor: pointer;
       transition: all 0.3s ease;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234c1d95' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
     }
 
-    .btn-create-group {
+    .genre-select:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .btn-join-community {
+      width: 100%;
+      padding: 16px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .btn-create-group:hover {
-      transform: translateY(-3px);
+    .btn-join-community:hover {
+      transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
 
-    .btn-join-group {
-      background: #2ecc71;
-      color: white;
-      box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    .btn-join-community:active {
+      transform: translateY(0);
     }
 
-    .btn-join-group:hover {
-      background: #27ae60;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-    }
-
-    .btn-solo-mode {
-      background: linear-gradient(135deg, #e94b3c 0%, #f45b69 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(233, 75, 60, 0.3);
-    }
-
-    .btn-solo-mode:hover {
-      background: linear-gradient(135deg, #d63a2d 0%, #e04b5a 100%);
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(233, 75, 60, 0.4);
-    }
-
-    .join-form-container {
+    /* Hidden sections for other modes */
+    .mode-content {
       display: none;
-      background: #f7fafc;
-      padding: 25px;
-      border-radius: 12px;
-      border: 2px solid #e2e8f0;
     }
 
-    .join-form-container.active {
+    .mode-content.active {
       display: block;
     }
 
-    .join-form-container label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 10px;
+    /* My Groups Section (for Active Groups tab) */
+    .groups-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .group-item {
+      background: #f9fafb;
+      padding: 18px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .group-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .group-code {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      letter-spacing: 2px;
+      font-size: 1.1rem;
+    }
+
+    .group-role {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .group-role.creator {
+      background: #ffd700;
       color: #2d3748;
     }
 
-    .code-input-wrapper {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 15px;
+    .group-role.member {
+      background: #e5e7eb;
+      color: #4a5568;
     }
 
-    #groupCodeInput {
-      flex: 1;
-      padding: 14px 18px;
-      border: 2px solid #cbd5e0;
-      border-radius: 10px;
-      font-size: 1.1rem;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      font-family: 'Courier New', monospace;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-
-    #groupCodeInput:focus {
-      outline: none;
-      border-color: #2ecc71;
-      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
-    }
-
-    .form-buttons {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-submit {
-      flex: 1;
-      padding: 12px;
-      background: #2ecc71;
+    .btn-enter {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      border: none;
+      padding: 10px 20px;
       border-radius: 8px;
+      text-decoration: none;
       font-weight: 600;
-      cursor: pointer;
       transition: all 0.3s ease;
     }
 
-    .btn-submit:hover {
-      background: #27ae60;
-    }
-
-    .btn-cancel {
-      flex: 1;
-      padding: 12px;
-      background: #95a5a6;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn-cancel:hover {
-      background: #7f8c8d;
-    }
-
-    .status-message {
-      padding: 15px 20px;
-      border-radius: 10px;
-      margin-top: 15px;
-      font-weight: 500;
-      display: none;
-    }
-
-    .status-message.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-      display: block;
-    }
-
-    .status-message.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-      display: block;
+    .btn-enter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     @media (max-width: 768px) {
-      .header {
-        padding: 25px;
+      .welcome-title {
+        font-size: 2rem;
       }
 
-      .header-content h1 {
-        font-size: 1.6rem;
+      .mode-tabs {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .mode-tab {
+        width: 100%;
+        text-align: center;
       }
 
       .card {
         padding: 25px;
       }
 
-      .group-actions-grid {
-        grid-template-columns: 1fr;
+      .header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
       }
     }
   </style>
@@ -301,88 +357,182 @@
   <div class="profile-container">
     <!-- Header -->
     <div class="header">
-      <div class="header-content">
-        <h1>🎬 Welcome, {{ profile.name }}!</h1>
-        <p>Discover movies with friends</p>
+      <div class="logo-section">
+        <div class="logo-icon">🎬</div>
+        <div class="logo-text">CineMatch</div>
       </div>
       <div class="header-actions">
         <a href="{% url 'recom_sys:recommend' %}" class="btn btn-primary">
-          🎥 Get Recommendations
+          Get Recommendations
         </a>
         <a href="{% url 'recom_sys:edit_profile' %}" class="btn btn-secondary">
-          ✏️ Edit Profile
+          ⚙️ Edit Profile
         </a>
         <form method="post" action="{% url 'recom_sys:logout' %}" style="display:inline;">
           {% csrf_token %}
-          <button type="submit" class="btn btn-logout">🚪 Sign Out</button>
+          <button type="submit" class="btn btn-logout">Sign Out →</button>
         </form>
       </div>
     </div>
 
-    <!-- Group Sessions Card -->
-    <div class="card">
-      <div class="card-title">🎭 Movie Discovery Modes</div>
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <div class="welcome-title">
+        Welcome back, {{ profile.name|default:user.username }}! 🎬
+      </div>
+      <div class="welcome-subtitle">
+        Ready to discover your next favorite movie?
+      </div>
+    </div>
 
-      <div class="group-actions-grid">
-        <button id="createGroupBtn" class="group-btn btn-create-group">
-          <span style="font-size: 2rem;">✨</span>
-          <span>Create New Group</span>
-        </button>
-        <button id="toggleJoinBtn" class="group-btn btn-join-group">
-          <span style="font-size: 2rem;">🚪</span>
-          <span>Join Existing Group</span>
-        </button>
-        <a href="{% url 'recom_sys:solo_genre_selection' %}" class="group-btn btn-solo-mode">
-          <span style="font-size: 2rem;">🎬</span>
-          <span>Go Solo Mode</span>
+    <!-- Mode Selection Tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="solo" onclick="switchMode('solo')">
+        Solo Mode
+      </button>
+      <button class="mode-tab" data-mode="private" onclick="switchMode('private')">
+        Private Group
+      </button>
+      <button class="mode-tab" data-mode="active" onclick="switchMode('active')">
+        Active Groups
+      </button>
+    </div>
+
+    <!-- Solo Mode Content -->
+    <div id="solo-content" class="mode-content active">
+      <div class="card">
+        <div class="card-title">
+          <span>🎬</span>
+          <span>Solo Mode</span>
+        </div>
+        <div class="card-description">
+          Discover movies tailored just for you based on your preferences.
+        </div>
+        <a href="{% url 'recom_sys:solo_genre_selection' %}" class="btn-join-community" style="text-decoration: none; display: block; text-align: center;">
+          Start Solo Discovery
         </a>
       </div>
-
-      <!-- Join Group Form -->
-      <div id="joinFormContainer" class="join-form-container">
-        <label for="groupCodeInput">Enter 6-Character Group Code</label>
-        <div class="code-input-wrapper">
-          <input
-            type="text"
-            id="groupCodeInput"
-            placeholder="ABC123"
-            maxlength="6"
-            pattern="[A-Za-z0-9]{6}"
-          >
-        </div>
-        <div class="form-buttons">
-          <button id="submitJoinBtn" class="btn-submit">Join Group</button>
-          <button id="cancelJoinBtn" class="btn-cancel">Cancel</button>
-        </div>
-        <div id="statusMessage" class="status-message"></div>
-      </div>
     </div>
 
-    <!-- My Groups Card -->
-    {% if user_groups %}
-    <div class="card">
-      <div class="card-title">📋 My Groups</div>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        {% for membership in user_groups %}
-        <div style="background: #f7fafc; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 8px; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px; font-size: 1.1rem;">
-              {{ membership.group_session.group_code }}
-            </span>
-            {% if membership.role == 'CREATOR' %}
-            <span style="background: #ffd700; color: #2d3748; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Creator</span>
-            {% else %}
-            <span style="background: #e2e8f0; color: #4a5568; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Member</span>
-            {% endif %}
+    <!-- Private Group Content -->
+    <div id="private-content" class="mode-content">
+      <div class="card">
+        <div class="card-title">
+          <span>👥</span>
+          <span>Private Group</span>
+        </div>
+        <div class="card-description">
+          Create or join a private group with your friends to find movies everyone will love.
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
+          <button id="createGroupBtn" class="btn-join-community" style="margin: 0;">
+            Create New Group
+          </button>
+          <button id="toggleJoinBtn" class="btn-join-community" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); margin: 0;">
+            Join Existing Group
+          </button>
+        </div>
+
+        <!-- Join Group Form -->
+        <div id="joinFormContainer" style="display: none; margin-top: 25px; padding: 25px; background: #f9fafb; border-radius: 12px; border: 2px solid #e5e7eb;">
+          <label for="groupCodeInput" style="display: block; font-weight: 600; margin-bottom: 10px; color: #4c1d95;">Enter 6-Character Group Code</label>
+          <div style="display: flex; gap: 12px; margin-bottom: 15px;">
+            <input
+              type="text"
+              id="groupCodeInput"
+              placeholder="ABC123"
+              maxlength="6"
+              pattern="[A-Za-z0-9]{6}"
+              style="flex: 1; padding: 14px 18px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 3px; font-family: 'Courier New', monospace; font-weight: bold;"
+            >
           </div>
-          <a href="/group/{{ membership.group_session.id }}/" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
-            Enter Lobby →
-          </a>
+          <div style="display: flex; gap: 10px;">
+            <button id="submitJoinBtn" class="btn-join-community" style="margin: 0; flex: 1;">Join Group</button>
+            <button id="cancelJoinBtn" class="btn-join-community" style="background: #95a5a6; margin: 0; flex: 1;">Cancel</button>
+          </div>
+          <div id="statusMessage" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none;"></div>
         </div>
-        {% endfor %}
       </div>
     </div>
-    {% endif %}
+
+    <!-- Active Groups Content -->
+    <div id="active-content" class="mode-content">
+      {% if user_groups %}
+      <div class="card">
+        <div class="card-title">
+          <span>📋</span>
+          <span>My Active Groups</span>
+        </div>
+        <div class="groups-list">
+          {% for membership in user_groups %}
+          <div class="group-item">
+            <div class="group-info">
+              <span class="group-code">{{ membership.group_session.group_code }}</span>
+              {% if membership.role == 'CREATOR' %}
+              <span class="group-role creator">Creator</span>
+              {% else %}
+              <span class="group-role member">Member</span>
+              {% endif %}
+            </div>
+            <a href="/group/{{ membership.group_session.id }}/" class="btn-enter">
+              Enter Lobby →
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="card-title">
+          <span>📋</span>
+          <span>My Active Groups</span>
+        </div>
+        <div class="card-description">
+          You don't have any active groups yet. Create or join a group to get started!
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Community Mode Card (always visible) -->
+    <div class="card">
+      <div class="card-title">
+        <div class="theater-masks">
+          <span style="color: #3b82f6;">🎭</span>
+          <span style="color: #f59e0b;">🎭</span>
+        </div>
+        <span>Community Mode</span>
+      </div>
+      <div class="card-description">
+        Join a genre-based community room and swipe with other users
+      </div>
+      <div class="genre-select-container">
+        <select id="communityGenre" class="genre-select">
+          <option value="">Choose a genre</option>
+          <option value="28">Action</option>
+          <option value="12">Adventure</option>
+          <option value="16">Animation</option>
+          <option value="35">Comedy</option>
+          <option value="80">Crime</option>
+          <option value="99">Documentary</option>
+          <option value="18">Drama</option>
+          <option value="10751">Family</option>
+          <option value="14">Fantasy</option>
+          <option value="36">History</option>
+          <option value="27">Horror</option>
+          <option value="10402">Music</option>
+          <option value="9648">Mystery</option>
+          <option value="10749">Romance</option>
+          <option value="878">Science Fiction</option>
+          <option value="53">Thriller</option>
+          <option value="10752">War</option>
+          <option value="37">Western</option>
+        </select>
+      </div>
+      <button class="btn-join-community" onclick="joinCommunity()">
+        Join Community
+      </button>
+    </div>
   </div>
 
   <script>
@@ -404,16 +554,34 @@
     function showStatus(message, isSuccess) {
       const statusEl = document.getElementById('statusMessage');
       statusEl.textContent = message;
-      statusEl.className = 'status-message ' + (isSuccess ? 'success' : 'error');
+      statusEl.style.display = 'block';
+      statusEl.style.background = isSuccess ? '#d4edda' : '#f8d7da';
+      statusEl.style.color = isSuccess ? '#155724' : '#721c24';
+      statusEl.style.borderLeft = `4px solid ${isSuccess ? '#c3e6cb' : '#f5c6cb'}`;
+    }
+
+    // Mode Switching
+    function switchMode(mode) {
+      // Update tabs
+      document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+
+      // Update content
+      document.querySelectorAll('.mode-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(`${mode}-content`).classList.add('active');
     }
 
     // Create Group
-    document.getElementById('createGroupBtn').addEventListener('click', async () => {
+    document.getElementById('createGroupBtn')?.addEventListener('click', async () => {
       const btn = document.getElementById('createGroupBtn');
       const originalHTML = btn.innerHTML;
 
       btn.disabled = true;
-      btn.innerHTML = '<span style="font-size: 2rem;">⏳</span><span>Creating...</span>';
+      btn.innerHTML = 'Creating...';
 
       try {
         const response = await fetch('/api/groups', {
@@ -447,20 +615,21 @@
     const cancelJoinBtn = document.getElementById('cancelJoinBtn');
     const groupCodeInput = document.getElementById('groupCodeInput');
 
-    toggleJoinBtn.addEventListener('click', () => {
-      joinFormContainer.classList.add('active');
-      groupCodeInput.focus();
+    toggleJoinBtn?.addEventListener('click', () => {
+      joinFormContainer.style.display = 'block';
+      groupCodeInput?.focus();
     });
 
-    cancelJoinBtn.addEventListener('click', () => {
-      joinFormContainer.classList.remove('active');
-      groupCodeInput.value = '';
-      document.getElementById('statusMessage').className = 'status-message';
+    cancelJoinBtn?.addEventListener('click', () => {
+      joinFormContainer.style.display = 'none';
+      if (groupCodeInput) groupCodeInput.value = '';
+      const statusEl = document.getElementById('statusMessage');
+      if (statusEl) statusEl.style.display = 'none';
     });
 
     // Join Group
-    document.getElementById('submitJoinBtn').addEventListener('click', async () => {
-      const groupCode = groupCodeInput.value.trim().toUpperCase();
+    document.getElementById('submitJoinBtn')?.addEventListener('click', async () => {
+      const groupCode = groupCodeInput?.value.trim().toUpperCase();
 
       if (!groupCode) {
         showStatus('Please enter a group code', false);
@@ -509,11 +678,23 @@
     });
 
     // Enter key to submit
-    groupCodeInput.addEventListener('keypress', (e) => {
+    groupCodeInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        document.getElementById('submitJoinBtn').click();
+        document.getElementById('submitJoinBtn')?.click();
       }
     });
+
+    // Join Community (placeholder - can be extended)
+    function joinCommunity() {
+      const genreId = document.getElementById('communityGenre').value;
+      if (!genreId) {
+        alert('Please select a genre first');
+        return;
+      }
+      // For now, redirect to solo mode with the selected genre
+      // This can be extended to create a community room feature
+      window.location.href = `{% url 'recom_sys:solo_genre_selection' %}`;
+    }
   </script>
 </body>
 </html>
