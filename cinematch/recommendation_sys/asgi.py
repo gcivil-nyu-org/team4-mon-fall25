@@ -24,16 +24,13 @@ from channels.security.websocket import AllowedHostsOriginValidator
 from recom_sys_app import routing
 
 # ASGI application, handling HTTP and WebSocket
-application = ProtocolTypeRouter({
-    # Django's ASGI application handles traditional HTTP requests.
-    "http": django_asgi_app,
-    
-    # WebSocket Chat Handler with Authentication and Source Verification
-    "websocket": AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(
-                routing.websocket_urlpatterns
-            )
-        )
-    ),
-})
+application = ProtocolTypeRouter(
+    {
+        # Django's ASGI application handles traditional HTTP requests.
+        "http": django_asgi_app,
+        # WebSocket Chat Handler with Authentication and Source Verification
+        "websocket": AllowedHostsOriginValidator(
+            AuthMiddlewareStack(URLRouter(routing.websocket_urlpatterns))
+        ),
+    }
+)

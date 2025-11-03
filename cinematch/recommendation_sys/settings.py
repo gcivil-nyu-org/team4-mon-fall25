@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'True'
+DEBUG = "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
@@ -39,19 +39,19 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',  # Must be placed at the very front
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'channels', # Enable Django Channels for handling WebSocket and asynchronous tasks
-    'recom_sys_app',
-    'corsheaders',
-    'django_filters',
-    'rest_framework',
-    'rest_framework.authtoken',
+    "daphne",  # Must be placed at the very front
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "channels",  # Enable Django Channels for handling WebSocket and asynchronous tasks
+    "recom_sys_app",
+    "corsheaders",
+    "django_filters",
+    "rest_framework",
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
@@ -181,12 +181,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 # Tell Django where to find static files (for development debugging)
-STATICFILES_DIRS = [
-    BASE_DIR / "recom_sys_app" / "static"
-]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [BASE_DIR / "recom_sys_app" / "static"]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -200,16 +198,12 @@ LOGOUT_REDIRECT_URL = "recom_sys:login"
 # WebSocket and Django Channels Configuration
 # ============================================================================
 # ASGI Application
-ASGI_APPLICATION = 'recommendation_sys.asgi.application'
+ASGI_APPLICATION = "recommendation_sys.asgi.application"
 
 # Channel Layers Configuration
 # Use InMemory channel layer for development (no Redis needed)
 # For production, use Redis instead
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    }
-}
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 # Alternative (requires Redis):
 # CHANNEL_LAYERS = {

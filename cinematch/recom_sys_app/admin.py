@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import UserProfile, Interaction, GroupSession, GroupMember
 from .models import GroupChatMessage
 
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
@@ -56,15 +57,18 @@ class GroupMemberAdmin(admin.ModelAdmin):
 
     def group_code(self, obj):
         return obj.group_session.group_code
-    group_code.short_description = 'Group Code'
+
+    group_code.short_description = "Group Code"
+
 
 @admin.register(GroupChatMessage)
 class GroupChatMessageAdmin(admin.ModelAdmin):
-    list_display = ['user', 'group_session', 'content_preview', 'created_at']
-    list_filter = ['created_at', 'group_session']
-    search_fields = ['content', 'user__username', 'group_session__group_code']
-    readonly_fields = ['created_at']
-    
+    list_display = ["user", "group_session", "content_preview", "created_at"]
+    list_filter = ["created_at", "group_session"]
+    search_fields = ["content", "user__username", "group_session__group_code"]
+    readonly_fields = ["created_at"]
+
     def content_preview(self, obj):
-        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
-    content_preview.short_description = 'Content'
+        return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
+
+    content_preview.short_description = "Content"
