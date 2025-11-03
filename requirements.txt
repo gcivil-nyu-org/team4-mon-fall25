@@ -49,3 +49,6 @@ channels==4.0.0
 channels-redis==4.1.0
 daphne==4.0.0
 redis==5.0.1
+
+coverage
+coveralls
