@@ -39,11 +39,14 @@ install:
   - pip install --upgrade pip
   - pip install -r requirements.txt
   # ✨ Add test dependencies
-  - pip install pytest pytest-django pytest-asyncio pytest-cov channels-testing
+  - pip install pytest pytest-django pytest-asyncio pytest-cov
   - pip install black flake8 coverage coveralls
 
 # Pre-submit CI - runs on every push
 script:
+  # Change to cinematch directory
+  - cd cinematch
+
   # Run black for code formatting
   - black --check .
 
