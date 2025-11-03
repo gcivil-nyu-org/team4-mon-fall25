@@ -1,0 +1,74 @@
+{% extends 'movies/base.html' %}
+
+{% block title %}{{ movie.title }} - CineMatch{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: 30px; margin-bottom: 20px;">
+    <div style="flex-shrink: 0;">
+        {% if movie.poster_url %}
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" style="width: 300px; border-radius: 8px;">
+        {% else %}
+            <div style="width: 300px; height: 450px; background-color: #eee; display: flex; align-items: center; justify-content: center; color: #999; border-radius: 8px;">
+                No Image
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="flex: 1;">
+        <h1 style="margin-top: 0; color: #333;">{{ movie.title }}</h1>
+
+        <div style="margin-bottom: 20px;">
+            {% if movie.release_date %}
+                <span style="background-color: #007bff; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px;">
+                    {{ movie.release_date.year }}
+                </span>
+            {% endif %}
+            {% if movie.runtime %}
+                <span style="background-color: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px; margin-left: 10px;">
+                    {{ movie.runtime }} min
+                </span>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="font-size: 18px; margin-bottom: 10px;">
+                <span style="color: #e74c3c; font-weight: bold;">★ {{ movie.vote_average|floatformat:1 }}/10</span>
+                <span style="color: #666; margin-left: 10px;">({{ movie.vote_count }} votes)</span>
+            </div>
+            <div style="color: #666;">
+                Popularity: {{ movie.popularity|floatformat:1 }}
+            </div>
+        </div>
+
+        {% if movie.genres %}
+        <div style="margin-bottom: 20px;">
+            <strong>Genres:</strong>
+            {% for genre in movie.genres %}
+                <span style="background-color: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-size: 14px; margin-right: 5px;">
+                    {{ genre }}
+                </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if movie.overview %}
+        <div>
+            <h3 style="color: #333;">Overview</h3>
+            <p style="line-height: 1.6; color: #555;">{{ movie.overview }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if movie.backdrop_url %}
+<div style="margin-top: 30px;">
+    <img src="{{ movie.backdrop_url }}" alt="{{ movie.title }} backdrop" style="width: 100%; border-radius: 8px;">
+</div>
+{% endif %}
+
+<div style="margin-top: 30px; text-align: center;">
+    <a href="{% url 'movies:movie_list' %}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+        ← Back to Movies
+    </a>
+</div>
+{% endblock %}

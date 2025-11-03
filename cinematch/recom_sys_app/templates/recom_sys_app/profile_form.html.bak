@@ -1,0 +1,392 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>My Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+  <style>
+    /* General Style */
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .profile-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+    
+    /* 群组操作区域 */
+    .group-actions {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+    
+    .group-actions h2 {
+      font-size: 1.3rem;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-create {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-create:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-join {
+      background: #2ecc71;
+      color: white;
+    }
+    
+    .btn-join:hover {
+      background: #27ae60;
+      transform: translateY(-2px);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    /* 加入群组表单 */
+    .join-form {
+      display: none;
+      margin-top: 15px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+    }
+    
+    .join-form.active {
+      display: block;
+    }
+    
+    .join-form label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #2c3e50;
+    }
+    
+    .join-form input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #dfe6e9;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .join-form input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .join-form-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn-submit {
+      background: #2ecc71;
+      color: white;
+      flex: 1;
+    }
+    
+    .btn-cancel {
+      background: #95a5a6;
+      color: white;
+      flex: 1;
+    }
+    
+    /* 导航链接 */
+    .nav-links {
+      margin-top: 20px;
+    }
+    
+    .nav-links a {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-links a:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+    }
+
+    /* Styled logout button to match nav links */
+    .nav-logout-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .nav-logout-btn:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+    }
+    
+    /* 表单样式 */
+    form button[type="submit"] {
+      background: #3498db;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    form button[type="submit"]:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'logout' %}" style="display:inline; margin-right:10px;">
+        {% csrf_token %}
+        <button type="submit" class="nav-logout-btn">Sign out</button>
+      </form>
+    {% else %}
+      <a href="{% url 'signup' %}">Sign up</a>
+    {% endif %}
+
+    <h1>🎬 My Profile</h1>
+    
+    <!-- 群组操作区域 -->
+    <div class="group-actions">
+      <h2>Group Sessions</h2>
+      
+      <div class="action-buttons">
+        <button id="createGroupBtn" class="btn btn-create">
+          ✨ Create New Group
+        </button>
+        <button id="toggleJoinBtn" class="btn btn-join">
+          🚪 Join Existing Group
+        </button>
+      </div>
+      
+      <!-- 加入群组表单（默认隐藏） -->
+      <div id="joinForm" class="join-form">
+        <label for="groupCodeInput">Enter Group Code</label>
+        <input 
+          type="text" 
+          id="groupCodeInput" 
+          placeholder="e.g., ABC123"
+          maxlength="6"
+          pattern="[A-Za-z0-9]{6}"
+        >
+        <div class="join-form-buttons">
+          <button id="submitJoinBtn" class="btn btn-submit">Join</button>
+          <button id="cancelJoinBtn" class="btn btn-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 个人资料表单 -->
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Save Profile</button>
+    </form>
+    
+    <div class="nav-links">
+      <a href="{% url 'recommend' %}">🎥 Go to Recommendations</a>
+    </div>
+  </div>
+
+  <script>
+    // 获取 CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // 创建群组
+    document.getElementById('createGroupBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('createGroupBtn');
+      const originalText = btn.textContent;
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Creating...';
+      
+      try {
+        const response = await fetch('/api/groups', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(`✅ Group created!\n\nGroup Code: ${result.data.groupCode}\n\nShare this code with friends!`);
+          window.location.href = result.data.redirectUrl;
+        } else {
+          alert('❌ Failed: ' + result.message);
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    // 显示/隐藏加入表单
+    const joinForm = document.getElementById('joinForm');
+    const toggleJoinBtn = document.getElementById('toggleJoinBtn');
+    const cancelJoinBtn = document.getElementById('cancelJoinBtn');
+    
+    toggleJoinBtn.addEventListener('click', () => {
+      joinForm.classList.add('active');
+      document.getElementById('groupCodeInput').focus();
+    });
+    
+    cancelJoinBtn.addEventListener('click', () => {
+      joinForm.classList.remove('active');
+      document.getElementById('groupCodeInput').value = '';
+    });
+
+    // 加入群组
+    document.getElementById('submitJoinBtn').addEventListener('click', async () => {
+      const input = document.getElementById('groupCodeInput');
+      const groupCode = input.value.trim().toUpperCase();
+      
+      if (!groupCode) {
+        alert('⚠️ Please enter a group code');
+        return;
+      }
+      
+      if (groupCode.length !== 6) {
+        alert('⚠️ Group code must be exactly 6 characters');
+        return;
+      }
+      
+      const btn = document.getElementById('submitJoinBtn');
+      const originalText = btn.textContent;
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Joining...';
+      
+      try {
+        const response = await fetch('/api/groups/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ groupCode: groupCode })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          const message = result.data.alreadyMember 
+            ? `ℹ️ You are already in group ${groupCode}`
+            : result.data.rejoined
+            ? `✅ Rejoined group ${groupCode}!`
+            : `✅ Successfully joined group ${groupCode}!`;
+          
+          alert(message);
+          window.location.href = result.data.redirectUrl;
+        } else {
+          alert('❌ ' + result.message);
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+    
+    // 按 Enter 键提交
+    document.getElementById('groupCodeInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('submitJoinBtn').click();
+      }
+    });
+  </script>
+</body>
+</html>
