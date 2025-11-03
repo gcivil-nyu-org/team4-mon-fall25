@@ -183,6 +183,131 @@
             object-fit: cover;
             border-radius: 5px;
         }
+
+        /* Movie Details Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+
+        .info-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 50;
+        }
+
+        .info-button:hover {
+            background: rgba(0,0,0,0.9);
+            border-color: rgba(255,255,255,0.6);
+            transform: scale(1.1);
+        }
+
+        .modal-poster {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .genre-tag {
+            display: inline-block;
+            background: rgba(103, 126, 234, 0.3);
+            padding: 5px 12px;
+            border-radius: 15px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border: 1px solid rgba(103, 126, 234, 0.5);
+        }
+
+        .cast-member {
+            background: rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        .streaming-provider {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(103, 126, 234, 0.2);
+            padding: 8px 16px;
+            border-radius: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .modal-loading {
+            text-align: center;
+            padding: 40px;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-black min-h-screen text-white">
@@ -239,6 +364,19 @@
             <a href="{% url 'recom_sys:profile' %}" class="text-gray-400 hover:text-white transition-colors">
                 Back to Profile
             </a>
+        </div>
+    </div>
+
+    <!-- Movie Details Modal -->
+    <div id="movie-details-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div id="modal-body">
+                <div class="modal-loading">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-4">Loading movie details...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -321,6 +459,7 @@
             const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
 
             card.innerHTML = `
+                <button class="info-button" onclick="showMovieDetails(${movie.tmdb_id}, event)" title="View Details">ℹ️</button>
                 <img src="${posterUrl}" alt="${movie.title}" class="card-image">
                 <div class="overlay like">LIKE</div>
                 <div class="overlay dislike">NOPE</div>
@@ -529,6 +668,174 @@
                 }
             }
             return cookieValue;
+        }
+
+        // Movie Details Modal Functions
+        let modalOpen = false;
+
+        async function showMovieDetails(tmdbId, event) {
+            // Prevent triggering swipe events
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+
+            const modal = document.getElementById('movie-details-modal');
+            const modalBody = document.getElementById('modal-body');
+
+            // Show modal with loading state
+            modal.classList.add('active');
+            modalOpen = true;
+
+            modalBody.innerHTML = `
+                <div class="modal-loading">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-4">Loading movie details...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/movie/${tmdbId}/`);
+                const data = await response.json();
+
+                if (data.error || !data.success) {
+                    modalBody.innerHTML = `
+                        <div class="p-8 text-center">
+                            <div class="text-5xl mb-4">😕</div>
+                            <h3 class="text-xl font-bold mb-2">Error Loading Details</h3>
+                            <p class="text-gray-300">${data.error || 'Unable to load movie details'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Extract movie data from the nested structure
+                const movie = data.movie;
+
+                // Extract year from release_date
+                const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+
+                // Build genres HTML
+                const genresHTML = movie.genres && movie.genres.length > 0
+                    ? movie.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')
+                    : '<span class="text-gray-400">No genres available</span>';
+
+                // Build cast HTML - extract just names
+                const castHTML = movie.cast && movie.cast.length > 0
+                    ? movie.cast.map(actor => `<span class="cast-member">${actor.name}</span>`).join('')
+                    : '<span class="text-gray-400">Cast information not available</span>';
+
+                // Build streaming providers HTML
+                let streamingHTML = '';
+                if (movie.watch_providers) {
+                    const providers = [];
+                    if (movie.watch_providers.flatrate && movie.watch_providers.flatrate.length > 0) {
+                        providers.push(...movie.watch_providers.flatrate.map(p =>
+                            `<div class="streaming-provider">📺 ${p.provider_name}</div>`
+                        ));
+                    }
+                    streamingHTML = providers.length > 0
+                        ? providers.join('')
+                        : '<p class="text-gray-400">Streaming information not available</p>';
+                } else {
+                    streamingHTML = '<p class="text-gray-400">Streaming information not available</p>';
+                }
+
+                // Format runtime
+                const runtimeText = movie.runtime
+                    ? `⏱️ ${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`
+                    : '';
+
+                // Build full modal content
+                modalBody.innerHTML = `
+                    <img src="${movie.poster_url || 'https://via.placeholder.com/600x900?text=No+Poster'}"
+                         alt="${movie.title}"
+                         class="modal-poster">
+
+                    <div class="p-6">
+                        <h2 class="text-3xl font-bold mb-3">${movie.title} ${year ? `(${year})` : ''}</h2>
+
+                        <div class="flex items-center gap-4 mb-4 text-lg">
+                            ${movie.vote_average ? `<span>⭐ ${movie.vote_average.toFixed(1)}/10</span>` : ''}
+                            ${runtimeText}
+                        </div>
+
+                        ${genresHTML ? `
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase mb-2">Genres</h3>
+                                <div>${genresHTML}</div>
+                            </div>
+                        ` : ''}
+
+                        ${movie.overview ? `
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase mb-2">Overview</h3>
+                                <p class="text-gray-200 leading-relaxed">${movie.overview}</p>
+                            </div>
+                        ` : ''}
+
+                        ${movie.director ? `
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase mb-2">Director</h3>
+                                <p class="text-gray-200">🎥 ${movie.director.name}</p>
+                            </div>
+                        ` : ''}
+
+                        ${castHTML ? `
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase mb-2">Top Cast</h3>
+                                <div>${castHTML}</div>
+                            </div>
+                        ` : ''}
+
+                        ${streamingHTML ? `
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase mb-2">Available On</h3>
+                                <div>${streamingHTML}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+                modalBody.innerHTML = `
+                    <div class="p-8 text-center">
+                        <div class="text-5xl mb-4">😕</div>
+                        <h3 class="text-xl font-bold mb-2">Error Loading Details</h3>
+                        <p class="text-gray-300">Unable to load movie details. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function closeModal(event) {
+            // If event is provided and clicked on overlay (not content), close
+            if (event && event.target.id !== 'movie-details-modal') {
+                return;
+            }
+
+            const modal = document.getElementById('movie-details-modal');
+            modal.classList.remove('active');
+            modalOpen = false;
+        }
+
+        // Prevent swiping when modal is open
+        function startDrag(e) {
+            if (currentIndex >= movies.length || modalOpen) return;
+
+            isDragging = true;
+            const card = e.currentTarget;
+            card.classList.add('swiping');
+
+            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+
+            const moveHandler = (e) => handleDragMove(e, card);
+            const endHandler = () => handleDragEnd(card, moveHandler, endHandler);
+
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('touchmove', moveHandler);
+            document.addEventListener('mouseup', endHandler);
+            document.addEventListener('touchend', endHandler);
         }
     </script>
 </body>
