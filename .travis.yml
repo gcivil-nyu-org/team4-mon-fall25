@@ -65,7 +65,7 @@ script:
 
 # Send coverage to Coveralls
 after_success:
-  - coveralls
+  - coveralls --service=travis-pro
 
 # Post-submit CI - cron job (runs once a day on main branch)
 # Configure in Travis settings: https://app.travis-ci.com/github/gcivil-nyu-org/team4-mon-fall25/settings
