@@ -157,6 +157,8 @@ class GroupSession(models.Model):
     )
 
     is_active = models.BooleanField(default=True, db_index=True)
+    is_public = models.BooleanField(default=False, db_index=True)
+    genre_filter = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -317,6 +319,7 @@ class GroupChatMessage(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_messages"
     )
     content = models.TextField()
+    is_system_message = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 

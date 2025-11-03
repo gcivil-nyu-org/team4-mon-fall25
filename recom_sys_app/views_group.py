@@ -700,3 +700,96 @@ def get_group_matches(request, group_code):
             {"error": f"Server Error: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def join_or_create_community_group(request):
+    """
+    Join or create a public community group based on genre.
+    If a public group with the same genre exists, join it.
+    Otherwise, create a new public group.
+
+    URL: POST /api/groups/community/join/
+    Body: {
+        "genre_id": "28"  // TMDB genre ID
+    }
+    """
+    try:
+        from django.db import models
+
+        genre_id = request.data.get("genre_id")
+
+        if not genre_id:
+            return Response(
+                {"error": "Genre ID is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = request.user
+
+        # Try to find an existing public group with this genre that's not full
+        # (limit to groups with less than 10 members for better experience)
+        existing_group = (
+            GroupSession.objects
+            .filter(is_public=True, is_active=True, genre_filter=genre_id)
+            .annotate(member_count=models.Count('members'))
+            .filter(member_count__lt=10)
+            .order_by('-created_at')
+            .first()
+        )
+
+        if existing_group:
+            # Check if user is already a member
+            existing_member = GroupMember.objects.filter(
+                group_session=existing_group,
+                user=user
+            ).first()
+
+            if existing_member:
+                # Already a member, just return the group
+                return Response({
+                    "success": True,
+                    "action": "already_member",
+                    "group_id": str(existing_group.id),
+                    "group_code": existing_group.group_code,
+                    "redirect_url": f"/group/{existing_group.id}/"
+                })
+            else:
+                # Join the existing group
+                GroupMember.objects.create(
+                    group_session=existing_group,
+                    user=user,
+                    role=GroupMember.Role.MEMBER,
+                    is_active=True
+                )
+
+                return Response({
+                    "success": True,
+                    "action": "joined",
+                    "group_id": str(existing_group.id),
+                    "group_code": existing_group.group_code,
+                    "redirect_url": f"/group/{existing_group.id}/"
+                })
+        else:
+            # Create a new public community group
+            new_group = GroupSession.objects.create(
+                creator=user,
+                is_public=True,
+                is_active=True,
+                genre_filter=genre_id
+            )
+
+            return Response({
+                "success": True,
+                "action": "created",
+                "group_id": str(new_group.id),
+                "group_code": new_group.group_code,
+                "redirect_url": f"/group/{new_group.id}/"
+            })
+
+    except Exception as e:
+        return Response(
+            {"error": f"Server Error: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
