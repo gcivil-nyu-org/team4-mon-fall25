@@ -123,7 +123,7 @@ DATABASES = {
 }
 
 # Use PostgreSQL if configured
-if False:  # Change to True to use PostgreSQL
+if True:  # Change to True to use PostgreSQL
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
