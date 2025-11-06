@@ -457,7 +457,7 @@ def edit_profile_view(request):
         if form.is_valid():
             form.instance.user = request.user
             form.save()
-            return redirect("profile")
+            return redirect("recom_sys:profile")
     else:
         form = UserProfileForm(instance=profile)
 
@@ -531,7 +531,7 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("profile")
+            return redirect("recom_sys:profile")
     else:
         form = SignUpForm()
 
@@ -902,7 +902,7 @@ def group_lobby(request, group_id):
 
         if not membership:
             # 如果不是成员，重定向到个人资料页
-            return redirect("profile")
+            return redirect("recom_sys:profile")
 
         context = {
             "group": group,
@@ -913,7 +913,7 @@ def group_lobby(request, group_id):
         return render(request, "recom_sys_app/group_lobby.html", context)
 
     except GroupSession.DoesNotExist:
-        return redirect("profile")
+        return redirect("recom_sys:profile")
 
 
 @login_required

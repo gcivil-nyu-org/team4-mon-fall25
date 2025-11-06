@@ -3,8 +3,6 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import date
 import uuid
-import random
-import string
 
 
 # ---- 1) User fundamentals ----
@@ -149,7 +147,7 @@ class GroupSession(models.Model):
     """群组会话模型 - 用于多人协作选电影"""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group_code = models.CharField(max_length=8, unique=True, db_index=True)
+    group_code = models.CharField(max_length=16, unique=True, db_index=True)
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -157,6 +155,8 @@ class GroupSession(models.Model):
     )
 
     is_active = models.BooleanField(default=True, db_index=True)
+    is_public = models.BooleanField(default=False, db_index=True)
+    genre_filter = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -317,6 +317,7 @@ class GroupChatMessage(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_messages"
     )
     content = models.TextField()
+    is_system_message = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 

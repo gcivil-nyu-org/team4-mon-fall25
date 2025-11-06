@@ -286,16 +286,16 @@ def solo_swipe(request):
 
         if existing_interaction:
             # Update existing interaction
-            existing_interaction.status = action  # 'like' or 'dislike'
-            existing_interaction.movie_title = movie_title
+            existing_interaction.status = (
+                action.upper()
+            )  # Convert to 'LIKE' or 'DISLIKE'
             existing_interaction.save()
         else:
             # Create new interaction
             Interaction.objects.create(
                 user=request.user,
-                movie_title=movie_title,
                 tmdb_id=tmdb_id,
-                liked=(action == "like"),
+                status=action.upper(),  # Convert to 'LIKE' or 'DISLIKE'
             )
 
         response_data = {
@@ -332,13 +332,13 @@ def get_solo_likes(request):
     try:
         # Get all liked interactions for this user
         liked_interactions = Interaction.objects.filter(
-            user=request.user, status="like"
-        ).order_by("-timestamp")[
+            user=request.user, status="LIKE"
+        ).order_by("-updated_at")[
             :50
         ]  # Get last 50 likes
 
         # Get unique tmdb_ids
-        tmdb_ids = list(liked_interactions.values_list("tmdb_id", flat=True).distinct())
+        tmdb_ids = list(set(liked_interactions.values_list("tmdb_id", flat=True)))
 
         # Fetch details from TMDB
         movies = _tmdb_fetch_by_ids(tmdb_ids)
@@ -346,6 +346,9 @@ def get_solo_likes(request):
         return JsonResponse({"success": True, "movies": movies, "total": len(movies)})
 
     except Exception as e:
+        import traceback
+
+        traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 

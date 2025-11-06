@@ -1,1 +1,1 @@
-web: gunicorn --bind :8000 --workers 3 --timeout 120 recommendation_sys.wsgi:application
+web: daphne -b 0.0.0.0 -p 8000 recommendation_sys.asgi:application

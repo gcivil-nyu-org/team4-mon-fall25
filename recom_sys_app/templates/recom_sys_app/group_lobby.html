@@ -394,6 +394,41 @@
       </div>
     </div>
 
+    <!-- Chat Section -->
+    <div class="members-section" style="margin-top: 30px;">
+      <div class="members-header">
+        <h2 class="members-title">
+          <span>💬</span>
+          Group Chat
+        </h2>
+      </div>
+
+      <div id="chatMessages" style="background: white; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; min-height: 200px;">
+        <div style="text-align: center; color: #9ca3af; padding: 40px 20px;">
+          No messages yet. Start chatting!
+        </div>
+      </div>
+
+      <form id="chatForm" onsubmit="sendChatMessage(event)" style="display: flex; gap: 10px;">
+        <input
+          type="text"
+          id="chatInput"
+          placeholder="Type a message..."
+          style="flex: 1; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s;"
+          onfocus="this.style.borderColor='#8b5cf6'"
+          onblur="this.style.borderColor='#e5e7eb'"
+        />
+        <button
+          type="submit"
+          style="padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;"
+          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'"
+          onmouseout="this.style.transform=''; this.style.boxShadow=''"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+
     <!-- Actions -->
     <div class="lobby-actions">
       <button id="startMatchingBtn" class="btn-primary">
@@ -510,6 +545,123 @@
 
     // Auto-refresh members list every 5 seconds
     setInterval(loadGroupDetails, 5000);
+
+    // ==================== Chat WebSocket ====================
+    let chatSocket = null;
+    const currentUsername = '{{ request.user.username }}';
+
+    function connectChatWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const chatWsUrl = `${protocol}//${window.location.host}/ws/chat/${groupCode}/`;
+
+      chatSocket = new WebSocket(chatWsUrl);
+
+      chatSocket.onopen = function(e) {
+        console.log('[Chat] WebSocket connected');
+        loadChatHistory();
+      };
+
+      chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.type === 'chat_message') {
+          displayChatMessage(data);
+        }
+      };
+
+      chatSocket.onclose = function(e) {
+        console.log('[Chat] WebSocket closed, reconnecting...');
+        setTimeout(connectChatWebSocket, 3000);
+      };
+
+      chatSocket.onerror = function(e) {
+        console.error('[Chat] WebSocket error:', e);
+      };
+    }
+
+    function sendChatMessage(event) {
+      event.preventDefault();
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+
+      if (message && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+        chatSocket.send(JSON.stringify({
+          'type': 'chat_message',
+          'message': message
+        }));
+        input.value = '';
+      }
+    }
+
+    function displayChatMessage(data) {
+      const messagesDiv = document.getElementById('chatMessages');
+
+      // Remove "no messages" placeholder if it exists
+      if (messagesDiv.querySelector('[style*="text-align: center"]')) {
+        messagesDiv.innerHTML = '';
+      }
+
+      const isOwnMessage = data.username === currentUsername;
+      const messageDiv = document.createElement('div');
+      messageDiv.style.cssText = `
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: ${isOwnMessage ? 'flex-end' : 'flex-start'};
+      `;
+
+      const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      messageDiv.innerHTML = `
+        <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">
+          ${isOwnMessage ? 'You' : data.username} • ${time}
+        </div>
+        <div style="
+          background: ${isOwnMessage ? 'linear-gradient(135deg, #8b5cf6 0%, #667eea 100%)' : '#f3f4f6'};
+          color: ${isOwnMessage ? 'white' : '#1f2937'};
+          padding: 10px 14px;
+          border-radius: 12px;
+          max-width: 70%;
+          word-wrap: break-word;
+        ">
+          ${escapeHtml(data.message)}
+        </div>
+      `;
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function loadChatHistory() {
+      try {
+        const response = await fetch(`/api/groups/${groupCode}/chat/history/?limit=50`);
+        const result = await response.json();
+
+        if (result.success && result.messages.length > 0) {
+          const messagesDiv = document.getElementById('chatMessages');
+          messagesDiv.innerHTML = '';
+
+          result.messages.forEach(msg => {
+            displayChatMessage({
+              username: msg.user,
+              message: msg.message,
+              timestamp: msg.created_at,
+              type: 'chat_message'
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Connect chat WebSocket on page load
+    connectChatWebSocket();
   </script>
 </body>
 </html>

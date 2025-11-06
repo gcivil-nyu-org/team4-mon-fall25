@@ -684,16 +684,55 @@
       }
     });
 
-    // Join Community (placeholder - can be extended)
-    function joinCommunity() {
+    // Join Community - Create or join a public group based on genre
+    async function joinCommunity() {
       const genreId = document.getElementById('communityGenre').value;
       if (!genreId) {
         alert('Please select a genre first');
         return;
       }
-      // For now, redirect to solo mode with the selected genre
-      // This can be extended to create a community room feature
-      window.location.href = `{% url 'recom_sys:solo_genre_selection' %}`;
+
+      try {
+        // Call API to join or create community group
+        const response = await fetch('{% url "recom_sys:api_community_join" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({
+            genre_id: genreId
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Redirect to the group lobby/deck
+          window.location.href = data.redirect_url;
+        } else {
+          alert(data.error || 'Failed to join community group');
+        }
+      } catch (error) {
+        console.error('Error joining community:', error);
+        alert('Failed to join community group. Please try again.');
+      }
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
     }
   </script>
 </body>

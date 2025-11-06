@@ -13,6 +13,7 @@ from .views_group import (
     group_room_view,
     group_deck_view,  # New: Swipe Card Page View
     get_group_matches,  # New: Retrieve matching records
+    join_or_create_community_group,  # New: Community group creation
 )
 from . import views_group
 from . import views  # For additional helper views
@@ -97,6 +98,11 @@ urlpatterns = [
         "api/groups/<str:group_code>/matches/",
         get_group_matches,
         name="api_group_matches",
+    ),
+    path(
+        "api/groups/community/join/",
+        join_or_create_community_group,
+        name="api_community_join",
     ),
 ]
 

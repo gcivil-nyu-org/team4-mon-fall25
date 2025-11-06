@@ -1,4 +1,5 @@
 language: python
+dist: jammy  # Ubuntu 22.04 has PostgreSQL 14 by default (focal has 13.21)
 python:
   - "3.11"
   - "3.12"
@@ -6,62 +7,43 @@ python:
 # Services
 services:
   - postgresql
-  - redis-server  # ✨ Add Redis support for WebSocket testing
+  - redis-server
 
 # Environment variables
 env:
   global:
-    - DJANGO_VERSION=5.2.6
+    - CI=1
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
     - POSTGRES_PASSWORD=postgres
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
+    - TMDB_TOKEN=dummy-token-for-testing  # Required for API tests (mocked)
 
 # Cache dependencies
 cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install
+# Before install - Setup PostgreSQL
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y postgresql postgresql-contrib
-  - sudo service postgresql start
-  - sudo -u postgres psql -c "CREATE DATABASE cinematch_test;" || true
-  - sudo -u postgres psql -c "CREATE USER cinematch_user WITH PASSWORD 'cinematch_password';" || true
-  - sudo -u postgres psql -c "ALTER USER cinematch_user CREATEDB;" || true
-  - sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE cinematch_test TO cinematch_user;" || true
-  - sudo -u postgres psql -c "ALTER USER cinematch_user SUPERUSER;" || true
+  - sudo -u postgres psql -c "CREATE DATABASE cinematch_test;"
+  - sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 
 # Install dependencies
 install:
   - pip install --upgrade pip
   - pip install -r requirements.txt
-  # ✨ Add test dependencies
-  - pip install pytest pytest-django pytest-asyncio pytest-cov
-  - pip install black flake8 coverage coveralls
+  - pip install pytest pytest-django pytest-asyncio pytest-cov black flake8 coverage coveralls
 
 # Pre-submit CI - runs on every push
 script:
-  # Run black for code formatting
   - black --check .
-
-  # Run flake8 for linting (allow to fail for now)
   - flake8 . --max-line-length=120 --exclude=migrations,__pycache__,venv,env --config=.flake8 || true
-
-  # Run Django migrations
-  - python manage.py makemigrations
-  - python manage.py migrate
-
-  # Run unit tests with coverage (allow failures for missing env vars)
-  - coverage run --source='recom_sys_app' manage.py test recom_sys_app || true
-
-  # Run all pytest tests (allow failures for missing env vars)
-  - pytest recom_sys_app/ -v --cov=recom_sys_app || true
-
-  # Check coverage threshold (skip for now until env vars are configured)
-  - coverage report --fail-under=85 || true
+  - python manage.py makemigrations --check --dry-run
+  - python manage.py migrate --noinput
+  - coverage run --source='recom_sys_app' manage.py test recom_sys_app
+  - pytest recom_sys_app/ -v --cov=recom_sys_app
 
 # Send coverage to Coveralls
 after_success:
@@ -70,26 +52,16 @@ after_success:
 # Post-submit CI - cron job (runs once a day on main branch)
 # Configure in Travis settings: https://app.travis-ci.com/github/gcivil-nyu-org/team4-mon-fall25/settings
 
-# CD Deployment (commented out for now)
-# Uncomment when ready to deploy to AWS
-# deploy:
-#   provider: elasticbeanstalk
-#   access_key_id: $AWS_ACCESS_KEY_ID
-#   secret_access_key: $AWS_SECRET_ACCESS_KEY
-#   region: us-east-1
-#   app: cinematch-app
-#   env: cinematch-integration
-#   on:
-#     branch: develop
-# 
-# - provider: elasticbeanstalk
-#   access_key_id: $AWS_ACCESS_KEY_ID
-#   secret_access_key: $AWS_SECRET_ACCESS_KEY
-#   region: us-east-1
-#   app: cinematch-app
-#   env: cinematch-production
-#   on:
-#     branch: main
+# CD Deployment - Auto-deploy to AWS when tests pass
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: $AWS_ACCESS_KEY_ID
+  secret_access_key: $AWS_SECRET_ACCESS_KEY
+  region: us-east-1
+  app: cinematch-app
+  env: cinematch-production
+  on:
+    branch: develop
 
 # Notifications
 notifications:
