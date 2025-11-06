@@ -8,9 +8,6 @@ services:
   - postgresql
   - redis-server  # ✨ Add Redis support for WebSocket testing
 
-addons:
-  postgresql: "14"
-
 # Environment variables
 env:
   global:
