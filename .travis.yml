@@ -29,18 +29,11 @@ cache:
 
 # Before install - Configure PostgreSQL 14
 before_install:
-  # Stop all PostgreSQL services
-  - sudo systemctl stop postgresql || true
-  - sudo service postgresql stop || true
-
-  # Start only PostgreSQL 14
-  - sudo systemctl start postgresql@14-main || sudo service postgresql start 14
-
-  # Wait for PostgreSQL to be ready
-  - sleep 5
+  # Wait for PostgreSQL 14 to be ready (Travis addon starts it automatically on 5433)
+  - sleep 3
 
   # Create the test database using PostgreSQL 14 on port 5433
-  - psql -p 5433 -c 'create database cinematch_test;' -U postgres -h localhost
+  - psql -p 5433 -c 'CREATE DATABASE cinematch_test;' -U postgres -h localhost
 
 # Install dependencies
 install:
