@@ -25,11 +25,8 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install
+# Before install - PostgreSQL 14 is provided by addons
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y postgresql postgresql-contrib
-  - sudo service postgresql start
   - sudo -u postgres psql -c "CREATE DATABASE cinematch_test;" || true
   - sudo -u postgres psql -c "CREATE USER cinematch_user WITH PASSWORD 'cinematch_password';" || true
   - sudo -u postgres psql -c "ALTER USER cinematch_user CREATEDB;" || true
