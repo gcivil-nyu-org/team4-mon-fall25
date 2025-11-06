@@ -70,26 +70,16 @@ after_success:
 # Post-submit CI - cron job (runs once a day on main branch)
 # Configure in Travis settings: https://app.travis-ci.com/github/gcivil-nyu-org/team4-mon-fall25/settings
 
-# CD Deployment (commented out for now)
-# Uncomment when ready to deploy to AWS
-# deploy:
-#   provider: elasticbeanstalk
-#   access_key_id: $AWS_ACCESS_KEY_ID
-#   secret_access_key: $AWS_SECRET_ACCESS_KEY
-#   region: us-east-1
-#   app: cinematch-app
-#   env: cinematch-integration
-#   on:
-#     branch: develop
-# 
-# - provider: elasticbeanstalk
-#   access_key_id: $AWS_ACCESS_KEY_ID
-#   secret_access_key: $AWS_SECRET_ACCESS_KEY
-#   region: us-east-1
-#   app: cinematch-app
-#   env: cinematch-production
-#   on:
-#     branch: main
+# CD Deployment - Auto-deploy to AWS when tests pass
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: $AWS_ACCESS_KEY_ID
+  secret_access_key: $AWS_SECRET_ACCESS_KEY
+  region: us-east-1
+  app: cinematch-app
+  env: cinematch-production
+  on:
+    branch: develop
 
 # Notifications
 notifications:
