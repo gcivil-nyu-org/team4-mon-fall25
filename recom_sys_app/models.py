@@ -147,7 +147,7 @@ class GroupSession(models.Model):
     """群组会话模型 - 用于多人协作选电影"""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group_code = models.CharField(max_length=8, unique=True, db_index=True)
+    group_code = models.CharField(max_length=16, unique=True, db_index=True)
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
