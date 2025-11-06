@@ -207,12 +207,14 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
 if os.getenv('REDIS_HOST'):
-    # Production: Use Redis
+    # Production: Use Redis with SSL/TLS for AWS ElastiCache Serverless
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [(REDIS_HOST, REDIS_PORT)],
+                "hosts": [{
+                    "address": f"rediss://{REDIS_HOST}:{REDIS_PORT}",
+                }],
                 "capacity": 1500,
                 "expiry": 10,
             },
