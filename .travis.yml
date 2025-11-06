@@ -4,12 +4,11 @@ python:
   - "3.12"
 
 # Services
+services:
+  - redis-server  # ✨ Add Redis support for WebSocket testing
+
 addons:
   postgresql: "14"
-
-services:
-  - postgresql
-  - redis-server  # ✨ Add Redis support for WebSocket testing
 
 # Environment variables
 env:
