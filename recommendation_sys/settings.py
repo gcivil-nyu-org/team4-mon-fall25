@@ -201,15 +201,31 @@ LOGOUT_REDIRECT_URL = "recom_sys:login"
 ASGI_APPLICATION = "recommendation_sys.asgi.application"
 
 # Channel Layers Configuration
-# Use Redis for production (required for WebSocket group chat)
+# Use Redis for production (required for WebSocket group chat across multiple servers)
 # Fallback to InMemory for local development
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
-# For now, use InMemoryChannelLayer even in production
-# AWS ElastiCache Serverless doesn't support the Lua scripts that channels-redis uses
-# TODO: Migrate to a standard ElastiCache instance (non-Serverless) for production WebSocket support
-CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+# Use Redis if REDIS_HOST is set to a real Redis server, otherwise use InMemory
+# IMPORTANT: For production, use ElastiCache Redis with "cluster mode disabled"
+# ElastiCache Serverless and cluster-enabled Redis don't support Lua scripts used by channels-redis
+USE_REDIS_CHANNELS = os.getenv("USE_REDIS_CHANNELS", "False") == "True"
+
+if USE_REDIS_CHANNELS:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(REDIS_HOST, REDIS_PORT)],
+                "capacity": 1000,  # Max messages per channel
+                "expiry": 600,  # Message expiry in seconds (10 minutes)
+            },
+        },
+    }
+else:
+    # InMemory: works for single-server deployments and testing
+    # WARNING: WebSocket groups won't work across multiple EC2 instances
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 # WebSocket-related settings
 WEBSOCKET_ACCEPT_ALL = False  # Production environments should be set to False.
