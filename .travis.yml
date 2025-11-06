@@ -6,6 +6,7 @@ python:
 # Services
 services:
   - redis-server  # ✨ Add Redis support for WebSocket testing
+  - postgresql
 
 addons:
   postgresql: "14"
