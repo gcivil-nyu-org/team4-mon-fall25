@@ -1,12 +1,12 @@
 language: python
-dist: jammy
+dist: jammy  # Ubuntu 22.04 has PostgreSQL 14 by default (focal has 13.21)
 python:
   - "3.11"
   - "3.12"
 
 # Services
 services:
-  - docker
+  - postgresql
   - redis-server
 
 # Environment variables
@@ -16,9 +16,6 @@ env:
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
     - POSTGRES_PASSWORD=postgres
-    - PGHOST=127.0.0.1
-    - PGPORT=5432
-    - DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/cinematch_test
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
 
@@ -27,13 +24,10 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install - Setup PostgreSQL 14 via Docker
+# Before install - Setup PostgreSQL
 before_install:
-  # Stop default PostgreSQL service to free port 5432
-  - sudo systemctl stop postgresql || true
-  - docker run --name pg14 -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD -e POSTGRES_DB=$POSTGRES_DB -p 5432:5432 -d postgres:14
-  - for i in {1..40}; do docker exec pg14 pg_isready -U $POSTGRES_USER >/dev/null 2>&1 && break; sleep 1; done
-  - docker exec pg14 psql -U $POSTGRES_USER -d $POSTGRES_DB -c "select version();"
+  - sudo -u postgres psql -c "CREATE DATABASE cinematch_test;"
+  - sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 
 # Install dependencies
 install:

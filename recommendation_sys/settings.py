@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -149,10 +148,6 @@ if True:  # Change to True to use PostgreSQL
         db_config["OPTIONS"] = {"connect_timeout": 10}
 
     DATABASES = {"default": db_config}
-
-# Override with DATABASE_URL if set (for Travis CI Docker PostgreSQL)
-if os.getenv("DATABASE_URL"):
-    DATABASES["default"] = dj_database_url.config(conn_max_age=0, ssl_require=False)
 
 
 # Password validation
