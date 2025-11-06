@@ -203,8 +203,8 @@ ASGI_APPLICATION = "recommendation_sys.asgi.application"
 # Channel Layers Configuration
 # Use Redis for production (required for WebSocket group chat)
 # Fallback to InMemory for local development
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
 # For now, use InMemoryChannelLayer even in production
 # AWS ElastiCache Serverless doesn't support the Lua scripts that channels-redis uses
