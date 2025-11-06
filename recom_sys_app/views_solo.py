@@ -338,7 +338,7 @@ def get_solo_likes(request):
         ]  # Get last 50 likes
 
         # Get unique tmdb_ids
-        tmdb_ids = list(liked_interactions.values_list("tmdb_id", flat=True).distinct())
+        tmdb_ids = list(set(liked_interactions.values_list("tmdb_id", flat=True)))
 
         # Fetch details from TMDB
         movies = _tmdb_fetch_by_ids(tmdb_ids)
@@ -346,6 +346,8 @@ def get_solo_likes(request):
         return JsonResponse({"success": True, "movies": movies, "total": len(movies)})
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
