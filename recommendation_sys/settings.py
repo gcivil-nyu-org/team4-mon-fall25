@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -149,6 +150,10 @@ if True:  # Change to True to use PostgreSQL
 
     DATABASES = {"default": db_config}
 
+# Override with DATABASE_URL if set (for Travis CI Docker PostgreSQL)
+if os.getenv("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.config(conn_max_age=0, ssl_require=False)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -229,6 +234,10 @@ if USE_REDIS_CHANNELS:
 else:
     # InMemory: works for single-server deployments and testing
     # WARNING: WebSocket groups won't work across multiple EC2 instances
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+# Force InMemory for CI testing (Travis CI)
+if os.getenv("CI"):
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 # WebSocket-related settings

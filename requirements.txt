@@ -53,3 +53,4 @@ cryptography>=41.0.0  # Required for symmetric encryption in channels-redis
 
 coverage
 coveralls
+dj-database-url
