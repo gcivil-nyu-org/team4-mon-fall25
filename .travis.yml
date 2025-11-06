@@ -53,18 +53,18 @@ after_success:
 # Configure in Travis settings: https://app.travis-ci.com/github/gcivil-nyu-org/team4-mon-fall25/settings
 
 # CD Deployment - Auto-deploy to AWS when tests pass
-# Disabled until AWS environment is configured
-# deploy:
-#   provider: elasticbeanstalk
-#   access_key_id: $AWS_ACCESS_KEY_ID
-#   secret_access_key: $AWS_SECRET_ACCESS_KEY
-#   region: us-east-1
-#   app: cinematch-app
-#   env: cinematch-production
-#   bucket_name: elasticbeanstalk-us-east-1-YOUR_ACCOUNT_ID
-#   bucket_path: cinematch-app
-#   on:
-#     branch: develop
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: $AWS_ACCESS_KEY_ID
+  secret_access_key: $AWS_SECRET_ACCESS_KEY
+  region: us-east-1
+  app: cinematch-app
+  env: cinematch-production
+  bucket_name: elasticbeanstalk-us-east-1-464975960156
+  bucket_path: cinematch-app
+  skip_cleanup: true
+  on:
+    branch: develop
 
 # Notifications
 notifications:
