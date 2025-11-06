@@ -209,10 +209,10 @@ option_settings:
     REDIS_HOST: "cinematch-redis.XXXXXX.0001.use1.cache.amazonaws.com"  # UPDATE THIS
     REDIS_PORT: "6379"
 
-    # API Keys
-    GROQ_API_KEY: "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"
-    TMDB_TOKEN: "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5Y2RkMjZhMTEwZDgxOTllYzY5ZDI2MzZlNDczYmRmZSIsIm5iZiI6MTcyOTcyOTQxNy43MjU5NjgsInN1YiI6IjY3MTlkMTY5YjE1ZDk3MTg0YzljYWFlOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.fNXdXgYSEY7BnYnXRFtRTqvZX2cJgCZp0rRH0m-VnYM"
-    TMDB_API_KEY: "9cdd26a110d8199ec69d2636e473bdfe"
+    # API Keys (get from team lead)
+    GROQ_API_KEY: "your-groq-api-key"
+    TMDB_TOKEN: "your-tmdb-bearer-token"
+    TMDB_API_KEY: "your-tmdb-api-key"
     MOVIES_PATH: "movies.txt"
 ```
 
