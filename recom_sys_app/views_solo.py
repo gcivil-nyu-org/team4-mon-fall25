@@ -333,7 +333,7 @@ def get_solo_likes(request):
         # Get all liked interactions for this user
         liked_interactions = Interaction.objects.filter(
             user=request.user, status="LIKE"
-        ).order_by("-timestamp")[
+        ).order_by("-updated_at")[
             :50
         ]  # Get last 50 likes
 

@@ -393,7 +393,7 @@ class SoloSwipeAPITest(TestCase):
 
         # FIXED: Check using 'status' field instead of 'liked'
         interaction = Interaction.objects.get(user=self.user, tmdb_id=550)
-        self.assertEqual(interaction.status, "like")
+        self.assertEqual(interaction.status, "LIKE")
 
     def test_swipe_dislike_success(self):
         """Test successful dislike swipe"""
@@ -415,7 +415,7 @@ class SoloSwipeAPITest(TestCase):
 
         # FIXED: Check using 'status' field
         interaction = Interaction.objects.get(user=self.user, tmdb_id=551)
-        self.assertEqual(interaction.status, "dislike")
+        self.assertEqual(interaction.status, "DISLIKE")
 
     def test_swipe_update_existing(self):
         """Test that swiping again updates existing interaction"""
