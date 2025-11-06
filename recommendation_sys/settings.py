@@ -208,6 +208,8 @@ REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
 if os.getenv('REDIS_HOST'):
     # Production: Use Redis with SSL/TLS for AWS ElastiCache Serverless
+    # ElastiCache Serverless doesn't support Lua scripts without input keys
+    # We need to use symmetric encryption instead of Lua scripts
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -215,6 +217,8 @@ if os.getenv('REDIS_HOST'):
                 "hosts": [f"rediss://{REDIS_HOST}:{REDIS_PORT}"],
                 "capacity": 1500,
                 "expiry": 10,
+                # Use symmetric encryption to avoid Lua script issues with ElastiCache Serverless
+                "symmetric_encryption_keys": [SECRET_KEY],
             },
         },
     }
