@@ -212,10 +212,7 @@ if os.getenv('REDIS_HOST'):
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [{
-                    "address": (REDIS_HOST, REDIS_PORT),
-                    "ssl": True,
-                }],
+                "hosts": [f"rediss://{REDIS_HOST}:{REDIS_PORT}"],
                 "capacity": 1500,
                 "expiry": 10,
             },
