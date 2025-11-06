@@ -442,7 +442,7 @@ class SoloSwipeAPITest(TestCase):
         self.assertEqual(interactions.count(), 1)
 
         interaction = interactions.first()
-        self.assertEqual(interaction.status, "like")
+        self.assertEqual(interaction.status, "LIKE")
 
     def test_swipe_missing_tmdb_id(self):
         """Test that missing tmdb_id returns error"""

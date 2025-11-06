@@ -286,14 +286,14 @@ def solo_swipe(request):
 
         if existing_interaction:
             # Update existing interaction
-            existing_interaction.status = action.upper()  # Convert to 'LIKE' or 'DISLIKE'
-            existing_interaction.movie_title = movie_title
+            existing_interaction.status = (
+                action.upper()
+            )  # Convert to 'LIKE' or 'DISLIKE'
             existing_interaction.save()
         else:
             # Create new interaction
             Interaction.objects.create(
                 user=request.user,
-                movie_title=movie_title,
                 tmdb_id=tmdb_id,
                 status=action.upper(),  # Convert to 'LIKE' or 'DISLIKE'
             )
