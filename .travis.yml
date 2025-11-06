@@ -28,6 +28,8 @@ cache:
 
 # Before install - Use PostgreSQL addon (default peer authentication)
 before_install:
+  - sudo service postgresql start
+  - sleep 5
   - psql -c 'create database cinematch_test;' -U postgres
 
 # Install dependencies
