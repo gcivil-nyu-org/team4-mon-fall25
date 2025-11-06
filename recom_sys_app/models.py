@@ -3,8 +3,6 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import date
 import uuid
-import random
-import string
 
 
 # ---- 1) User fundamentals ----

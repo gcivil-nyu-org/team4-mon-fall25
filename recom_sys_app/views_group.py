@@ -15,12 +15,7 @@ from .services import RecommendationService
 # Complete Chat Views for Your Existing Backend
 # Add these functions to your views_group.py
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from .models import GroupSession, GroupMember, GroupChatMessage
+from .models import GroupChatMessage
 
 
 @api_view(["GET"])

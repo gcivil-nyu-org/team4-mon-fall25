@@ -23,7 +23,7 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install
+# Before install - Setup PostgreSQL
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y postgresql postgresql-contrib
@@ -50,9 +50,11 @@ script:
   # Run flake8 for linting (allow to fail for now)
   - flake8 . --max-line-length=120 --exclude=migrations,__pycache__,venv,env --config=.flake8 || true
 
-  # Run Django migrations
-  - python manage.py makemigrations
-  - python manage.py migrate
+  # Check for uncommitted migrations (enforce migration hygiene)
+  - python manage.py makemigrations --check --dry-run
+
+  # Run migrations
+  - python manage.py migrate --noinput
 
   # Run unit tests with coverage (allow failures for missing env vars)
   - coverage run --source='recom_sys_app' manage.py test recom_sys_app || true
