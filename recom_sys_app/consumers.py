@@ -50,9 +50,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         is_member = await self.verify_group_membership()
+        print(f"Is member check result: {is_member}, User: {self.user.username if self.user else 'None'}")
 
         if not is_member:
-
+            print(f"User {self.user.username if self.user else 'None'} is not a member of group {self.group_id}, closing connection")
             await self.close(code=4003)
             return
 
