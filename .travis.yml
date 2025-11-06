@@ -1,14 +1,21 @@
 language: python
+dist: jammy  # Ensures PostgreSQL 14 packages are available
 python:
   - "3.11"
   - "3.12"
 
 # Services
 services:
+  - postgresql  # Travis will provision PostgreSQL
   - redis-server  # ✨ Add Redis support for WebSocket testing
 
 addons:
   postgresql: "14"
+  apt:
+    packages:
+      - postgresql-14
+      - postgresql-client-14
+      - postgresql-contrib-14
 
 # Environment variables
 env:
@@ -17,6 +24,10 @@ env:
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
     - POSTGRES_PASSWORD=
+    - POSTGRES_HOST=127.0.0.1  # Use TCP instead of Unix socket
+    - POSTGRES_PORT=5432
+    - PGHOST=127.0.0.1  # For psql commands
+    - PGPORT=5432
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
 
@@ -27,8 +38,19 @@ cache:
 
 # Before install - Configure PostgreSQL 14
 before_install:
-  # Create the test database using peer authentication (no host/port needed)
-  - psql -c 'CREATE DATABASE cinematch_test;' -U postgres
+  # Stop all PostgreSQL clusters and start only version 14
+  - sudo systemctl stop postgresql || true
+  - sudo pg_lsclusters || true
+  - sudo pg_ctlcluster 14 main start
+  - sleep 2
+
+  # Verify PostgreSQL 14 is running
+  - pg_isready -h $PGHOST -p $PGPORT -U $POSTGRES_USER
+  - psql --version
+  - psql -h $PGHOST -U $POSTGRES_USER -c "SELECT version();"
+
+  # Create the test database
+  - psql -h $PGHOST -U $POSTGRES_USER -c "CREATE DATABASE $POSTGRES_DB;"
 
 # Install dependencies
 install:
@@ -46,9 +68,11 @@ script:
   # Run flake8 for linting (allow to fail for now)
   - flake8 . --max-line-length=120 --exclude=migrations,__pycache__,venv,env --config=.flake8 || true
 
-  # Run Django migrations
-  - python manage.py makemigrations
-  - python manage.py migrate
+  # Check for missing migrations (don't create them in CI)
+  - python manage.py makemigrations --check --dry-run
+
+  # Run migrations
+  - python manage.py migrate --noinput
 
   # Run unit tests with coverage (allow failures for missing env vars)
   - coverage run --source='recom_sys_app' manage.py test recom_sys_app || true
