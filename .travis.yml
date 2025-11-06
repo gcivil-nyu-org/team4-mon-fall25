@@ -60,6 +60,9 @@ deploy:
   region: us-east-1
   app: cinematch-app
   env: cinematch-production
+  bucket_name: elasticbeanstalk-us-east-1-464975960156
+  bucket_path: cinematch-app
+  skip_cleanup: true
   on:
     branch: develop
 
