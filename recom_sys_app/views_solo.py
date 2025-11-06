@@ -347,6 +347,7 @@ def get_solo_likes(request):
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
