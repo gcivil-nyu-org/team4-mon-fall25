@@ -6,7 +6,6 @@ python:
 # Services
 services:
   - redis-server  # ✨ Add Redis support for WebSocket testing
-  - postgresql
 
 addons:
   postgresql: "14"
@@ -18,6 +17,8 @@ env:
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
     - POSTGRES_PASSWORD=
+    - POSTGRES_HOST=localhost
+    - POSTGRES_PORT=5433
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
 
@@ -26,11 +27,20 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install - Use PostgreSQL addon (default peer authentication)
+# Before install - Configure PostgreSQL 14
 before_install:
-  - sudo service postgresql start
+  # Stop all PostgreSQL services
+  - sudo systemctl stop postgresql || true
+  - sudo service postgresql stop || true
+
+  # Start only PostgreSQL 14
+  - sudo systemctl start postgresql@14-main || sudo service postgresql start 14
+
+  # Wait for PostgreSQL to be ready
   - sleep 5
-  - psql -c 'create database cinematch_test;' -U postgres
+
+  # Create the test database using PostgreSQL 14 on port 5433
+  - psql -p 5433 -c 'create database cinematch_test;' -U postgres -h localhost
 
 # Install dependencies
 install:
