@@ -17,6 +17,8 @@ env:
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
     - POSTGRES_PASSWORD=postgres
+    - POSTGRES_HOST=localhost
+    - POSTGRES_PORT=5433
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
 
@@ -25,15 +27,15 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install - PostgreSQL 14 is provided by addons
+# Before install - PostgreSQL 14 is provided by addons and runs on port 5433
 before_install:
   - sudo systemctl start postgresql@14-main || sudo service postgresql start
   - sleep 3  # Wait for PostgreSQL to be ready
-  - sudo -u postgres psql -c "CREATE DATABASE cinematch_test;" || true
-  - sudo -u postgres psql -c "CREATE USER cinematch_user WITH PASSWORD 'cinematch_password';" || true
-  - sudo -u postgres psql -c "ALTER USER cinematch_user CREATEDB;" || true
-  - sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE cinematch_test TO cinematch_user;" || true
-  - sudo -u postgres psql -c "ALTER USER cinematch_user SUPERUSER;" || true
+  - sudo -u postgres psql -p 5433 -c "CREATE DATABASE cinematch_test;" || true
+  - sudo -u postgres psql -p 5433 -c "CREATE USER cinematch_user WITH PASSWORD 'cinematch_password';" || true
+  - sudo -u postgres psql -p 5433 -c "ALTER USER cinematch_user CREATEDB;" || true
+  - sudo -u postgres psql -p 5433 -c "GRANT ALL PRIVILEGES ON DATABASE cinematch_test TO cinematch_user;" || true
+  - sudo -u postgres psql -p 5433 -c "ALTER USER cinematch_user SUPERUSER;" || true
 
 # Install dependencies
 install:
