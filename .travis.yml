@@ -31,11 +31,13 @@ cache:
 before_install:
   - sudo systemctl start postgresql@14-main || sudo service postgresql start
   - sleep 3  # Wait for PostgreSQL to be ready
+  - sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/14/main/postgresql.conf
+  - sudo sed -i "s/local   all             all                                     peer/local   all             all                                     trust/g" /etc/postgresql/14/main/pg_hba.conf
+  - sudo sed -i "s/host    all             all             127.0.0.1\/32            scram-sha-256/host    all             all             127.0.0.1\/32            trust/g" /etc/postgresql/14/main/pg_hba.conf
+  - sudo systemctl restart postgresql@14-main || sudo service postgresql restart
+  - sleep 3  # Wait for restart
   - sudo -u postgres psql -p 5433 -c "CREATE DATABASE cinematch_test;" || true
-  - sudo -u postgres psql -p 5433 -c "CREATE USER cinematch_user WITH PASSWORD 'cinematch_password';" || true
-  - sudo -u postgres psql -p 5433 -c "ALTER USER cinematch_user CREATEDB;" || true
-  - sudo -u postgres psql -p 5433 -c "GRANT ALL PRIVILEGES ON DATABASE cinematch_test TO cinematch_user;" || true
-  - sudo -u postgres psql -p 5433 -c "ALTER USER cinematch_user SUPERUSER;" || true
+  - sudo -u postgres psql -p 5433 -c "ALTER USER postgres WITH PASSWORD 'postgres';" || true
 
 # Install dependencies
 install:
