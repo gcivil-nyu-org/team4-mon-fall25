@@ -286,7 +286,7 @@ def solo_swipe(request):
 
         if existing_interaction:
             # Update existing interaction
-            existing_interaction.status = action  # 'like' or 'dislike'
+            existing_interaction.status = action.upper()  # Convert to 'LIKE' or 'DISLIKE'
             existing_interaction.movie_title = movie_title
             existing_interaction.save()
         else:
@@ -295,7 +295,7 @@ def solo_swipe(request):
                 user=request.user,
                 movie_title=movie_title,
                 tmdb_id=tmdb_id,
-                liked=(action == "like"),
+                status=action.upper(),  # Convert to 'LIKE' or 'DISLIKE'
             )
 
         response_data = {
@@ -332,7 +332,7 @@ def get_solo_likes(request):
     try:
         # Get all liked interactions for this user
         liked_interactions = Interaction.objects.filter(
-            user=request.user, status="like"
+            user=request.user, status="LIKE"
         ).order_by("-timestamp")[
             :50
         ]  # Get last 50 likes
