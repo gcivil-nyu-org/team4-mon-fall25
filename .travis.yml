@@ -17,8 +17,6 @@ env:
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
     - POSTGRES_PASSWORD=
-    - POSTGRES_HOST=localhost
-    - POSTGRES_PORT=5433
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
 
@@ -29,11 +27,8 @@ cache:
 
 # Before install - Configure PostgreSQL 14
 before_install:
-  # Wait for PostgreSQL 14 to be ready (Travis addon starts it automatically on 5433)
-  - sleep 3
-
-  # Create the test database using PostgreSQL 14 on port 5433
-  - psql -p 5433 -c 'CREATE DATABASE cinematch_test;' -U postgres -h localhost
+  # Create the test database using peer authentication (no host/port needed)
+  - psql -c 'CREATE DATABASE cinematch_test;' -U postgres
 
 # Install dependencies
 install:
