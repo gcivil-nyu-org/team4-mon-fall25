@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
@@ -201,19 +201,26 @@ LOGOUT_REDIRECT_URL = "recom_sys:login"
 ASGI_APPLICATION = "recommendation_sys.asgi.application"
 
 # Channel Layers Configuration
-# Use InMemory channel layer for development (no Redis needed)
-# For production, use Redis instead
-CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+# Use Redis for production (required for WebSocket group chat)
+# Fallback to InMemory for local development
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
-# Alternative (requires Redis):
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
+if os.getenv('REDIS_HOST'):
+    # Production: Use Redis
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [(REDIS_HOST, REDIS_PORT)],
+                "capacity": 1500,
+                "expiry": 10,
+            },
+        },
+    }
+else:
+    # Development: Use InMemory (not suitable for production)
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 # WebSocket-related settings
 WEBSOCKET_ACCEPT_ALL = False  # Production environments should be set to False.
