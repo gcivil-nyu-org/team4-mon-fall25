@@ -16,9 +16,7 @@ env:
     - DJANGO_VERSION=5.2.6
     - POSTGRES_DB=cinematch_test
     - POSTGRES_USER=postgres
-    - POSTGRES_PASSWORD=postgres
-    - POSTGRES_HOST=localhost
-    - POSTGRES_PORT=5433
+    - POSTGRES_PASSWORD=
     - DJANGO_SETTINGS_MODULE=recommendation_sys.settings
     - SECRET_KEY=test-secret-key-for-travis
 
@@ -27,17 +25,9 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-# Before install - PostgreSQL 14 is provided by addons and runs on port 5433
+# Before install - Use PostgreSQL addon (default peer authentication)
 before_install:
-  - sudo systemctl start postgresql@14-main || sudo service postgresql start
-  - sleep 3  # Wait for PostgreSQL to be ready
-  - sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/14/main/postgresql.conf
-  - sudo sed -i "s/local   all             all                                     peer/local   all             all                                     trust/g" /etc/postgresql/14/main/pg_hba.conf
-  - sudo sed -i "s/host    all             all             127.0.0.1\/32            scram-sha-256/host    all             all             127.0.0.1\/32            trust/g" /etc/postgresql/14/main/pg_hba.conf
-  - sudo systemctl restart postgresql@14-main || sudo service postgresql restart
-  - sleep 3  # Wait for restart
-  - sudo -u postgres psql -p 5433 -c "CREATE DATABASE cinematch_test;" || true
-  - sudo -u postgres psql -p 5433 -c "ALTER USER postgres WITH PASSWORD 'postgres';" || true
+  - psql -c 'create database cinematch_test;' -U postgres
 
 # Install dependencies
 install:
