@@ -396,6 +396,9 @@
       <button class="mode-tab" data-mode="active" onclick="switchMode('active')">
         Active Groups
       </button>
+      <button class="mode-tab" data-mode="similar" onclick="switchMode('similar')">
+        Find Similar Movie
+      </button>
     </div>
 
     <!-- Solo Mode Content -->
@@ -492,6 +495,22 @@
         </div>
       </div>
       {% endif %}
+    </div>
+
+    <!-- Find Similar Movie Content -->
+    <div id="similar-content" class="mode-content">
+      <div class="card">
+        <div class="card-title">
+          <span>🔍</span>
+          <span>Find Similar Movie</span>
+        </div>
+        <div class="card-description">
+          Discover movies similar to ones you already love. Search for a movie and we'll show you similar recommendations.
+        </div>
+        <a href="{% url 'recom_sys:movie_search' %}" class="btn-join-community" style="text-decoration: none; display: block; text-align: center;">
+          Start Searching
+        </a>
+      </div>
     </div>
 
     <!-- Community Mode Card (always visible) -->
