@@ -1013,3 +1013,79 @@ def join_group(request):
         return JsonResponse(
             {"success": False, "message": f"Failed to join group: {str(e)}"}, status=500
         )
+
+
+# ============================================
+# MOVIE SEARCH - FIND SIMILAR MOVIES
+# ============================================
+
+@login_required
+def movie_search_view(request):
+    """
+    Renders the movie search page where users can search for a movie
+    and find similar recommendations.
+    """
+    return render(request, "recom_sys_app/movie_search.html")
+
+
+@login_required
+@require_http_methods(["POST"])
+def search_movies_api(request):
+    """
+    API endpoint to search for movies by title
+    """
+    try:
+        data = json.loads(request.body)
+        query = data.get("query", "").strip()
+
+        if not query:
+            return JsonResponse(
+                {"success": False, "message": "Query is required"}, status=400
+            )
+
+        # Use RecommendationService to search
+        results = RecommendationService.search_movies(query, limit=10)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "results": results,
+                "count": len(results)
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"success": False, "message": "Invalid JSON"}, status=400
+        )
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": str(e)}, status=500
+        )
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_similar_movies_api(request, tmdb_id):
+    """
+    API endpoint to get similar movies for a given movie ID
+    """
+    try:
+        limit = int(request.GET.get("limit", 20))
+
+        # Use RecommendationService to get similar movies
+        results = RecommendationService.get_similar_movies(tmdb_id, limit=limit)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "results": results,
+                "count": len(results),
+                "tmdb_id": tmdb_id
+            }
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": str(e)}, status=500
+        )

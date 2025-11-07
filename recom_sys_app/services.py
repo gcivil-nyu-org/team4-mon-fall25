@@ -439,3 +439,102 @@ class RecommendationService:
         """
         cache_key = f"group_deck_{group_session.id}"
         cache.delete(cache_key)
+
+    @classmethod
+    def search_movies(cls, query, limit=10):
+        """
+        Search for movies by title using TMDb API
+
+        Args:
+            query: Movie title to search for
+            limit: Maximum number of results to return
+
+        Returns:
+            list: List of movie dictionaries with id, title, year, poster_path
+        """
+        if not cls.TMDB_TOKEN:
+            return []
+
+        try:
+            url = f"{cls.TMDB_BASE_URL}/search/movie"
+            params = {
+                "query": query,
+                "language": "en-US",
+                "page": 1,
+                "include_adult": False
+            }
+
+            response = requests.get(url, headers=cls.TMDB_HEADERS, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            results = []
+            for movie in data.get("results", [])[:limit]:
+                results.append({
+                    "tmdb_id": movie.get("id"),
+                    "title": movie.get("title"),
+                    "year": movie.get("release_date", "")[:4] if movie.get("release_date") else "",
+                    "poster_path": movie.get("poster_path"),
+                    "overview": movie.get("overview", ""),
+                    "vote_average": movie.get("vote_average", 0)
+                })
+
+            return results
+
+        except Exception as e:
+            print(f"Error searching movies: {e}")
+            return []
+
+    @classmethod
+    def get_similar_movies(cls, tmdb_id, limit=20):
+        """
+        Get similar movies using TMDb's similar movies endpoint
+
+        Args:
+            tmdb_id: TMDb movie ID
+            limit: Maximum number of similar movies to return
+
+        Returns:
+            list: List of similar movie dictionaries
+        """
+        # Check cache first
+        cache_key = f"similar_movies_{tmdb_id}"
+        cached_similar = cache.get(cache_key)
+        if cached_similar:
+            return cached_similar[:limit]
+
+        if not cls.TMDB_TOKEN:
+            return []
+
+        try:
+            url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}/similar"
+            params = {
+                "language": "en-US",
+                "page": 1
+            }
+
+            response = requests.get(url, headers=cls.TMDB_HEADERS, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            results = []
+            for movie in data.get("results", []):
+                results.append({
+                    "tmdb_id": movie.get("id"),
+                    "title": movie.get("title"),
+                    "year": movie.get("release_date", "")[:4] if movie.get("release_date") else "",
+                    "poster_path": movie.get("poster_path"),
+                    "overview": movie.get("overview", ""),
+                    "vote_average": movie.get("vote_average", 0),
+                    "backdrop_path": movie.get("backdrop_path"),
+                    "genre_ids": movie.get("genre_ids", [])
+                })
+
+            # Cache for 1 hour
+            cache.set(cache_key, results, cls.CACHE_TIMEOUT)
+
+            return results[:limit]
+
+        except Exception as e:
+            print(f"Error fetching similar movies: {e}")
+            return []
