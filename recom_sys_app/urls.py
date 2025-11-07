@@ -84,7 +84,11 @@ urlpatterns = [
     # ==================== MOVIE SEARCH - FIND SIMILAR ====================
     path("search/", views.movie_search_view, name="movie_search"),
     path("api/search/movies/", views.search_movies_api, name="api_search_movies"),
-    path("api/movies/<int:tmdb_id>/similar/", views.get_similar_movies_api, name="api_similar_movies"),
+    path(
+        "api/movies/<int:tmdb_id>/similar/",
+        views.get_similar_movies_api,
+        name="api_similar_movies",
+    ),
     # Solo Mode API Endpoints
     path("api/solo/set-genres/", views_solo.set_solo_genres, name="set_solo_genres"),
     path("api/solo/deck/", views_solo.get_solo_deck, name="get_solo_deck"),

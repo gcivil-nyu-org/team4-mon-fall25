@@ -1019,6 +1019,7 @@ def join_group(request):
 # MOVIE SEARCH - FIND SIMILAR MOVIES
 # ============================================
 
+
 @login_required
 def movie_search_view(request):
     """
@@ -1047,21 +1048,13 @@ def search_movies_api(request):
         results = RecommendationService.search_movies(query, limit=10)
 
         return JsonResponse(
-            {
-                "success": True,
-                "results": results,
-                "count": len(results)
-            }
+            {"success": True, "results": results, "count": len(results)}
         )
 
     except json.JSONDecodeError:
-        return JsonResponse(
-            {"success": False, "message": "Invalid JSON"}, status=400
-        )
+        return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
     except Exception as e:
-        return JsonResponse(
-            {"success": False, "message": str(e)}, status=500
-        )
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
 @login_required
@@ -1081,11 +1074,9 @@ def get_similar_movies_api(request, tmdb_id):
                 "success": True,
                 "results": results,
                 "count": len(results),
-                "tmdb_id": tmdb_id
+                "tmdb_id": tmdb_id,
             }
         )
 
     except Exception as e:
-        return JsonResponse(
-            {"success": False, "message": str(e)}, status=500
-        )
+        return JsonResponse({"success": False, "message": str(e)}, status=500)

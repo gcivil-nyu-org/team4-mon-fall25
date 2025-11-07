@@ -461,23 +461,31 @@ class RecommendationService:
                 "query": query,
                 "language": "en-US",
                 "page": 1,
-                "include_adult": False
+                "include_adult": False,
             }
 
-            response = requests.get(url, headers=cls.TMDB_HEADERS, params=params, timeout=10)
+            response = requests.get(
+                url, headers=cls.TMDB_HEADERS, params=params, timeout=10
+            )
             response.raise_for_status()
             data = response.json()
 
             results = []
             for movie in data.get("results", [])[:limit]:
-                results.append({
-                    "tmdb_id": movie.get("id"),
-                    "title": movie.get("title"),
-                    "year": movie.get("release_date", "")[:4] if movie.get("release_date") else "",
-                    "poster_path": movie.get("poster_path"),
-                    "overview": movie.get("overview", ""),
-                    "vote_average": movie.get("vote_average", 0)
-                })
+                results.append(
+                    {
+                        "tmdb_id": movie.get("id"),
+                        "title": movie.get("title"),
+                        "year": (
+                            movie.get("release_date", "")[:4]
+                            if movie.get("release_date")
+                            else ""
+                        ),
+                        "poster_path": movie.get("poster_path"),
+                        "overview": movie.get("overview", ""),
+                        "vote_average": movie.get("vote_average", 0),
+                    }
+                )
 
             return results
 
@@ -508,27 +516,32 @@ class RecommendationService:
 
         try:
             url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}/similar"
-            params = {
-                "language": "en-US",
-                "page": 1
-            }
+            params = {"language": "en-US", "page": 1}
 
-            response = requests.get(url, headers=cls.TMDB_HEADERS, params=params, timeout=10)
+            response = requests.get(
+                url, headers=cls.TMDB_HEADERS, params=params, timeout=10
+            )
             response.raise_for_status()
             data = response.json()
 
             results = []
             for movie in data.get("results", []):
-                results.append({
-                    "tmdb_id": movie.get("id"),
-                    "title": movie.get("title"),
-                    "year": movie.get("release_date", "")[:4] if movie.get("release_date") else "",
-                    "poster_path": movie.get("poster_path"),
-                    "overview": movie.get("overview", ""),
-                    "vote_average": movie.get("vote_average", 0),
-                    "backdrop_path": movie.get("backdrop_path"),
-                    "genre_ids": movie.get("genre_ids", [])
-                })
+                results.append(
+                    {
+                        "tmdb_id": movie.get("id"),
+                        "title": movie.get("title"),
+                        "year": (
+                            movie.get("release_date", "")[:4]
+                            if movie.get("release_date")
+                            else ""
+                        ),
+                        "poster_path": movie.get("poster_path"),
+                        "overview": movie.get("overview", ""),
+                        "vote_average": movie.get("vote_average", 0),
+                        "backdrop_path": movie.get("backdrop_path"),
+                        "genre_ids": movie.get("genre_ids", []),
+                    }
+                )
 
             # Cache for 1 hour
             cache.set(cache_key, results, cls.CACHE_TIMEOUT)
