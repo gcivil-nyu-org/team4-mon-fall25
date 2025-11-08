@@ -1,6 +1,11 @@
 [run]
 source = recom_sys_app
 omit =
+*/migrations/*
+    */test_settings.py
+    */urls.py
+    */admin.py
+    */conftest.py
     */migrations/*
     */venv/*
     */env/*
