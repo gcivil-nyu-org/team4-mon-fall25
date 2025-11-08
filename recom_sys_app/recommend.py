@@ -4,7 +4,7 @@ import requests
 from typing import Iterable, Dict, Any, List
 
 TMDB_BASE = "https://api.themoviedb.org/3"
-TMDB_TOKEN = (os.getenv("TMDB_API_KEY") or "").strip()
+TMDB_TOKEN = (os.getenv("TMDB_API_KEY") or os.getenv("TMDB_TOKEN") or "").strip()
 HEADERS = {
     "Authorization": f"Bearer {TMDB_TOKEN}",
     "Accept": "application/json",

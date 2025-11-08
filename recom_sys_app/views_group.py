@@ -327,6 +327,7 @@ def group_deck_view(request, group_code):
             "group_session": group_session,
             "member_count": member_count,
             "user": request.user,
+            "is_community": group_session.kind == GroupSession.Kind.COMMUNITY,
         }
 
         return render(request, "recom_sys_app/group_deck.html", context)
@@ -454,8 +455,8 @@ def swipe_like(request, group_code):
         "success": true,
         "swipe_id": 123,
         "action": "LIKE",
-        "is_match": true,
-        "match_data": {...}
+        "is_match": true,  // Only for PRIVATE groups
+        "match_data": {...}  // Only for PRIVATE groups
     }
     """
     print(
@@ -466,7 +467,9 @@ def swipe_like(request, group_code):
         group_session = get_object_or_404(
             GroupSession, group_code=group_code, is_active=True
         )
-        print(f"[DEBUG swipe_like] Group found: {group_code}")
+        print(
+            f"[DEBUG swipe_like] Group found: {group_code}, kind: {group_session.kind}"
+        )
 
         # 验证成员身份
         is_member = GroupMember.objects.filter(
@@ -489,6 +492,55 @@ def swipe_like(request, group_code):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # For COMMUNITY groups, use Interaction model (like solo mode)
+        if group_session.kind == GroupSession.Kind.COMMUNITY:
+            from .models import Interaction
+
+            # Check if already swiped
+            existing_interaction = Interaction.objects.filter(
+                user=request.user, tmdb_id=tmdb_id
+            ).first()
+
+            if existing_interaction:
+                # Update existing interaction
+                existing_interaction.status = Interaction.Status.LIKE
+                existing_interaction.save()
+
+                return Response(
+                    {
+                        "success": True,
+                        "interaction_id": existing_interaction.id,
+                        "action": "LIKE",
+                        "tmdb_id": tmdb_id,
+                        "is_match": False,  # Community mode has no matching
+                        "match_data": None,
+                        "timestamp": existing_interaction.updated_at.isoformat(),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                # Create new interaction
+                interaction = Interaction.objects.create(
+                    user=request.user,
+                    tmdb_id=tmdb_id,
+                    status=Interaction.Status.LIKE,
+                    source="community",
+                )
+
+                return Response(
+                    {
+                        "success": True,
+                        "interaction_id": interaction.id,
+                        "action": "LIKE",
+                        "tmdb_id": tmdb_id,
+                        "is_match": False,  # Community mode has no matching
+                        "match_data": None,
+                        "timestamp": interaction.created_at.isoformat(),
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
+        # For PRIVATE groups, use GroupSwipe model (original behavior)
         # Check if it has already been swiped.
         existing_swipe = GroupSwipe.objects.filter(
             group_session=group_session, user=request.user, tmdb_id=tmdb_id

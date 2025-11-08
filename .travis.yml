@@ -1,7 +1,6 @@
 language: python
 dist: jammy  # Ubuntu 22.04 has PostgreSQL 14 by default (focal has 13.21)
 python:
-  - "3.11"
   - "3.12"
 
 # Services

@@ -3,9 +3,16 @@ from django.contrib.auth import views as auth_views
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from . import views_solo
+from . import views_community
 
 # Import views
-from .views import recommend_view, profile_view, edit_profile_view, set_interaction_view
+from .views import (
+    recommend_view,
+    profile_view,
+    edit_profile_view,
+    set_interaction_view,
+    communities_view,
+)
 from .views_auth import signup_view
 from .views_group import (
     get_group_deck,
@@ -65,6 +72,7 @@ urlpatterns = [
     # ==================== PROFILE & RECOMMENDATIONS ====================
     path("profile/", profile_view, name="profile"),
     path("profile/edit/", edit_profile_view, name="edit_profile"),
+    path("communities/", communities_view, name="communities"),
     path("recommend/", recommend_view, name="recommend"),
     # ==================== INTERACTIONS ====================
     path(
@@ -79,6 +87,17 @@ urlpatterns = [
     path("groups/<str:group_code>/room/", group_room_view, name="group_room"),
     # Group Swipe Card Page (New)
     path("groups/<str:group_code>/deck/", group_deck_view, name="group_deck_page"),
+    # Community Pages (Genre-based)
+    path(
+        "communities/<str:group_code>/lobby/",
+        views_community.community_lobby_view,
+        name="community_lobby",
+    ),
+    path(
+        "communities/<str:group_code>/deck/",
+        views_community.community_deck_view,
+        name="community_deck",
+    ),
     path("solo/genres/", views_solo.solo_genre_selection, name="solo_genre_selection"),
     path("solo/deck/", views_solo.solo_deck_view, name="solo_deck"),
     # ==================== MOVIE SEARCH - FIND SIMILAR ====================
@@ -94,6 +113,9 @@ urlpatterns = [
     path("api/solo/deck/", views_solo.get_solo_deck, name="get_solo_deck"),
     path("api/solo/swipe/", views_solo.solo_swipe, name="solo_swipe"),
     path("api/solo/likes/", views_solo.get_solo_likes, name="get_solo_likes"),
+    path(
+        "api/solo/unlike/<int:tmdb_id>/", views_solo.unlike_movie, name="unlike_movie"
+    ),
     # ==================== GROUP MATCHING - API ENDPOINTS ====================
     # Create and join groups (existing ones)
     path("api/groups", views.create_group, name="create_group"),
@@ -109,8 +131,29 @@ urlpatterns = [
     ),
     path(
         "api/groups/community/join/",
-        join_or_create_community_group,
+        views_community.join_community,
         name="api_community_join",
+    ),
+    # Community API Endpoints (Genre-based)
+    path(
+        "api/communities/<str:group_code>/deck/",
+        views_community.get_community_deck,
+        name="api_community_deck",
+    ),
+    path(
+        "api/communities/<str:group_code>/swipe/like/",
+        views_community.community_swipe_like,
+        name="api_community_swipe_like",
+    ),
+    path(
+        "api/communities/<str:group_code>/swipe/dislike/",
+        views_community.community_swipe_dislike,
+        name="api_community_swipe_dislike",
+    ),
+    path(
+        "api/communities/<str:group_code>/ai-recommend/",
+        views_community.get_ai_recommendations,
+        name="api_community_ai_recommend",
     ),
 ]
 

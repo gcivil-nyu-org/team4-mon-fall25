@@ -23,7 +23,7 @@ load_dotenv(settings.BASE_DIR / ".env")
 # TMDB Configuration
 # ============================================
 
-TMDB_TOKEN = (os.getenv("TMDB_TOKEN") or "").strip()
+TMDB_TOKEN = (os.getenv("TMDB_TOKEN") or os.getenv("TMDB_API_KEY") or "").strip()
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_HEADERS = {
     "Authorization": f"Bearer {TMDB_TOKEN}",
@@ -312,6 +312,50 @@ def solo_swipe(request):
             {"success": False, "error": "Invalid JSON data"}, status=400
         )
     except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def unlike_movie(request, tmdb_id):
+    """
+    API endpoint to remove a movie from user's liked movies
+    DELETE /api/solo/unlike/<tmdb_id>/
+
+    Response:
+        {
+            "success": true,
+            "message": "Movie removed from likes",
+            "tmdb_id": 123
+        }
+    """
+    try:
+        # Find the interaction for this movie
+        interaction = Interaction.objects.filter(
+            user=request.user, tmdb_id=tmdb_id, status="LIKE"
+        ).first()
+
+        if not interaction:
+            return JsonResponse(
+                {"success": False, "error": "Movie not found in your likes"},
+                status=404,
+            )
+
+        # Delete the interaction
+        interaction.delete()
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Movie removed from likes",
+                "tmdb_id": tmdb_id,
+            }
+        )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
