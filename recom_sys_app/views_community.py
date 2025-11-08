@@ -17,26 +17,49 @@ import json
 
 from .models import GroupSession, GroupMember, Interaction, Genre
 from .services import RecommendationService
-from phi.agent import Agent
-from phi.model.groq import Groq
-
 # ============================================
-# AI Agent Configuration for Recommendations
+# AI Agent Configuration for Recommendations (SAFE / LAZY)
 # ============================================
+import os
 
-# Initialize the agent for movie recommendations
-movie_agent = Agent(
-    model=Groq(id="llama-3.3-70b-versatile"),
-    description="You are a movie recommendation expert assistant. Provide personalized movie suggestions based on user preferences.",
-    instructions=[
-        "Analyze user's movie preferences and viewing history",
-        "Suggest movies that match their taste in specific genres",
-        "Provide brief, engaging descriptions of recommended movies",
-        "Consider movie ratings, popularity, and release years",
-        "Be enthusiastic and helpful in your recommendations"
-    ],
-    markdown=True,
-)
+USE_COMMUNITY_AI = os.getenv("COMMUNITY_AI_ENABLED", "0") == "1"  # opt-in only
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_TOKEN")
+
+# Optional deps
+try:
+    from phi.agent import Agent  # type: ignore
+    from phi.model.groq import Groq  # type: ignore
+except Exception:
+    Agent = None  # type: ignore
+    Groq = None   # type: ignore
+
+_movie_agent = None  # lazy singleton
+
+def get_movie_agent():
+    """
+    Return a lazily-created movie recommendation agent, or None if disabled/missing deps.
+    Never throws during import or when disabled.
+    """
+    global _movie_agent
+    if not USE_COMMUNITY_AI:
+        return None
+    if Agent is None or Groq is None or not GROQ_API_KEY:
+        return None
+    if _movie_agent is None:
+        _movie_agent = Agent(
+            model=Groq(id="llama-3.3-70b-versatile", api_key=GROQ_API_KEY, temperature=0.7),
+            description="Movie recommendation expert assistant.",
+            instructions=[
+                "Analyze user's movie preferences and viewing history.",
+                "Suggest movies that match their taste in the requested genre.",
+                "Provide short, engaging reasons for each recommendation.",
+                "Prefer movies after 2018; weigh ratings & popularity.",
+                "Return 3–5 suggestions."
+            ],
+            markdown=True,
+        )
+    return _movie_agent
+
 
 
 # ============================================
@@ -442,73 +465,50 @@ def community_swipe_dislike(request, group_code):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def get_ai_recommendations(request, group_code):
-    """
-    Get AI-powered movie recommendations using the agent
-    POST /api/communities/<group_code>/ai-recommend/
-
-    Request Body:
-    {
-        "genre": "Action",
-        "preferences": "I like intense action scenes and plot twists"
-    }
-
-    Response:
-    {
-        "success": true,
-        "recommendations": "AI-generated movie recommendations..."
-    }
-    """
     try:
-        # Get community
         community = get_object_or_404(
             GroupSession,
             group_code=group_code,
             is_active=True,
             kind=GroupSession.Kind.COMMUNITY
         )
-
-        # Verify membership
         is_member = GroupMember.objects.filter(
             group_session=community, user=request.user, is_active=True
         ).exists()
-
         if not is_member:
+            return Response({"error": "You are not a member of this community"}, status=status.HTTP_403_FORBIDDEN)
+
+        agent = get_movie_agent()
+        if agent is None:
+            # Disabled or missing deps/keys -> respond cleanly instead of throwing
             return Response(
-                {"error": "You are not a member of this community"},
-                status=status.HTTP_403_FORBIDDEN,
+                {"success": False, "error": "Community AI is disabled or not configured"},
+                status=status.HTTP_501_NOT_IMPLEMENTED,
             )
 
-        # Get genre and preferences
-        genre = request.data.get("genre", "")
+        genre = request.data.get("genre") or (
+            community.community_key.split(":", 1)[1]
+            if community.community_key and community.community_key.startswith("genre:")
+            else community.genre_filter or ""
+        )
         preferences = request.data.get("preferences", "")
 
-        # Build prompt for agent
-        prompt = f"""
-        I'm looking for {genre} movie recommendations.
-        My preferences: {preferences if preferences else "Just suggest popular movies in this genre"}
-
-        Please suggest 3-5 specific movies with brief explanations of why they match my taste.
-        """
-
-        # Get recommendations from agent
-        response = movie_agent.run(prompt)
-
-        return Response(
-            {
-                "success": True,
-                "recommendations": response.content,
-            },
-            status=status.HTTP_200_OK,
+        prompt = (
+            f"I'm looking for {genre or 'popular'} movie recommendations.\n"
+            f"My preferences: {preferences or 'No special preferences; keep it mainstream.'}\n"
+            f"Please suggest 3–5 specific movies with one-line reasons."
         )
+
+        resp = agent.run(prompt)
+        text = getattr(resp, "content", str(resp))
+        return Response({"success": True, "recommendations": text}, status=status.HTTP_200_OK)
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response(
-            {"error": f"Server Error: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        import traceback; traceback.print_exc()
+        return Response({"error": f"Server Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @login_required
