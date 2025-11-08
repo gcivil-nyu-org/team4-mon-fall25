@@ -467,7 +467,9 @@ def swipe_like(request, group_code):
         group_session = get_object_or_404(
             GroupSession, group_code=group_code, is_active=True
         )
-        print(f"[DEBUG swipe_like] Group found: {group_code}, kind: {group_session.kind}")
+        print(
+            f"[DEBUG swipe_like] Group found: {group_code}, kind: {group_session.kind}"
+        )
 
         # 验证成员身份
         is_member = GroupMember.objects.filter(

@@ -332,9 +332,7 @@ def unlike_movie(request, tmdb_id):
     try:
         # Find the interaction for this movie
         interaction = Interaction.objects.filter(
-            user=request.user,
-            tmdb_id=tmdb_id,
-            status="LIKE"
+            user=request.user, tmdb_id=tmdb_id, status="LIKE"
         ).first()
 
         if not interaction:

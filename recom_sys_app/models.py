@@ -149,7 +149,7 @@ class GroupSession(models.Model):
 
     class Kind(models.TextChoices):
         PRIVATE = "PRIVATE", "Private"
-        COMMUNITY = "COMMUNITY", "Community"   # NEW
+        COMMUNITY = "COMMUNITY", "Community"  # NEW
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     group_code = models.CharField(max_length=32, unique=True, db_index=True)  # ⬆ length
@@ -265,11 +265,11 @@ class GroupSession(models.Model):
         """生成唯一的6位大写字母+数字群组代码"""
         import random
         import string
+
         while True:
             code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
             if not GroupSession.objects.filter(group_code=code).exists():
                 return code
-
 
 
 class GroupMember(models.Model):

@@ -17,6 +17,7 @@ import json
 
 from .models import GroupSession, GroupMember, Interaction, Genre
 from .services import RecommendationService
+
 # ============================================
 # AI Agent Configuration for Recommendations (SAFE / LAZY)
 # ============================================
@@ -31,9 +32,10 @@ try:
     from phi.model.groq import Groq  # type: ignore
 except Exception:
     Agent = None  # type: ignore
-    Groq = None   # type: ignore
+    Groq = None  # type: ignore
 
 _movie_agent = None  # lazy singleton
+
 
 def get_movie_agent():
     """
@@ -47,24 +49,26 @@ def get_movie_agent():
         return None
     if _movie_agent is None:
         _movie_agent = Agent(
-            model=Groq(id="llama-3.3-70b-versatile", api_key=GROQ_API_KEY, temperature=0.7),
+            model=Groq(
+                id="llama-3.3-70b-versatile", api_key=GROQ_API_KEY, temperature=0.7
+            ),
             description="Movie recommendation expert assistant.",
             instructions=[
                 "Analyze user's movie preferences and viewing history.",
                 "Suggest movies that match their taste in the requested genre.",
                 "Provide short, engaging reasons for each recommendation.",
                 "Prefer movies after 2018; weigh ratings & popularity.",
-                "Return 3–5 suggestions."
+                "Return 3–5 suggestions.",
             ],
             markdown=True,
         )
     return _movie_agent
 
 
-
 # ============================================
 # Page Views
 # ============================================
+
 
 @login_required
 def community_lobby_view(request, group_code):
@@ -81,21 +85,22 @@ def community_lobby_view(request, group_code):
             GroupSession,
             group_code=group_code,
             is_active=True,
-            kind=GroupSession.Kind.COMMUNITY
+            kind=GroupSession.Kind.COMMUNITY,
         )
 
         # Verify user is a member
         is_member = GroupMember.objects.filter(
-            group_session=community,
-            user=request.user,
-            is_active=True
+            group_session=community, user=request.user, is_active=True
         ).exists()
 
         if not is_member:
             return render(
                 request,
                 "recom_sys_app/error.html",
-                {"error_message": "You are not a member of this community", "group_code": group_code},
+                {
+                    "error_message": "You are not a member of this community",
+                    "group_code": group_code,
+                },
             )
 
         # Get member count
@@ -143,21 +148,22 @@ def community_deck_view(request, group_code):
             GroupSession,
             group_code=group_code,
             is_active=True,
-            kind=GroupSession.Kind.COMMUNITY
+            kind=GroupSession.Kind.COMMUNITY,
         )
 
         # Verify user is a member
         is_member = GroupMember.objects.filter(
-            group_session=community,
-            user=request.user,
-            is_active=True
+            group_session=community, user=request.user, is_active=True
         ).exists()
 
         if not is_member:
             return render(
                 request,
                 "recom_sys_app/error.html",
-                {"error_message": "You are not a member of this community", "group_code": group_code},
+                {
+                    "error_message": "You are not a member of this community",
+                    "group_code": group_code,
+                },
             )
 
         # Get member count
@@ -194,6 +200,7 @@ def community_deck_view(request, group_code):
 # API Endpoints
 # ============================================
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_community_deck(request, group_code):
@@ -215,7 +222,7 @@ def get_community_deck(request, group_code):
             GroupSession,
             group_code=group_code,
             is_active=True,
-            kind=GroupSession.Kind.COMMUNITY
+            kind=GroupSession.Kind.COMMUNITY,
         )
 
         # Verify membership
@@ -258,6 +265,7 @@ def get_community_deck(request, group_code):
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return Response(
             {"error": f"Server Error: {str(e)}"},
@@ -291,7 +299,7 @@ def community_swipe_like(request, group_code):
             GroupSession,
             group_code=group_code,
             is_active=True,
-            kind=GroupSession.Kind.COMMUNITY
+            kind=GroupSession.Kind.COMMUNITY,
         )
 
         # Verify membership
@@ -357,6 +365,7 @@ def community_swipe_like(request, group_code):
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return Response(
             {"error": f"Server Error: {str(e)}"},
@@ -390,7 +399,7 @@ def community_swipe_dislike(request, group_code):
             GroupSession,
             group_code=group_code,
             is_active=True,
-            kind=GroupSession.Kind.COMMUNITY
+            kind=GroupSession.Kind.COMMUNITY,
         )
 
         # Verify membership
@@ -456,6 +465,7 @@ def community_swipe_dislike(request, group_code):
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return Response(
             {"error": f"Server Error: {str(e)}"},
@@ -473,19 +483,25 @@ def get_ai_recommendations(request, group_code):
             GroupSession,
             group_code=group_code,
             is_active=True,
-            kind=GroupSession.Kind.COMMUNITY
+            kind=GroupSession.Kind.COMMUNITY,
         )
         is_member = GroupMember.objects.filter(
             group_session=community, user=request.user, is_active=True
         ).exists()
         if not is_member:
-            return Response({"error": "You are not a member of this community"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "You are not a member of this community"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         agent = get_movie_agent()
         if agent is None:
             # Disabled or missing deps/keys -> respond cleanly instead of throwing
             return Response(
-                {"success": False, "error": "Community AI is disabled or not configured"},
+                {
+                    "success": False,
+                    "error": "Community AI is disabled or not configured",
+                },
                 status=status.HTTP_501_NOT_IMPLEMENTED,
             )
 
@@ -504,11 +520,18 @@ def get_ai_recommendations(request, group_code):
 
         resp = agent.run(prompt)
         text = getattr(resp, "content", str(resp))
-        return Response({"success": True, "recommendations": text}, status=status.HTTP_200_OK)
+        return Response(
+            {"success": True, "recommendations": text}, status=status.HTTP_200_OK
+        )
 
     except Exception as e:
-        import traceback; traceback.print_exc()
-        return Response({"error": f"Server Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        import traceback
+
+        traceback.print_exc()
+        return Response(
+            {"error": f"Server Error: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @login_required
@@ -540,17 +563,21 @@ def join_community(request):
         print(f"[DEBUG join_community] genre_name: {genre_name}, genre_id: {genre_id}")
 
         if not genre_name or not genre_id:
-            print(f"[DEBUG join_community] Missing data - genre_name: {genre_name}, genre_id: {genre_id}")
+            print(
+                f"[DEBUG join_community] Missing data - genre_name: {genre_name}, genre_id: {genre_id}"
+            )
             return JsonResponse(
-                {"success": False, "message": f"Genre name and ID are required. Received: genre={genre_name}, genre_id={genre_id}"},
+                {
+                    "success": False,
+                    "message": f"Genre name and ID are required. Received: genre={genre_name}, genre_id={genre_id}",
+                },
                 status=400,
             )
 
         # Get or create community for this genre
         with transaction.atomic():
             community, _ = GroupSession.get_or_create_community_by_genre(
-                genre_value=genre_name,
-                creator=request.user
+                genre_value=genre_name, creator=request.user
             )
 
             # Add user as member if not already
@@ -575,7 +602,6 @@ def join_community(request):
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
-        return JsonResponse(
-            {"success": False, "message": str(e)}, status=500
-        )
+        return JsonResponse({"success": False, "message": str(e)}, status=500)

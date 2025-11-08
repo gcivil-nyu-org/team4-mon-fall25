@@ -52,7 +52,9 @@ class RecommendationService:
                     genre_name = group_session.community_key.split(":", 1)[1]
 
             print(f"[DEBUG get_group_deck] COMMUNITY mode - genre_name: {genre_name}")
-            print(f"[DEBUG get_group_deck] community_key: {group_session.community_key}, genre_filter: {group_session.genre_filter}")
+            print(
+                f"[DEBUG get_group_deck] community_key: {group_session.community_key}, genre_filter: {group_session.genre_filter}"
+            )
 
             if genre_name:
                 # Get genre IDs and fetch movies
@@ -60,16 +62,23 @@ class RecommendationService:
                 print(f"[DEBUG get_group_deck] genre_ids: {genre_ids}")
                 if genre_ids:
                     movie_ids = cls._get_movies_by_genres(genre_ids, limit * 2)
-                    print(f"[DEBUG get_group_deck] Fetched {len(movie_ids)} movies for genre {genre_name}")
+                    print(
+                        f"[DEBUG get_group_deck] Fetched {len(movie_ids)} movies for genre {genre_name}"
+                    )
                 else:
                     movie_ids = cls._get_popular_movies(limit * 2)
-                    print(f"[DEBUG get_group_deck] No genre IDs found, using popular movies")
+                    print(
+                        f"[DEBUG get_group_deck] No genre IDs found, using popular movies"
+                    )
             else:
                 movie_ids = cls._get_popular_movies(limit * 2)
-                print(f"[DEBUG get_group_deck] No genre name found, using popular movies")
+                print(
+                    f"[DEBUG get_group_deck] No genre name found, using popular movies"
+                )
 
             # For communities, filter out movies user already swiped via Interaction model
             from .models import Interaction
+
             # Get all users in community
             user_ids = GroupMember.objects.filter(
                 group_session=group_session, is_active=True
@@ -77,9 +86,9 @@ class RecommendationService:
 
             # Get all swiped movie IDs by community members
             swiped_ids = set(
-                Interaction.objects.filter(
-                    user_id__in=user_ids
-                ).values_list("tmdb_id", flat=True)
+                Interaction.objects.filter(user_id__in=user_ids).values_list(
+                    "tmdb_id", flat=True
+                )
             )
         else:
             # For PRIVATE groups, use original logic

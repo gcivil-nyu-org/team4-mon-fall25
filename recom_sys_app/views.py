@@ -244,7 +244,11 @@ def _tmdb_fetch_by_ids(movie_ids: list[int]) -> list[dict]:
 def api_community_join(request):
     try:
         payload = json.loads(request.body or "{}")
-        genre_value = payload.get("genre") or payload.get("genre_value") or payload.get("genre_id")
+        genre_value = (
+            payload.get("genre")
+            or payload.get("genre_value")
+            or payload.get("genre_id")
+        )
 
         if not genre_value:
             return HttpResponseBadRequest("Missing genre")
@@ -267,7 +271,7 @@ def api_community_join(request):
             "878": "Science Fiction",
             "53": "Thriller",
             "10752": "War",
-            "37": "Western"
+            "37": "Western",
         }
 
         # Convert TMDB ID to genre name if needed
@@ -289,12 +293,20 @@ def api_community_join(request):
     )
     # Ensure current user is a member (idempotent)
     GroupMember.objects.get_or_create(
-        group_session=group, user=request.user, defaults={"role": GroupMember.Role.MEMBER}
+        group_session=group,
+        user=request.user,
+        defaults={"role": GroupMember.Role.MEMBER},
     )
 
     return JsonResponse(
-        {"success": True, "redirect_url": reverse("recom_sys:group_deck_page", kwargs={"group_code": group.group_code})}
+        {
+            "success": True,
+            "redirect_url": reverse(
+                "recom_sys:group_deck_page", kwargs={"group_code": group.group_code}
+            ),
+        }
     )
+
 
 def _get_signup_movies(user):
     """
@@ -478,7 +490,7 @@ def profile_view(request):
         GroupMember.objects.filter(
             user=request.user,
             is_active=True,
-            group_session__kind=GroupSession.Kind.PRIVATE
+            group_session__kind=GroupSession.Kind.PRIVATE,
         )
         .select_related("group_session")
         .order_by("-joined_at")
@@ -486,9 +498,7 @@ def profile_view(request):
 
     # Get created PRIVATE groups only (exclude communities)
     created_groups = GroupSession.objects.filter(
-        creator=request.user,
-        is_active=True,
-        kind=GroupSession.Kind.PRIVATE
+        creator=request.user, is_active=True, kind=GroupSession.Kind.PRIVATE
     ).order_by("-created_at")
 
     get_token(request)  # ensure CSRF cookie
@@ -518,7 +528,7 @@ def communities_view(request):
         GroupMember.objects.filter(
             user=request.user,
             is_active=True,
-            group_session__kind=GroupSession.Kind.COMMUNITY
+            group_session__kind=GroupSession.Kind.COMMUNITY,
         )
         .select_related("group_session")
         .order_by("-joined_at")
