@@ -26,6 +26,9 @@ class RecommendationService:
         """
         为群组生成个性化电影推荐列表
 
+        For COMMUNITY groups: filter movies by community genre
+        For PRIVATE groups: generate recommendations based on group member history
+
         Args:
             group_session: GroupSession 实例
             limit: 返回电影数量
@@ -39,26 +42,67 @@ class RecommendationService:
         if cached_deck:
             return cached_deck[:limit]
 
-        # 获取活跃成员
-        members = GroupMember.objects.filter(
-            group_session=group_session, is_active=True
-        ).select_related("user")
+        # For COMMUNITY groups, filter by genre only
+        if group_session.kind == "COMMUNITY":
+            # Get genre from community_key or genre_filter
+            genre_name = group_session.genre_filter or ""
+            if not genre_name and group_session.community_key:
+                # Extract from community_key (format: "genre:Action")
+                if group_session.community_key.startswith("genre:"):
+                    genre_name = group_session.community_key.split(":", 1)[1]
 
-        if members.count() < 2:
-            # 人数不足，返回热门电影
-            movie_ids = cls._get_popular_movies(limit)
+            print(f"[DEBUG get_group_deck] COMMUNITY mode - genre_name: {genre_name}")
+            print(f"[DEBUG get_group_deck] community_key: {group_session.community_key}, genre_filter: {group_session.genre_filter}")
+
+            if genre_name:
+                # Get genre IDs and fetch movies
+                genre_ids = cls._get_genre_ids_by_names([genre_name])
+                print(f"[DEBUG get_group_deck] genre_ids: {genre_ids}")
+                if genre_ids:
+                    movie_ids = cls._get_movies_by_genres(genre_ids, limit * 2)
+                    print(f"[DEBUG get_group_deck] Fetched {len(movie_ids)} movies for genre {genre_name}")
+                else:
+                    movie_ids = cls._get_popular_movies(limit * 2)
+                    print(f"[DEBUG get_group_deck] No genre IDs found, using popular movies")
+            else:
+                movie_ids = cls._get_popular_movies(limit * 2)
+                print(f"[DEBUG get_group_deck] No genre name found, using popular movies")
+
+            # For communities, filter out movies user already swiped via Interaction model
+            from .models import Interaction
+            # Get all users in community
+            user_ids = GroupMember.objects.filter(
+                group_session=group_session, is_active=True
+            ).values_list("user_id", flat=True)
+
+            # Get all swiped movie IDs by community members
+            swiped_ids = set(
+                Interaction.objects.filter(
+                    user_id__in=user_ids
+                ).values_list("tmdb_id", flat=True)
+            )
         else:
-            # 基于群组历史 likes 生成推荐（传递 group_session）
-            movie_ids = cls._generate_group_recommendations(
-                group_session, members, limit * 2
-            )
+            # For PRIVATE groups, use original logic
+            # 获取活跃成员
+            members = GroupMember.objects.filter(
+                group_session=group_session, is_active=True
+            ).select_related("user")
 
-        # 过滤已经滑过的电影
-        swiped_ids = set(
-            GroupSwipe.objects.filter(group_session=group_session).values_list(
-                "tmdb_id", flat=True
+            if members.count() < 2:
+                # 人数不足，返回热门电影
+                movie_ids = cls._get_popular_movies(limit * 2)
+            else:
+                # 基于群组历史 likes 生成推荐（传递 group_session）
+                movie_ids = cls._generate_group_recommendations(
+                    group_session, members, limit * 2
+                )
+
+            # 过滤已经滑过的电影
+            swiped_ids = set(
+                GroupSwipe.objects.filter(group_session=group_session).values_list(
+                    "tmdb_id", flat=True
+                )
             )
-        )
 
         # 移除已滑过的电影
         filtered_movies = [mid for mid in movie_ids if mid not in swiped_ids]

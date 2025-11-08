@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Communities - CineMatch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .community-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            outline: none;
+        }
+        .community-card:hover, .community-card:focus-visible {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .community-card.joined {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-black min-h-screen text-white">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4">🌐 Communities</h1>
+            <p class="text-xl text-gray-300">Browse movies by mood with others who share your taste!</p>
+            <p class="text-sm text-gray-400 mt-2">Join genre-based communities and discover new movies</p>
+        </div>
+
+        <!-- My Communities Section -->
+        {% if user_communities %}
+        <div class="max-w-6xl mx-auto mb-12">
+            <h2 class="text-2xl font-bold mb-6 text-center">My Communities</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for membership in user_communities %}
+                <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg p-6 shadow-lg">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold">{{ membership.group_session.community_key|title }}</h3>
+                            <p class="text-sm text-green-100 mt-1">Joined {{ membership.joined_at|date:"M d, Y" }}</p>
+                        </div>
+                        <span class="text-3xl">
+                            {% if "Action" in membership.group_session.community_key %}⚡
+                            {% elif "Comedy" in membership.group_session.community_key %}😂
+                            {% elif "Drama" in membership.group_session.community_key %}🎭
+                            {% elif "Horror" in membership.group_session.community_key %}👻
+                            {% elif "Romance" in membership.group_session.community_key %}💕
+                            {% elif "Thriller" in membership.group_session.community_key %}🔪
+                            {% elif "Science Fiction" in membership.group_session.community_key %}🚀
+                            {% elif "Animation" in membership.group_session.community_key %}🎨
+                            {% elif "Adventure" in membership.group_session.community_key %}🗺️
+                            {% elif "Fantasy" in membership.group_session.community_key %}🧙
+                            {% elif "Crime" in membership.group_session.community_key %}🕵️
+                            {% elif "Mystery" in membership.group_session.community_key %}🔍
+                            {% elif "Family" in membership.group_session.community_key %}👨‍👩‍👧‍👦
+                            {% elif "Music" in membership.group_session.community_key %}🎵
+                            {% elif "History" in membership.group_session.community_key %}📜
+                            {% elif "War" in membership.group_session.community_key %}⚔️
+                            {% elif "Western" in membership.group_session.community_key %}🤠
+                            {% else %}🌐
+                            {% endif %}
+                        </span>
+                    </div>
+                    <button onclick="window.location.href='/communities/{{ membership.group_session.group_code }}/deck/'"
+                            class="w-full bg-white text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-50 transition-colors">
+                        Enter Community →
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Browse Communities -->
+        <div class="max-w-6xl mx-auto mb-8">
+            <h2 class="text-2xl font-bold mb-6 text-center">Browse by Genre</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for genre in genres %}
+                <div class="community-card bg-gray-800 rounded-lg p-6 text-center"
+                     role="button" tabindex="0"
+                     data-genre="{{ genre.name }}"
+                     data-genre-id="{{ genre.id }}"
+                     onclick="joinCommunity(this)"
+                     onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); joinCommunity(this); }">
+                    <div class="text-4xl mb-2">
+                        {% if genre.name == "Action" %}⚡
+                        {% elif genre.name == "Comedy" %}😂
+                        {% elif genre.name == "Drama" %}🎭
+                        {% elif genre.name == "Horror" %}👻
+                        {% elif genre.name == "Romance" %}💕
+                        {% elif genre.name == "Thriller" %}🔪
+                        {% elif genre.name == "Science Fiction" %}🚀
+                        {% elif genre.name == "Animation" %}🎨
+                        {% elif genre.name == "Adventure" %}🗺️
+                        {% elif genre.name == "Fantasy" %}🧙
+                        {% elif genre.name == "Crime" %}🕵️
+                        {% elif genre.name == "Mystery" %}🔍
+                        {% elif genre.name == "Family" %}👨‍👩‍👧‍👦
+                        {% elif genre.name == "Music" %}🎵
+                        {% elif genre.name == "History" %}📜
+                        {% elif genre.name == "War" %}⚔️
+                        {% elif genre.name == "Western" %}🤠
+                        {% else %}🎬
+                        {% endif %}
+                    </div>
+                    <h3 class="text-lg font-semibold">{{ genre.name }}</h3>
+                    <p class="text-sm text-gray-400 mt-2">Browse movies together</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-8">
+            <a href="{% url 'recom_sys:profile' %}" class="text-gray-400 hover:text-white transition-colors">
+                ← Back to Profile
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // VERSION: 2025-01-08-FIX-v2 - Cache busting version
+        console.log('Communities.html script loaded - VERSION 2025-01-08-FIX-v2');
+
+        async function joinCommunity(element) {
+            try {
+                // Debug: Log the element and its dataset
+                console.log('Element:', element);
+                console.log('Dataset:', element.dataset);
+
+                // Get genre data from the clicked element's data attributes
+                const genreName = element.dataset.genre;
+                const genreId = parseInt(element.dataset.genreId);
+
+                console.log('Genre Name:', genreName, 'Genre ID:', genreId);
+
+                // Build request body
+                const requestBody = {
+                    genre: genreName,
+                    genre_id: genreId
+                };
+
+                console.log('Request body:', requestBody);
+
+                const response = await fetch('/api/groups/community/join/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to community deck page
+                    window.location.href = `/communities/${data.community_code}/deck/`;
+                } else {
+                    alert(data.message || 'Failed to join community');
+                }
+            } catch (error) {
+                console.error('Error joining community:', error);
+                alert('Failed to join community. Please try again.');
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

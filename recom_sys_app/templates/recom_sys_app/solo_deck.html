@@ -611,7 +611,13 @@
             }
 
             likesList.innerHTML = likedMovies.map(movie => `
-                <div class="liked-movie">
+                <div class="liked-movie" style="position: relative;">
+                    <button onclick="removeLike(${movie.tmdb_id}, event)"
+                            class="remove-like-btn"
+                            title="Remove from likes"
+                            style="position: absolute; top: 4px; right: 4px; background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;">
+                        ×
+                    </button>
                     <img src="${movie.poster_url || 'https://via.placeholder.com/60x90'}" alt="${movie.title}">
                     <div class="flex-1">
                         <h3 class="font-bold">${movie.title}</h3>
@@ -619,6 +625,37 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        async function removeLike(tmdb_id, event) {
+            event.stopPropagation();
+
+            if (!confirm('Remove this movie from your likes?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/solo/unlike/${tmdb_id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove from local array
+                    likedMovies = likedMovies.filter(m => m.tmdb_id !== tmdb_id);
+                    // Update the UI
+                    updateLikesPanel();
+                } else {
+                    alert(data.error || 'Failed to remove movie from likes');
+                }
+            } catch (error) {
+                console.error('Error removing like:', error);
+                alert('Failed to remove movie from likes');
+            }
         }
 
         function toggleLikesPanel() {

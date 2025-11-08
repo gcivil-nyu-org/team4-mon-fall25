@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% if is_community %}Community Lobby{% else %}Group Lobby{% endif %} - {{ group_code }}</title>
+  <title>{{ genre_name }} Community Lobby - {{ group_code }}</title>
   <style>
-    /* ===== CineMatch Group Lobby ============================================= */
+    /* ===== CineMatch Community Lobby ============================================= */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -363,7 +363,7 @@
     <div class="lobby-header">
       <h1 class="lobby-title">
         <span>{% if is_community %}🌐{% else %}🎬{% endif %}</span>
-        {% if is_community %}Community Lobby{% else %}Group Lobby{% endif %}
+        {% if is_community %}Community Lobby{% else %}Community Lobby{% endif %}
       </h1>
 
       <div class="group-code-display">
@@ -501,7 +501,7 @@
       document.getElementById('memberCount').textContent = count;
     }
 
-    // Copy Group Code
+    // Copy Community Code
     document.getElementById('copyCodeBtn').addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(groupCode);

@@ -468,6 +468,7 @@
         </div>
         <div class="groups-list">
           {% for membership in user_groups %}
+          {% if membership.group_session.kind == 'PRIVATE' %}
           <div class="group-item">
             <div class="group-info">
               <span class="group-code">{{ membership.group_session.group_code }}</span>
@@ -481,6 +482,7 @@
               Enter Lobby →
             </a>
           </div>
+          {% endif %}
           {% endfor %}
         </div>
       </div>
@@ -523,34 +525,40 @@
         <span>Community Mode</span>
       </div>
       <div class="card-description">
-        Join a genre-based community room and swipe with other users
+        Join genre-based communities and discover movies with others who share your taste!
       </div>
-      <div class="genre-select-container">
-        <select id="communityGenre" class="genre-select">
-          <option value="">Choose a genre</option>
-          <option value="28">Action</option>
-          <option value="12">Adventure</option>
-          <option value="16">Animation</option>
-          <option value="35">Comedy</option>
-          <option value="80">Crime</option>
-          <option value="99">Documentary</option>
-          <option value="18">Drama</option>
-          <option value="10751">Family</option>
-          <option value="14">Fantasy</option>
-          <option value="36">History</option>
-          <option value="27">Horror</option>
-          <option value="10402">Music</option>
-          <option value="9648">Mystery</option>
-          <option value="10749">Romance</option>
-          <option value="878">Science Fiction</option>
-          <option value="53">Thriller</option>
-          <option value="10752">War</option>
-          <option value="37">Western</option>
-        </select>
+
+      <!-- Quick Access Genre Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div class="genre-quick-card" data-genre="Action" data-genre-id="28" onclick="joinCommunityQuick(this)">
+          <div class="genre-icon">⚡</div>
+          <div class="genre-name">Action</div>
+        </div>
+        <div class="genre-quick-card" data-genre="Horror" data-genre-id="27" onclick="joinCommunityQuick(this)">
+          <div class="genre-icon">👻</div>
+          <div class="genre-name">Horror</div>
+        </div>
+        <div class="genre-quick-card" data-genre="Comedy" data-genre-id="35" onclick="joinCommunityQuick(this)">
+          <div class="genre-icon">😂</div>
+          <div class="genre-name">Comedy</div>
+        </div>
+        <div class="genre-quick-card" data-genre="Romance" data-genre-id="10749" onclick="joinCommunityQuick(this)">
+          <div class="genre-icon">💕</div>
+          <div class="genre-name">Romance</div>
+        </div>
+        <div class="genre-quick-card" data-genre="Science Fiction" data-genre-id="878" onclick="joinCommunityQuick(this)">
+          <div class="genre-icon">🚀</div>
+          <div class="genre-name">Sci-Fi</div>
+        </div>
+        <div class="genre-quick-card" data-genre="Thriller" data-genre-id="53" onclick="joinCommunityQuick(this)">
+          <div class="genre-icon">🔪</div>
+          <div class="genre-name">Thriller</div>
+        </div>
       </div>
-      <button class="btn-join-community" onclick="joinCommunity()">
-        Join Community
-      </button>
+
+      <a href="{% url 'recom_sys:communities' %}" class="btn-join-community" style="text-decoration: none; display: block; text-align: center;">
+        Browse All Communities →
+      </a>
     </div>
   </div>
 
@@ -711,6 +719,35 @@
         return;
       }
 
+      // Map genre IDs to genre names
+      const genreMap = {
+        '28': 'Action',
+        '12': 'Adventure',
+        '16': 'Animation',
+        '35': 'Comedy',
+        '80': 'Crime',
+        '18': 'Drama',
+        '10751': 'Family',
+        '14': 'Fantasy',
+        '36': 'History',
+        '27': 'Horror',
+        '10402': 'Music',
+        '9648': 'Mystery',
+        '10749': 'Romance',
+        '878': 'Science Fiction',
+        '53': 'Thriller',
+        '10752': 'War',
+        '37': 'Western'
+      };
+
+      const genreName = genreMap[genreId];
+      if (!genreName) {
+        alert('Invalid genre selected');
+        return;
+      }
+
+      console.log('Joining community with:', { genre: genreName, genre_id: parseInt(genreId) });
+
       try {
         // Call API to join or create community group
         const response = await fetch('{% url "recom_sys:api_community_join" %}', {
@@ -720,7 +757,8 @@
             'X-CSRFToken': getCookie('csrftoken')
           },
           body: JSON.stringify({
-            genre_id: genreId
+            genre: genreName,
+            genre_id: parseInt(genreId)
           })
         });
 
@@ -730,7 +768,7 @@
           // Redirect to the group lobby/deck
           window.location.href = data.redirect_url;
         } else {
-          alert(data.error || 'Failed to join community group');
+          alert(data.message || data.error || 'Failed to join community group');
         }
       } catch (error) {
         console.error('Error joining community:', error);
