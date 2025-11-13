@@ -15,12 +15,14 @@ omit =
     */management/commands/*
 
 [report]
-# Only report a tiny whitelist of files that are already 100%.
 # (Adjust paths if yours differ.)
 include =
     recom_sys_app/routing.py
     recom_sys_app/apps.py
     recom_sys_app/__init__.py
+    recom_sys_app/models.py
+    recom_sys_app/forms.py
+    recom_sys_app/serializers.py
 
 exclude_lines =
     pragma: no cover
