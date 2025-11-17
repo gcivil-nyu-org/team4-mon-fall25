@@ -11,8 +11,6 @@ Tests cover:
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
-from rest_framework import status
 from recom_sys_app.serializers import (
     UserSerializer,
     UserProfileSerializer,
@@ -46,7 +44,14 @@ class UserSerializerTest(TestCase):
         """Test that serializer has correct fields"""
         serializer = UserSerializer(instance=self.user)
         data = serializer.data
-        expected_fields = ["id", "username", "email", "first_name", "last_name", "date_joined"]
+        expected_fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "date_joined",
+        ]
         for field in expected_fields:
             self.assertIn(field, data)
 
@@ -508,7 +513,12 @@ class RecommendationResponseSerializerTest(TestCase):
     def test_serializer_fields(self):
         """Test that serializer has all expected fields"""
         serializer = RecommendationResponseSerializer()
-        expected_fields = ["agent_response", "recommendations", "user_movies", "user_genres"]
+        expected_fields = [
+            "agent_response",
+            "recommendations",
+            "user_movies",
+            "user_genres",
+        ]
         for field in expected_fields:
             self.assertIn(field, serializer.fields)
 
@@ -544,4 +554,3 @@ class RecommendationResponseSerializerTest(TestCase):
             }
         )
         self.assertTrue(serializer.is_valid())
-

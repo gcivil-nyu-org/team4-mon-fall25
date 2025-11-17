@@ -21,7 +21,9 @@ class RecomSysConfigTest(TestCase):
 
     def test_default_auto_field(self):
         """Test that default_auto_field is set"""
-        self.assertEqual(RecomSysConfig.default_auto_field, "django.db.models.BigAutoField")
+        self.assertEqual(
+            RecomSysConfig.default_auto_field, "django.db.models.BigAutoField"
+        )
 
     def test_app_name(self):
         """Test that app name is correct"""
@@ -32,4 +34,3 @@ class RecomSysConfigTest(TestCase):
         config = RecomSysConfig("recom_sys_app", None)
         self.assertIsNotNone(config)
         self.assertEqual(config.name, "recom_sys_app")
-

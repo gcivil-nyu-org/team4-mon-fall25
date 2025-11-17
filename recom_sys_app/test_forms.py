@@ -501,4 +501,3 @@ class SignUpFormTest(TestCase):
         self.assertIn(Sex.FEMALE, sex_choices)
         self.assertIn(Sex.OTHER, sex_choices)
         self.assertIn(Sex.UNSPECIFIED, sex_choices)
-

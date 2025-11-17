@@ -12,7 +12,7 @@ Tests cover:
 - Error handling
 """
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.core.cache import cache
 from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
@@ -23,7 +23,6 @@ from recom_sys_app.models import (
     GroupSession,
     GroupMember,
     GroupSwipe,
-    Sex,
     Genre,
 )
 
@@ -379,9 +378,7 @@ class RecommendationServiceTest(TestCase):
         # Mock popular movies API
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "results": [{"id": 550}, {"id": 551}]
-        }
+        mock_response.json.return_value = {"results": [{"id": 550}, {"id": 551}]}
         mock_get.return_value = mock_response
 
         deck = RecommendationService.get_solo_deck(self.user, limit=10)
@@ -455,7 +452,7 @@ class RecommendationServiceTest(TestCase):
     def test_get_group_deck_private_group(self, mock_get):
         """Test get_group_deck for private group"""
         group = GroupSession.objects.create(creator=self.user)
-        member = GroupMember.objects.create(
+        GroupMember.objects.create(
             group_session=group, user=self.user, role=GroupMember.Role.CREATOR
         )
 
@@ -500,7 +497,10 @@ class RecommendationServiceTest(TestCase):
 
         # Create swipe
         GroupSwipe.objects.create(
-            group_session=group, user=self.user, tmdb_id=550, action=GroupSwipe.Action.LIKE
+            group_session=group,
+            user=self.user,
+            tmdb_id=550,
+            action=GroupSwipe.Action.LIKE,
         )
 
         mock_response = MagicMock()
@@ -551,7 +551,10 @@ class RecommendationServiceTest(TestCase):
 
         # Both users like the movie
         GroupSwipe.objects.create(
-            group_session=group, user=self.user, tmdb_id=550, action=GroupSwipe.Action.LIKE
+            group_session=group,
+            user=self.user,
+            tmdb_id=550,
+            action=GroupSwipe.Action.LIKE,
         )
         GroupSwipe.objects.create(
             group_session=group, user=user2, tmdb_id=550, action=GroupSwipe.Action.LIKE
@@ -576,7 +579,10 @@ class RecommendationServiceTest(TestCase):
 
         # Only one user likes
         GroupSwipe.objects.create(
-            group_session=group, user=self.user, tmdb_id=550, action=GroupSwipe.Action.LIKE
+            group_session=group,
+            user=self.user,
+            tmdb_id=550,
+            action=GroupSwipe.Action.LIKE,
         )
 
         is_match = RecommendationService.check_group_match(group, 550)
@@ -589,4 +595,3 @@ class RecommendationServiceTest(TestCase):
 
         is_match = RecommendationService.check_group_match(group, 550)
         self.assertFalse(is_match)
-
