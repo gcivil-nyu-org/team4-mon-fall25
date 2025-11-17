@@ -20,6 +20,7 @@ include =
     recom_sys_app/routing.py
     recom_sys_app/apps.py
     recom_sys_app/__init__.py
+    recom_sys_app/models.py
     recom_sys_app/serializers.py
 
 exclude_lines =
