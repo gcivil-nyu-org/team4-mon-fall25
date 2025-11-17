@@ -17,3 +17,28 @@ staticfiles/
 
 # Claude Code settings
 .claude/settings.local.json
+
+# Test files and temporary files
+test_redis.py
+nul
+
+# Credentials file (DO NOT COMMIT)
+CREDENTIALS_TO_SHARE.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# AWS credentials
+*.pem
+.aws/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover

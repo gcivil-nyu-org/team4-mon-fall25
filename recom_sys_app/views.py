@@ -6,7 +6,9 @@ import re
 import json
 import ast
 import requests
-
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 from dotenv import load_dotenv
 from phi.agent import Agent
 from phi.model.groq import Groq
@@ -17,7 +19,7 @@ from django.middleware.csrf import get_token
 from django.contrib.auth import login
 
 from .forms import UserProfileForm, SignUpForm
-from .models import UserProfile, Interaction
+from .models import UserProfile, Interaction, Genre
 from .services import RecommendationService
 
 # NEW for group
@@ -33,7 +35,7 @@ load_dotenv(settings.BASE_DIR / ".env")
 # TMDB Configuration
 # ============================================
 
-TMDB_TOKEN = (os.getenv("TMDB_TOKEN") or "").strip()
+TMDB_TOKEN = (os.getenv("TMDB_TOKEN") or os.getenv("TMDB_API_KEY") or "").strip()
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_HEADERS = {
     "Authorization": f"Bearer {TMDB_TOKEN}",
@@ -237,6 +239,73 @@ def _tmdb_fetch_by_ids(movie_ids: list[int]) -> list[dict]:
 # ============================================
 # User Affinity Helper Functions
 # ============================================
+@login_required
+@require_POST
+def api_community_join(request):
+    try:
+        payload = json.loads(request.body or "{}")
+        genre_value = (
+            payload.get("genre")
+            or payload.get("genre_value")
+            or payload.get("genre_id")
+        )
+
+        if not genre_value:
+            return HttpResponseBadRequest("Missing genre")
+
+        # TMDB genre ID to genre name mapping (matching Genre model choices)
+        tmdb_genre_map = {
+            "28": "Action",
+            "12": "Adventure",
+            "16": "Animation",
+            "35": "Comedy",
+            "80": "Crime",
+            "18": "Drama",
+            "10751": "Family",
+            "14": "Fantasy",
+            "36": "History",
+            "27": "Horror",
+            "10402": "Music",
+            "9648": "Mystery",
+            "10749": "Romance",
+            "878": "Science Fiction",
+            "53": "Thriller",
+            "10752": "War",
+            "37": "Western",
+        }
+
+        # Convert TMDB ID to genre name if needed
+        if genre_value in tmdb_genre_map:
+            genre_value = tmdb_genre_map[genre_value]
+
+        # Validate genre
+        valid_genres = dict(Genre.choices)
+        if genre_value not in valid_genres:
+            return HttpResponseBadRequest(f"Invalid genre: {genre_value}")
+
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON")
+    except Exception as e:
+        return HttpResponseBadRequest(f"Error: {str(e)}")
+
+    group, _ = GroupSession.get_or_create_community_by_genre(
+        genre_value=genre_value, creator=request.user
+    )
+    # Ensure current user is a member (idempotent)
+    GroupMember.objects.get_or_create(
+        group_session=group,
+        user=request.user,
+        defaults={"role": GroupMember.Role.MEMBER},
+    )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "redirect_url": reverse(
+                "recom_sys:group_deck_page", kwargs={"group_code": group.group_code}
+            ),
+        }
+    )
 
 
 def _get_signup_movies(user):
@@ -416,16 +485,20 @@ def profile_view(request):
         user=request.user, defaults={"name": request.user.username}
     )
 
-    # Get user's group memberships
+    # Get user's PRIVATE group memberships only (exclude communities)
     user_groups = (
-        GroupMember.objects.filter(user=request.user, is_active=True)
+        GroupMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            group_session__kind=GroupSession.Kind.PRIVATE,
+        )
         .select_related("group_session")
         .order_by("-joined_at")
     )
 
-    # Get created groups
+    # Get created PRIVATE groups only (exclude communities)
     created_groups = GroupSession.objects.filter(
-        creator=request.user, is_active=True
+        creator=request.user, is_active=True, kind=GroupSession.Kind.PRIVATE
     ).order_by("-created_at")
 
     get_token(request)  # ensure CSRF cookie
@@ -436,6 +509,60 @@ def profile_view(request):
             "profile": profile,
             "user_groups": user_groups,
             "created_groups": created_groups,
+        },
+    )
+
+
+@login_required
+def communities_view(request):
+    """
+    Communities view - shows only COMMUNITY groups (genre-based browsing)
+    URL: /communities/
+    """
+    profile, _ = UserProfile.objects.get_or_create(
+        user=request.user, defaults={"name": request.user.username}
+    )
+
+    # Get user's COMMUNITY memberships only
+    user_communities = (
+        GroupMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            group_session__kind=GroupSession.Kind.COMMUNITY,
+        )
+        .select_related("group_session")
+        .order_by("-joined_at")
+    )
+
+    # TMDB standard genre list
+    genres = [
+        {"id": 28, "name": "Action"},
+        {"id": 12, "name": "Adventure"},
+        {"id": 16, "name": "Animation"},
+        {"id": 35, "name": "Comedy"},
+        {"id": 80, "name": "Crime"},
+        {"id": 18, "name": "Drama"},
+        {"id": 10751, "name": "Family"},
+        {"id": 14, "name": "Fantasy"},
+        {"id": 36, "name": "History"},
+        {"id": 27, "name": "Horror"},
+        {"id": 10402, "name": "Music"},
+        {"id": 9648, "name": "Mystery"},
+        {"id": 10749, "name": "Romance"},
+        {"id": 878, "name": "Science Fiction"},
+        {"id": 53, "name": "Thriller"},
+        {"id": 10752, "name": "War"},
+        {"id": 37, "name": "Western"},
+    ]
+
+    get_token(request)  # ensure CSRF cookie
+    return render(
+        request,
+        "recom_sys_app/communities.html",
+        {
+            "profile": profile,
+            "user_communities": user_communities,
+            "genres": genres,
         },
     )
 
@@ -457,7 +584,7 @@ def edit_profile_view(request):
         if form.is_valid():
             form.instance.user = request.user
             form.save()
-            return redirect("profile")
+            return redirect("recom_sys:profile")
     else:
         form = UserProfileForm(instance=profile)
 
@@ -531,7 +658,7 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("profile")
+            return redirect("recom_sys:profile")
     else:
         form = SignUpForm()
 
@@ -902,18 +1029,19 @@ def group_lobby(request, group_id):
 
         if not membership:
             # 如果不是成员，重定向到个人资料页
-            return redirect("profile")
+            return redirect("recom_sys:profile")
 
         context = {
             "group": group,
             "group_code": group.group_code,
             "is_creator": membership.role == GroupMember.Role.CREATOR,
+            "is_community": group.kind == GroupSession.Kind.COMMUNITY,
         }
 
         return render(request, "recom_sys_app/group_lobby.html", context)
 
     except GroupSession.DoesNotExist:
-        return redirect("profile")
+        return redirect("recom_sys:profile")
 
 
 @login_required
@@ -1013,3 +1141,70 @@ def join_group(request):
         return JsonResponse(
             {"success": False, "message": f"Failed to join group: {str(e)}"}, status=500
         )
+
+
+# ============================================
+# MOVIE SEARCH - FIND SIMILAR MOVIES
+# ============================================
+
+
+@login_required
+def movie_search_view(request):
+    """
+    Renders the movie search page where users can search for a movie
+    and find similar recommendations.
+    """
+    return render(request, "recom_sys_app/movie_search.html")
+
+
+@login_required
+@require_http_methods(["POST"])
+def search_movies_api(request):
+    """
+    API endpoint to search for movies by title
+    """
+    try:
+        data = json.loads(request.body)
+        query = data.get("query", "").strip()
+
+        if not query:
+            return JsonResponse(
+                {"success": False, "message": "Query is required"}, status=400
+            )
+
+        # Use RecommendationService to search
+        results = RecommendationService.search_movies(query, limit=10)
+
+        return JsonResponse(
+            {"success": True, "results": results, "count": len(results)}
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_similar_movies_api(request, tmdb_id):
+    """
+    API endpoint to get similar movies for a given movie ID
+    """
+    try:
+        limit = int(request.GET.get("limit", 20))
+
+        # Use RecommendationService to get similar movies
+        results = RecommendationService.get_similar_movies(tmdb_id, limit=limit)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "results": results,
+                "count": len(results),
+                "tmdb_id": tmdb_id,
+            }
+        )
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)

@@ -9,14 +9,25 @@ from .models import GroupMember, GroupSwipe, Interaction, UserProfile
 class RecommendationService:
     """群组电影推荐服务"""
 
-    TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+    TMDB_TOKEN = os.getenv("TMDB_TOKEN") or os.getenv("TMDB_API_KEY")
     TMDB_BASE_URL = "https://api.themoviedb.org/3"
+    TMDB_HEADERS = (
+        {
+            "Authorization": f"Bearer {TMDB_TOKEN}",
+            "Accept": "application/json",
+        }
+        if TMDB_TOKEN
+        else {}
+    )
     CACHE_TIMEOUT = 3600  # 1小时缓存
 
     @classmethod
     def get_group_deck(cls, group_session, limit=50):
         """
         为群组生成个性化电影推荐列表
+
+        For COMMUNITY groups: filter movies by community genre
+        For PRIVATE groups: generate recommendations based on group member history
 
         Args:
             group_session: GroupSession 实例
@@ -31,26 +42,76 @@ class RecommendationService:
         if cached_deck:
             return cached_deck[:limit]
 
-        # 获取活跃成员
-        members = GroupMember.objects.filter(
-            group_session=group_session, is_active=True
-        ).select_related("user")
+        # For COMMUNITY groups, filter by genre only
+        if group_session.kind == "COMMUNITY":
+            # Get genre from community_key or genre_filter
+            genre_name = group_session.genre_filter or ""
+            if not genre_name and group_session.community_key:
+                # Extract from community_key (format: "genre:Action")
+                if group_session.community_key.startswith("genre:"):
+                    genre_name = group_session.community_key.split(":", 1)[1]
 
-        if members.count() < 2:
-            # 人数不足，返回热门电影
-            movie_ids = cls._get_popular_movies(limit)
+            print(f"[DEBUG get_group_deck] COMMUNITY mode - genre_name: {genre_name}")
+            print(
+                f"[DEBUG get_group_deck] community_key: {group_session.community_key}, genre_filter: {group_session.genre_filter}"
+            )
+
+            if genre_name:
+                # Get genre IDs and fetch movies
+                genre_ids = cls._get_genre_ids_by_names([genre_name])
+                print(f"[DEBUG get_group_deck] genre_ids: {genre_ids}")
+                if genre_ids:
+                    movie_ids = cls._get_movies_by_genres(genre_ids, limit * 2)
+                    print(
+                        f"[DEBUG get_group_deck] Fetched {len(movie_ids)} movies for genre {genre_name}"
+                    )
+                else:
+                    movie_ids = cls._get_popular_movies(limit * 2)
+                    print(
+                        f"[DEBUG get_group_deck] No genre IDs found, using popular movies"
+                    )
+            else:
+                movie_ids = cls._get_popular_movies(limit * 2)
+                print(
+                    f"[DEBUG get_group_deck] No genre name found, using popular movies"
+                )
+
+            # For communities, filter out movies user already swiped via Interaction model
+            from .models import Interaction
+
+            # Get all users in community
+            user_ids = GroupMember.objects.filter(
+                group_session=group_session, is_active=True
+            ).values_list("user_id", flat=True)
+
+            # Get all swiped movie IDs by community members
+            swiped_ids = set(
+                Interaction.objects.filter(user_id__in=user_ids).values_list(
+                    "tmdb_id", flat=True
+                )
+            )
         else:
-            # 基于群组历史 likes 生成推荐（传递 group_session）
-            movie_ids = cls._generate_group_recommendations(
-                group_session, members, limit * 2
-            )
+            # For PRIVATE groups, use original logic
+            # 获取活跃成员
+            members = GroupMember.objects.filter(
+                group_session=group_session, is_active=True
+            ).select_related("user")
 
-        # 过滤已经滑过的电影
-        swiped_ids = set(
-            GroupSwipe.objects.filter(group_session=group_session).values_list(
-                "tmdb_id", flat=True
+            if members.count() < 2:
+                # 人数不足，返回热门电影
+                movie_ids = cls._get_popular_movies(limit * 2)
+            else:
+                # 基于群组历史 likes 生成推荐（传递 group_session）
+                movie_ids = cls._generate_group_recommendations(
+                    group_session, members, limit * 2
+                )
+
+            # 过滤已经滑过的电影
+            swiped_ids = set(
+                GroupSwipe.objects.filter(group_session=group_session).values_list(
+                    "tmdb_id", flat=True
+                )
             )
-        )
 
         # 移除已滑过的电影
         filtered_movies = [mid for mid in movie_ids if mid not in swiped_ids]
@@ -281,7 +342,6 @@ class RecommendationService:
             genre_str = "|".join(map(str, genre_ids))
 
             params = {
-                "api_key": cls.TMDB_API_KEY,
                 "with_genres": genre_str,
                 "sort_by": "vote_average.desc",
                 "vote_count.gte": 100,  # 至少100个投票
@@ -289,7 +349,10 @@ class RecommendationService:
             }
 
             response = requests.get(
-                f"{cls.TMDB_BASE_URL}/discover/movie", params=params, timeout=10
+                f"{cls.TMDB_BASE_URL}/discover/movie",
+                params=params,
+                headers=cls.TMDB_HEADERS,
+                timeout=10,
             )
             response.raise_for_status()
 
@@ -300,7 +363,10 @@ class RecommendationService:
             if len(movie_ids) < limit and data.get("total_pages", 0) > 1:
                 params["page"] = 2
                 response = requests.get(
-                    f"{cls.TMDB_BASE_URL}/discover/movie", params=params, timeout=10
+                    f"{cls.TMDB_BASE_URL}/discover/movie",
+                    params=params,
+                    headers=cls.TMDB_HEADERS,
+                    timeout=10,
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -318,10 +384,13 @@ class RecommendationService:
         获取热门电影作为后备方案
         """
         try:
-            params = {"api_key": cls.TMDB_API_KEY, "page": 1}
+            params = {"page": 1}
 
             response = requests.get(
-                f"{cls.TMDB_BASE_URL}/movie/popular", params=params, timeout=10
+                f"{cls.TMDB_BASE_URL}/movie/popular",
+                params=params,
+                headers=cls.TMDB_HEADERS,
+                timeout=10,
             )
             response.raise_for_status()
 
@@ -356,8 +425,14 @@ class RecommendationService:
             group_session=group_session, tmdb_id=tmdb_id, action=GroupSwipe.Action.LIKE
         ).count()
 
+        print(
+            f"[DEBUG check_group_match] active_members: {active_member_count}, likes: {like_count}, tmdb_id: {tmdb_id}"
+        )
+
         # 检查是否所有人都喜欢
-        return like_count >= active_member_count and active_member_count > 0
+        is_match = like_count >= active_member_count and active_member_count > 0
+        print(f"[DEBUG check_group_match] Result: {is_match}")
+        return is_match
 
     @classmethod
     def get_movie_details(cls, tmdb_id):
@@ -377,10 +452,10 @@ class RecommendationService:
             return cached_data
 
         try:
-            params = {"api_key": cls.TMDB_API_KEY}
-
             response = requests.get(
-                f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}", params=params, timeout=10
+                f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}",
+                headers=cls.TMDB_HEADERS,
+                timeout=10,
             )
             response.raise_for_status()
 
@@ -417,3 +492,161 @@ class RecommendationService:
         """
         cache_key = f"group_deck_{group_session.id}"
         cache.delete(cache_key)
+
+    @classmethod
+    def search_movies(cls, query, limit=10):
+        """
+        Search for movies by title using TMDb API
+
+        Args:
+            query: Movie title to search for
+            limit: Maximum number of results to return
+
+        Returns:
+            list: List of movie dictionaries with id, title, year, poster_path
+        """
+        if not cls.TMDB_TOKEN:
+            return []
+
+        try:
+            url = f"{cls.TMDB_BASE_URL}/search/movie"
+            params = {
+                "query": query,
+                "language": "en-US",
+                "page": 1,
+                "include_adult": False,
+            }
+
+            response = requests.get(
+                url, headers=cls.TMDB_HEADERS, params=params, timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            results = []
+            for movie in data.get("results", [])[:limit]:
+                results.append(
+                    {
+                        "tmdb_id": movie.get("id"),
+                        "title": movie.get("title"),
+                        "year": (
+                            movie.get("release_date", "")[:4]
+                            if movie.get("release_date")
+                            else ""
+                        ),
+                        "poster_path": movie.get("poster_path"),
+                        "overview": movie.get("overview", ""),
+                        "vote_average": movie.get("vote_average", 0),
+                    }
+                )
+
+            return results
+
+        except Exception as e:
+            print(f"Error searching movies: {e}")
+            return []
+
+    @classmethod
+    def get_similar_movies(cls, tmdb_id, limit=20):
+        """
+        Get similar movies using TMDb's recommendations endpoint with filtering
+        for more relevant and recent results. Only returns movies that share
+        at least one genre with the original movie.
+
+        Args:
+            tmdb_id: TMDb movie ID
+            limit: Maximum number of similar movies to return
+
+        Returns:
+            list: List of similar movie dictionaries
+        """
+        # Check cache first
+        cache_key = f"similar_movies_{tmdb_id}"
+        cached_similar = cache.get(cache_key)
+        if cached_similar:
+            return cached_similar[:limit]
+
+        if not cls.TMDB_TOKEN:
+            return []
+
+        try:
+            # First, get the original movie's genres
+            movie_url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}"
+            movie_response = requests.get(
+                movie_url, headers=cls.TMDB_HEADERS, timeout=10
+            )
+            movie_response.raise_for_status()
+            original_movie = movie_response.json()
+            original_genres = set(
+                genre["id"] for genre in original_movie.get("genres", [])
+            )
+
+            # Use recommendations endpoint for better matches
+            url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}/recommendations"
+            params = {"language": "en-US", "page": 1}
+
+            response = requests.get(
+                url, headers=cls.TMDB_HEADERS, params=params, timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            results = []
+            for movie in data.get("results", []):
+                # Get movie year
+                release_date = movie.get("release_date", "")
+                year = release_date[:4] if release_date else ""
+
+                # Get movie genres
+                movie_genre_ids = set(movie.get("genre_ids", []))
+
+                # Filter criteria for more specific results:
+                # 1. Must have a release year
+                # 2. Movie must be from 2000 or newer (avoid very old films)
+                # 3. Must have at least 100 votes (avoid obscure films)
+                # 4. Must have rating of 5.0 or higher (avoid low-quality films)
+                # 5. Must share at least one genre with the original movie
+                if not year:
+                    continue
+                if int(year) < 2000:
+                    continue
+                if movie.get("vote_count", 0) < 100:
+                    continue
+                if movie.get("vote_average", 0) < 5.0:
+                    continue
+                # Check genre overlap - must share at least 2 genres for better relevance
+                genre_overlap = original_genres.intersection(movie_genre_ids)
+                if len(genre_overlap) < 2:
+                    continue
+
+                # Calculate genre match score (more shared genres = higher score)
+                genre_match_score = len(genre_overlap)
+
+                results.append(
+                    {
+                        "tmdb_id": movie.get("id"),
+                        "title": movie.get("title"),
+                        "year": year,
+                        "poster_path": movie.get("poster_path"),
+                        "overview": movie.get("overview", ""),
+                        "vote_average": movie.get("vote_average", 0),
+                        "backdrop_path": movie.get("backdrop_path"),
+                        "genre_ids": movie.get("genre_ids", []),
+                        "vote_count": movie.get("vote_count", 0),
+                        "genre_match_score": genre_match_score,
+                    }
+                )
+
+            # Sort by genre match score first, then by vote average
+            results.sort(
+                key=lambda x: (x["genre_match_score"], x["vote_average"]), reverse=True
+            )
+
+            # Cache for 1 hour
+            cache.set(cache_key, results, cls.CACHE_TIMEOUT)
+
+            return results[:limit]
+
+        except Exception as e:
+            print(f"Error fetching similar movies: {e}")
+            return []
