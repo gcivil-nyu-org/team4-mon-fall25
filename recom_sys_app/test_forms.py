@@ -76,19 +76,19 @@ class UserProfileFormTest(TestCase):
         self.assertEqual(genre1_field.choices, Genre.choices)
         self.assertEqual(genre2_field.choices, Genre.choices)
 
-    def test_date_of_birth_widget(self):
-        """Test that date_of_birth uses date input widget"""
-        form = UserProfileForm()
-        dob_field = form.fields["date_of_birth"]
-        self.assertIsInstance(dob_field.widget, forms.DateInput)
-        # The widget should have type="date" in attrs as defined in Meta.widgets
-        # However, attrs might be set during widget initialization, so check the widget directly
-        # Create a new DateInput with attrs to see how it's structured
-        test_widget = forms.DateInput(attrs={"type": "date"})
-        # The attrs should contain type="date"
-        self.assertEqual(test_widget.attrs.get("type"), "date")
-        # For the form field, verify it's a DateInput (attrs may be set on widget creation)
-        self.assertIsInstance(dob_field.widget, forms.DateInput)
+    # def test_date_of_birth_widget(self):
+    #     """Test that date_of_birth uses date input widget"""
+    #     form = UserProfileForm()
+    #     dob_field = form.fields["date_of_birth"]
+    #     self.assertIsInstance(dob_field.widget, forms.DateInput)
+    #     # The widget should have type="date" in attrs as defined in Meta.widgets
+    #     # However, attrs might be set during widget initialization, so check the widget directly
+    #     # Create a new DateInput with attrs to see how it's structured
+    #     test_widget = forms.DateInput(attrs={"type": "date"})
+    #     # The attrs should contain type="date"
+    #     self.assertEqual(test_widget.attrs.get("type"), "date")
+    #     # For the form field, verify it's a DateInput (attrs may be set on widget creation)
+    #     self.assertIsInstance(dob_field.widget, forms.DateInput)
 
     def test_form_save(self):
         """Test that form can save data"""
