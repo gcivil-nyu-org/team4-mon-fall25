@@ -394,19 +394,25 @@ class RecommendationServiceTest(TestCase):
             status=Interaction.Status.LIKE,
         )
 
-        # Mock movie details and recommendations
-        movie_response = MagicMock()
-        movie_response.status_code = 200
-        movie_response.json.return_value = {
+        # Mock movie details response (for get_movie_details call)
+        movie_details_response = MagicMock()
+        movie_details_response.status_code = 200
+        movie_details_response.json.return_value = {
             "id": 550,
+            "title": "Fight Club",
             "genres": [{"id": 28, "name": "Action"}],
         }
 
-        rec_response = MagicMock()
-        rec_response.status_code = 200
-        rec_response.json.return_value = {"results": [{"id": 551}]}
+        # Mock discover/movie API response (for _get_movies_by_genres call)
+        discover_response = MagicMock()
+        discover_response.status_code = 200
+        discover_response.json.return_value = {
+            "results": [{"id": 551}],
+            "total_pages": 1,
+        }
 
-        mock_get.side_effect = [movie_response, rec_response]
+        # get_movie_details is called first, then discover API
+        mock_get.side_effect = [movie_details_response, discover_response]
 
         deck = RecommendationService.get_solo_deck(self.user, limit=10)
         self.assertIsInstance(deck, list)
