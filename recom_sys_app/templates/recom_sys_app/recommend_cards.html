@@ -218,6 +218,16 @@
 
             const handleStart = (e) => {
                 if (isAnimating) return;
+
+                // Prevent dragging when clicking on interactive elements
+                const target = e.target;
+                const isClickableElement = target.tagName === 'BUTTON' ||
+                                          target.tagName === 'A' ||
+                                          target.onclick !== null ||
+                                          target.closest('button') !== null;
+
+                if (isClickableElement) return;
+
                 isDragging = true;
                 startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
                 currentX = startX;

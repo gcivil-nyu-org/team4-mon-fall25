@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
@@ -39,12 +39,14 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",  # Must be placed at the very front
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",  # Enable Django Channels for handling WebSocket and asynchronous tasks
     "recom_sys_app",
     "corsheaders",
     "django_filters",
@@ -88,6 +90,7 @@ ROOT_URLCONF = "recommendation_sys.urls"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost:8000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
@@ -120,27 +123,31 @@ DATABASES = {
 }
 
 # Use PostgreSQL if configured
-if False:  # Change to True to use PostgreSQL
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("POSTGRES_DB", "cinematch_d"),
-            "USER": os.getenv("POSTGRES_USER", "cinematch"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "cinematch123"),
-            "HOST": os.getenv("POSTGRES_HOST", "localhost"),
-            "PORT": os.getenv("POSTGRES_PORT", "5432"),
-            "CONN_MAX_AGE": 60,
-            "OPTIONS": {
-                "connect_timeout": 10,
-                "sslmode": (
-                    "require"
-                    if os.getenv("POSTGRES_HOST")
-                    and "rds.amazonaws.com" in os.getenv("POSTGRES_HOST")
-                    else "disable"
-                ),
-            },
-        }
+if True:  # Change to True to use PostgreSQL
+    # Build database configuration
+    db_config = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "cinematch_d"),
+        "USER": os.getenv("POSTGRES_USER", "cinematch"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "cinematch123"),
+        "CONN_MAX_AGE": 60,
     }
+
+    # Add HOST and PORT only if POSTGRES_HOST is explicitly set
+    # (Travis CI uses Unix socket connection when HOST is not set)
+    postgres_host = os.getenv("POSTGRES_HOST")
+    if postgres_host:
+        db_config["HOST"] = postgres_host
+        db_config["PORT"] = os.getenv("POSTGRES_PORT", "5432")
+        db_config["OPTIONS"] = {
+            "connect_timeout": 10,
+            "sslmode": "require" if "rds.amazonaws.com" in postgres_host else "disable",
+        }
+    else:
+        # For Travis CI: use Unix socket (no HOST/PORT needed)
+        db_config["OPTIONS"] = {"connect_timeout": 10}
+
+    DATABASES = {"default": db_config}
 
 
 # Password validation
@@ -179,6 +186,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+# Tell Django where to find static files (for development debugging)
+STATICFILES_DIRS = [BASE_DIR / "recom_sys_app" / "static"]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type
@@ -189,4 +198,43 @@ LOGIN_URL = "recom_sys:login"
 LOGIN_REDIRECT_URL = "recom_sys:profile"
 LOGOUT_REDIRECT_URL = "recom_sys:login"
 
-# settings.py
+# ============================================================================
+# WebSocket and Django Channels Configuration
+# ============================================================================
+# ASGI Application
+ASGI_APPLICATION = "recommendation_sys.asgi.application"
+
+# Channel Layers Configuration
+# Use Redis for production (required for WebSocket group chat across multiple servers)
+# Fallback to InMemory for local development
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+
+# Use Redis if REDIS_HOST is set to a real Redis server, otherwise use InMemory
+# IMPORTANT: For production, use ElastiCache Redis with "cluster mode disabled"
+# ElastiCache Serverless and cluster-enabled Redis don't support Lua scripts used by channels-redis
+USE_REDIS_CHANNELS = os.getenv("USE_REDIS_CHANNELS", "False") == "True"
+
+if USE_REDIS_CHANNELS:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(REDIS_HOST, REDIS_PORT)],
+                "capacity": 1000,  # Max messages per channel
+                "expiry": 600,  # Message expiry in seconds (10 minutes)
+            },
+        },
+    }
+else:
+    # InMemory: works for single-server deployments and testing
+    # WARNING: WebSocket groups won't work across multiple EC2 instances
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+# Force InMemory for CI testing (Travis CI)
+if os.getenv("CI"):
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
+# WebSocket-related settings
+WEBSOCKET_ACCEPT_ALL = False  # Production environments should be set to False.
+WEBSOCKET_MAX_MESSAGE_SIZE = 1024 * 1024  # 1MB

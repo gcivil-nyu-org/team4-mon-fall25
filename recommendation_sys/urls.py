@@ -7,6 +7,10 @@ from django.urls import path, include
 from django.http import HttpResponse
 from django.shortcuts import redirect
 
+import os
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 def root_view(request):
     """
@@ -31,3 +35,8 @@ urlpatterns = [
     path("", root_view),  # Smart root handler
     path("", include("recom_sys_app.urls", namespace="recom_sys")),  # App routes
 ]
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.STATIC_URL,
+        document_root=os.path.join(settings.BASE_DIR, "recom_sys_app", "static"),
+    )

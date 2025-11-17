@@ -143,18 +143,35 @@ class Interaction(models.Model):
 
 
 # ---- 3) Group Movie Matching (NEW) ----
+# ---- 3) Group Movie Matching (NEW) ----
 class GroupSession(models.Model):
     """群组会话模型 - 用于多人协作选电影"""
 
+    class Kind(models.TextChoices):
+        PRIVATE = "PRIVATE", "Private"
+        COMMUNITY = "COMMUNITY", "Community"  # NEW
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group_code = models.CharField(max_length=8, unique=True, db_index=True)
+    group_code = models.CharField(max_length=32, unique=True, db_index=True)  # ⬆ length
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="created_groups",
     )
 
+    # NEW: what type of room this is
+    kind = models.CharField(
+        max_length=16, choices=Kind.choices, default=Kind.PRIVATE, db_index=True
+    )
+
+    # NEW: for communities, a stable key (e.g., "genre:Action")
+    community_key = models.CharField(
+        max_length=64, blank=True, null=True, db_index=True
+    )
+
     is_active = models.BooleanField(default=True, db_index=True)
+    is_public = models.BooleanField(default=False, db_index=True)
+    genre_filter = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -164,19 +181,78 @@ class GroupSession(models.Model):
         indexes = [
             models.Index(fields=["group_code"]),
             models.Index(fields=["creator", "-created_at"]),
+            models.Index(fields=["kind", "community_key"]),  # NEW
+        ]
+        # Enforce uniqueness of a community room per key
+        constraints = [
+            models.UniqueConstraint(
+                fields=["kind", "community_key"],
+                name="uniq_community_key_when_community",
+                condition=models.Q(kind="COMMUNITY"),
+            ),
         ]
 
-    def save(self, *args, **kwargs):
-        """覆盖 save 方法，自动生成 group_code"""
-        if not self.group_code:
-            self.group_code = self.generate_unique_code()
+    # ---------- Convenience helpers ----------
+    @property
+    def is_community(self) -> bool:
+        return self.kind == self.Kind.COMMUNITY
 
-        # 判断是否是新创建的群组
+    @staticmethod
+    def community_code_for_genre(genre_value: str) -> str:
+        """
+        Deterministic, human-readable code for community rooms by genre.
+        Example: "Action" -> "COMM-ACTION"
+        """
+        base = str(genre_value or "").strip().upper().replace(" ", "-")
+        return f"COMM-{base[:24]}"  # keep within 32 incl. 'COMM-'
+
+    @staticmethod
+    def community_key_for_genre(genre_value: str) -> str:
+        return f"genre:{str(genre_value or '').strip()}"
+
+    @classmethod
+    def get_or_create_community_by_genre(cls, *, genre_value: str, creator):
+        """
+        Idempotently get/create the community room for a given genre.
+        """
+        code = cls.community_code_for_genre(genre_value)
+        ck = cls.community_key_for_genre(genre_value)
+        obj, created = cls.objects.get_or_create(
+            kind=cls.Kind.COMMUNITY,
+            community_key=ck,
+            defaults={
+                "group_code": code,
+                "creator": creator,
+                "is_public": True,
+                "genre_filter": genre_value,
+            },
+        )
+        return obj, created
+
+    # ---------- Existing logic, slightly adjusted ----------
+    def save(self, *args, **kwargs):
+        """
+        - PRIVATE rooms: auto-generate random 6-char code if missing.
+        - COMMUNITY rooms: code must be set (via helper above) for determinism.
+        - Auto-add creator as a member when the object is first created.
+        """
         is_new = self.pk is None
+
+        if not self.group_code:
+            if self.kind == self.Kind.COMMUNITY:
+                # Safety net: derive from community_key if needed
+                if self.community_key and self.community_key.startswith("genre:"):
+                    self.group_code = self.community_code_for_genre(
+                        self.community_key.split(":", 1)[1]
+                    )
+                else:
+                    # Fallback (shouldn’t normally happen)
+                    self.group_code = self.generate_unique_code()
+            else:
+                self.group_code = self.generate_unique_code()
 
         super().save(*args, **kwargs)
 
-        # 如果是新创建的群组，自动添加创建者为成员
         if is_new and self.creator:
             GroupMember.objects.get_or_create(
                 group_session=self,
@@ -283,7 +359,7 @@ class GroupMatch(models.Model):
     )
     tmdb_id = models.IntegerField(db_index=True)
 
-    # 可选：存储电影标题快照
+    # Optional: Save movie title snapshots
     movie_title = models.CharField(max_length=300, blank=True)
 
     matched_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -302,3 +378,31 @@ class GroupMatch(models.Model):
 
     def __str__(self):
         return f"Match: Movie {self.tmdb_id} in group {self.group_session.group_code}"
+
+
+class GroupChatMessage(models.Model):
+    """Group Chat Message Model"""
+
+    id = models.AutoField(primary_key=True)
+    group_session = models.ForeignKey(
+        GroupSession, on_delete=models.CASCADE, related_name="chat_messages"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_messages"
+    )
+    content = models.TextField()
+    is_system_message = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "group_chat_messages"
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["group_session", "created_at"]),
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
+        return f"{self.user.username}: {preview}"

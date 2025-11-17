@@ -1,0 +1,599 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Similar Movies - CineMatch</title>
+  <link href="{% static 'recom_sys_app/cards.css' %}" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(to bottom, #b794f6 0%, #e9d5ff 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4c1d95;
+    }
+
+    .btn-back {
+      padding: 12px 24px;
+      border-radius: 10px;
+      background: white;
+      color: #4c1d95;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Page Title */
+    .page-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-title h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #4c1d95;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .page-title p {
+      font-size: 1.2rem;
+      color: #6b46c1;
+    }
+
+    /* Search Card */
+    .search-card {
+      background: white;
+      border-radius: 20px;
+      padding: 35px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .search-title {
+      font-size: 1.5rem;
+      color: #4c1d95;
+      margin-bottom: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 16px 20px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      background: #f9fafb;
+      color: #4c1d95;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #f59e0b;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+
+    .search-btn {
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .search-btn:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Results Section */
+    .results-section {
+      display: none;
+    }
+
+    .results-section.active {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      color: #4c1d95;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    /* Search Results Grid */
+    .search-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .movie-result {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .movie-result:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .movie-result.selected {
+      border: 3px solid #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+
+    .movie-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      background: #e5e7eb;
+    }
+
+    .movie-info {
+      padding: 12px;
+    }
+
+    .movie-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #4c1d95;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .movie-year {
+      font-size: 0.85rem;
+      color: #6b46c1;
+    }
+
+    /* Selected Movie Display */
+    .selected-movie-display {
+      background: linear-gradient(135deg, #f59e0b15 0%, #ef444415 100%);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .selected-movie-display.active {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .selected-poster {
+      width: 100px;
+      height: 150px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .selected-info h3 {
+      font-size: 1.3rem;
+      color: #4c1d95;
+      margin-bottom: 8px;
+    }
+
+    .selected-info p {
+      color: #6b46c1;
+      margin-bottom: 15px;
+    }
+
+    .btn-find-similar {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-find-similar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b46c1;
+      font-size: 1.1rem;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top-color: #f59e0b;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Message Display */
+    .message {
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .message.active {
+      display: block;
+    }
+
+    .message.error {
+      background: #fee;
+      color: #c33;
+      border-left: 4px solid #c33;
+    }
+
+    .message.info {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-left: 4px solid #0369a1;
+    }
+
+    @media (max-width: 768px) {
+      .page-title h1 {
+        font-size: 2rem;
+      }
+
+      .search-form {
+        flex-direction: column;
+      }
+
+      .search-results {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-section">
+        <div class="logo-icon">🎬</div>
+        <div class="logo-text">CineMatch</div>
+      </div>
+      <a href="{% url 'recom_sys:profile' %}" class="btn-back">← Back to Profile</a>
+    </div>
+
+    <!-- Page Title -->
+    <div class="page-title">
+      <h1>
+        <span>🔍</span>
+        <span>Find Similar Movies</span>
+      </h1>
+      <p>Type a movie you like and we'll show you similar movies!</p>
+    </div>
+
+    <!-- Search Card -->
+    <div class="search-card">
+      <div class="search-title">
+        <span>🎬</span>
+        <span>What movie do you like?</span>
+      </div>
+
+      <form class="search-form" id="searchForm">
+        <input
+          type="text"
+          class="search-input"
+          id="searchInput"
+          placeholder="Type a movie you like (e.g., Avatar, Inception, The Matrix)"
+          required
+        >
+        <button type="submit" class="search-btn" id="searchBtn">
+          🔍 Search
+        </button>
+      </form>
+
+      <div class="message" id="messageBox"></div>
+    </div>
+
+    <!-- Selected Movie Section -->
+    <div class="search-card">
+      <div class="selected-movie-display" id="selectedMovieDisplay">
+        <img src="" alt="Movie Poster" class="selected-poster" id="selectedPoster">
+        <div class="selected-info">
+          <h3 id="selectedTitle"></h3>
+          <p id="selectedYear"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Similar Movies Section -->
+    <div class="results-section" id="similarSection">
+      <div class="search-card">
+        <div class="section-title">Similar Movies</div>
+        <p style="color: #6b46c1;">Type a movie above to see similar recommendations...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedMovieId = null;
+    let selectedMovieData = null;
+
+    // Get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Show message
+    function showMessage(text, type = 'info') {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.textContent = text;
+      messageBox.className = `message ${type} active`;
+    }
+
+    // Hide message
+    function hideMessage() {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.classList.remove('active');
+    }
+
+    // Search form submission
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const searchInput = document.getElementById('searchInput');
+      const searchBtn = document.getElementById('searchBtn');
+      const query = searchInput.value.trim();
+
+      if (!query) return;
+
+      // Show loading state
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Searching...';
+      hideMessage();
+
+      // Hide results while searching
+      document.getElementById('selectedMovieDisplay').classList.remove('active');
+      document.getElementById('similarSection').classList.remove('active');
+
+      try {
+        // Call search API to find the movie
+        const response = await fetch('{% url "recom_sys:api_search_movies" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ query: query })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.results.length > 0) {
+          // Automatically select the first (best match) movie
+          const bestMatch = data.results[0];
+          selectedMovieId = bestMatch.tmdb_id;
+          selectedMovieData = bestMatch;
+
+          // Show the selected movie
+          showSelectedMovie(bestMatch);
+
+          // Automatically fetch and display similar movies
+          await fetchAndDisplaySimilarMovies(bestMatch);
+
+          hideMessage();
+        } else {
+          showMessage('No movies found. Try a different search term.', 'info');
+        }
+
+        // Restore button
+        searchBtn.disabled = false;
+        searchBtn.textContent = '🔍 Search';
+      } catch (error) {
+        console.error('Search error:', error);
+        showMessage('An error occurred while searching. Please try again.', 'error');
+        searchBtn.disabled = false;
+        searchBtn.textContent = '🔍 Search';
+      }
+    });
+
+    // Show selected movie info
+    function showSelectedMovie(movie) {
+      const posterUrl = movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : 'https://via.placeholder.com/100x150?text=No+Poster';
+
+      document.getElementById('selectedPoster').src = posterUrl;
+      document.getElementById('selectedTitle').textContent = movie.title;
+      document.getElementById('selectedYear').textContent = movie.year ? `Released: ${movie.year}` : 'Release date unknown';
+      document.getElementById('selectedMovieDisplay').classList.add('active');
+    }
+
+    // Fetch and display similar movies
+    async function fetchAndDisplaySimilarMovies(movie) {
+      const similarSection = document.getElementById('similarSection');
+
+      // Show loading state
+      similarSection.innerHTML = `
+        <div class="search-card">
+          <div class="section-title">Finding Similar Movies...</div>
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Searching for movies similar to "${movie.title}"</p>
+          </div>
+        </div>
+      `;
+      similarSection.classList.add('active');
+
+      try {
+        const response = await fetch(`/api/movies/${movie.tmdb_id}/similar/?limit=20`);
+        const data = await response.json();
+
+        if (data.success && data.results.length > 0) {
+          displaySimilarMovies(data.results, movie.title);
+        } else {
+          similarSection.innerHTML = `
+            <div class="search-card">
+              <div class="section-title">Similar Movies</div>
+              <p style="color: #6b46c1;">No similar movies found for "${movie.title}".</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error fetching similar movies:', error);
+        similarSection.innerHTML = `
+          <div class="search-card">
+            <div class="section-title">Similar Movies</div>
+            <div class="message error active">Failed to load similar movies. Please try again.</div>
+          </div>
+        `;
+      }
+    }
+
+    // Display similar movies
+    function displaySimilarMovies(movies, movieTitle) {
+      const similarSection = document.getElementById('similarSection');
+
+      let html = `
+        <div class="search-card">
+          <div class="section-title">Movies Similar to "${movieTitle}"</div>
+          <div class="search-results">
+      `;
+
+      movies.forEach(movie => {
+        const posterUrl = movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : 'https://via.placeholder.com/200x300?text=No+Poster';
+
+        const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+
+        html += `
+          <div class="movie-result" onclick="window.open('https://www.themoviedb.org/movie/${movie.tmdb_id}', '_blank')">
+            <img src="${posterUrl}" alt="${movie.title}" class="movie-poster" onerror="this.src='https://via.placeholder.com/200x300?text=No+Poster'">
+            <div class="movie-info">
+              <div class="movie-title">${movie.title}</div>
+              <div class="movie-year">${movie.year || 'N/A'} ⭐ ${rating}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+          <div style="margin-top: 20px; text-align: center;">
+            <button class="btn-find-similar" onclick="location.reload()">
+              Search for Another Movie
+            </button>
+          </div>
+        </div>
+      `;
+
+      similarSection.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
