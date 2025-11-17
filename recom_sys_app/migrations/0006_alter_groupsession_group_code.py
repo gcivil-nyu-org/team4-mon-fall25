@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("recom_sys_app", "0005_groupsession_community_fields_groupchatmessage_system"),
     ]

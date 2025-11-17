@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("recom_sys_app", "0006_alter_groupsession_group_code"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
