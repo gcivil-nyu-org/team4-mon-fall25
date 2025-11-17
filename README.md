@@ -8,11 +8,11 @@ An Agentic AI movie recommendation system that suggests you movies based on your
 
 ### Master
 [![Build Status](https://app.travis-ci.com/gcivil-nyu-org/team4-mon-fall25.svg?branch=main)](https://app.travis-ci.com/gcivil-nyu-org/team4-mon-fall25)
-[![Coverage Status](https://coveralls.io/repos/github/gcivil-nyu-org/team4-mon-fall25/badge.svg?branch=main&t=refresh_1730668800)](https://coveralls.io/github/gcivil-nyu-org/team4-mon-fall25?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/gcivil-nyu-org/team4-mon-fall25/badge.svg?branch=main)](https://coveralls.io/github/gcivil-nyu-org/team4-mon-fall25?branch=main)
 
 ### Develop
 [![Build Status](https://app.travis-ci.com/gcivil-nyu-org/team4-mon-fall25.svg?branch=develop)](https://app.travis-ci.com/gcivil-nyu-org/team4-mon-fall25)
-[![Coverage Status](https://coveralls.io/repos/github/gcivil-nyu-org/team4-mon-fall25/badge.svg?branch=develop&t=refresh_1730668800)](https://coveralls.io/github/gcivil-nyu-org/team4-mon-fall25?branch=develop)
+[![Coverage Status](https://coveralls.io/repos/github/gcivil-nyu-org/team4-mon-fall25/badge.svg?branch=develop)](https://coveralls.io/github/gcivil-nyu-org/team4-mon-fall25?branch=develop)
 
 ## Project Description
 
