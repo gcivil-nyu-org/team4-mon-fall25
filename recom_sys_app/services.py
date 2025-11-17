@@ -549,7 +549,9 @@ class RecommendationService:
     @classmethod
     def get_similar_movies(cls, tmdb_id, limit=20):
         """
-        Get similar movies using TMDb's similar movies endpoint
+        Get similar movies using TMDb's recommendations endpoint with filtering
+        for more relevant and recent results. Only returns movies that share
+        at least one genre with the original movie.
 
         Args:
             tmdb_id: TMDb movie ID
@@ -568,7 +570,19 @@ class RecommendationService:
             return []
 
         try:
-            url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}/similar"
+            # First, get the original movie's genres
+            movie_url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}"
+            movie_response = requests.get(
+                movie_url, headers=cls.TMDB_HEADERS, timeout=10
+            )
+            movie_response.raise_for_status()
+            original_movie = movie_response.json()
+            original_genres = set(
+                genre["id"] for genre in original_movie.get("genres", [])
+            )
+
+            # Use recommendations endpoint for better matches
+            url = f"{cls.TMDB_BASE_URL}/movie/{tmdb_id}/recommendations"
             params = {"language": "en-US", "page": 1}
 
             response = requests.get(
@@ -579,22 +593,54 @@ class RecommendationService:
 
             results = []
             for movie in data.get("results", []):
+                # Get movie year
+                release_date = movie.get("release_date", "")
+                year = release_date[:4] if release_date else ""
+
+                # Get movie genres
+                movie_genre_ids = set(movie.get("genre_ids", []))
+
+                # Filter criteria for more specific results:
+                # 1. Must have a release year
+                # 2. Movie must be from 2000 or newer (avoid very old films)
+                # 3. Must have at least 100 votes (avoid obscure films)
+                # 4. Must have rating of 5.0 or higher (avoid low-quality films)
+                # 5. Must share at least one genre with the original movie
+                if not year:
+                    continue
+                if int(year) < 2000:
+                    continue
+                if movie.get("vote_count", 0) < 100:
+                    continue
+                if movie.get("vote_average", 0) < 5.0:
+                    continue
+                # Check genre overlap - must share at least 2 genres for better relevance
+                genre_overlap = original_genres.intersection(movie_genre_ids)
+                if len(genre_overlap) < 2:
+                    continue
+
+                # Calculate genre match score (more shared genres = higher score)
+                genre_match_score = len(genre_overlap)
+
                 results.append(
                     {
                         "tmdb_id": movie.get("id"),
                         "title": movie.get("title"),
-                        "year": (
-                            movie.get("release_date", "")[:4]
-                            if movie.get("release_date")
-                            else ""
-                        ),
+                        "year": year,
                         "poster_path": movie.get("poster_path"),
                         "overview": movie.get("overview", ""),
                         "vote_average": movie.get("vote_average", 0),
                         "backdrop_path": movie.get("backdrop_path"),
                         "genre_ids": movie.get("genre_ids", []),
+                        "vote_count": movie.get("vote_count", 0),
+                        "genre_match_score": genre_match_score,
                     }
                 )
+
+            # Sort by genre match score first, then by vote average
+            results.sort(
+                key=lambda x: (x["genre_match_score"], x["vote_average"]), reverse=True
+            )
 
             # Cache for 1 hour
             cache.set(cache_key, results, cls.CACHE_TIMEOUT)
