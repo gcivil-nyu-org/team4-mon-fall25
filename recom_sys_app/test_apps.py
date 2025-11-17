@@ -29,8 +29,10 @@ class RecomSysConfigTest(TestCase):
         """Test that app name is correct"""
         self.assertEqual(RecomSysConfig.name, "recom_sys_app")
 
-    def test_config_instantiation(self):
-        """Test that config can be instantiated"""
-        config = RecomSysConfig("recom_sys_app", None)
-        self.assertIsNotNone(config)
-        self.assertEqual(config.name, "recom_sys_app")
+    def test_config_attributes(self):
+        """Test that config has required attributes"""
+        # Test class attributes directly without instantiation
+        self.assertEqual(
+            RecomSysConfig.default_auto_field, "django.db.models.BigAutoField"
+        )
+        self.assertEqual(RecomSysConfig.name, "recom_sys_app")

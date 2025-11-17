@@ -533,8 +533,11 @@ class RecommendationResponseSerializerTest(TestCase):
     def test_serializer_list_fields(self):
         """Test that list fields are correctly configured"""
         serializer = RecommendationResponseSerializer()
-        self.assertTrue(serializer.fields["user_movies"].many)
-        self.assertTrue(serializer.fields["user_genres"].many)
+        # ListField doesn't have 'many' attribute, but we can check it's a ListField
+        from rest_framework.serializers import ListField
+
+        self.assertIsInstance(serializer.fields["user_movies"], ListField)
+        self.assertIsInstance(serializer.fields["user_genres"], ListField)
 
     def test_serializer_validation(self):
         """Test serializer with valid data"""
