@@ -396,7 +396,7 @@
 
             chatSocket.onclose = function(e) {
                 console.log('[Chat] WebSocket closed:', e.code);
-                setTimeout(connectWebSockets, 3000);
+                // setTimeout(connectWebSockets, 3000);
             };
 
             chatSocket.onerror = function(e) {
@@ -420,12 +420,16 @@
                         console.log('[Match] Connection established:', data.message);
                     } else if (data.type === 'match_found') {
                         handleMatchNotification(data);
+                    } else if (data.type === 'all_members_finished') {
+                        // notification that everyone finishes
+                        console.log('[Match] All members finished!');
+                        showFinalMatches();
                     }
                 };
 
                 matchSocket.onclose = function(e) {
                     console.log('[Match] WebSocket closed:', e.code);
-                    setTimeout(connectWebSockets, 3000);
+                    // setTimeout(connectWebSockets, 3000);
                 };
 
                 matchSocket.onerror = function(e) {
@@ -571,7 +575,7 @@
 
         async function loadMovieDeck() {
             try {
-                const response = await fetch(`/api/groups/${GROUP_CODE}/deck/?limit=20&with_details=true`);
+                const response = await fetch(`/api/groups/${GROUP_CODE}/deck/?limit=5&with_details=true`);
                 const data = await response.json();
 
                 console.log('[Deck] Loaded movies:', data);
@@ -845,27 +849,35 @@
 
             const movie = MOVIES[currentIndex];
 
-            if (action === 'LIKE') {
-                try {
-                    const csrfToken = getCookie('csrftoken');
-                    const response = await fetch(`/api/groups/${GROUP_CODE}/swipe/like/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({
-                            tmdb_id: movie.tmdb_id,
-                            movie_title: movie.title
-                        })
-                    });
+            // no matter like/dislike, call api
+            try {
+                const csrfToken = getCookie('csrftoken');
+                // according to action, choose different endpoint
+                const endpoint = action === 'LIKE' 
+                    ? `/api/groups/${GROUP_CODE}/swipe/like/`
+                    : `/api/groups/${GROUP_CODE}/swipe/dislike/`;
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        tmdb_id: movie.tmdb_id,
+                        movie_title: movie.title
+                    })
+                });
 
-                    const data = await response.json();
-                    console.log('[Swipe] Response:', data);
+                const data = await response.json();
 
-                } catch (error) {
-                    console.error('[Swipe] Error:', error);
+                if (data.success) {
+                    console.log(`[Swipe] ✅ Success - ID: ${data.swipe_id}`);
+                } else {
+                    console.error(`[Swipe] ❌ Failed:`, data);
                 }
+
+            } catch (error) {
+                console.error('[Swipe] Error:', error);
             }
 
             setTimeout(() => {
@@ -880,10 +892,220 @@
             }, 500);
         }
 
-        function showEmptyState() {
+        async function showEmptyState() {
             deckContainer.classList.add('hidden');
             actionButtons.classList.add('hidden');
+            
+            // check if everyone finishes
+            try {
+                const response = await fetch(`/api/groups/${GROUP_CODE}/completion-status/`);
+                const data = await response.json();
+                
+                console.log('[Completion Check]', data);
+                
+                if (data.all_finished) {
+                    // If everyone is done, show the final match results
+                    showFinalMatches();
+                } else {
+                    // If not everyone is done, show the waiting screen with progress
+                    showWaitingForOthers(data);
+                }
+            } catch (error) {
+                console.error('[Completion Check] Error:', error);
+                // If everyone is done, show the final match results
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        function showWaitingForOthers(statusData) {
+            const emptyState = document.getElementById('emptyState');
+            emptyState.innerHTML = `
+                <div class="text-center py-20">
+                    <div class="text-6xl mb-4">⏳</div>
+                    <h2 class="text-2xl font-bold mb-2" style="color: #4c1d95;">You've finished all movies!</h2>
+                    <p class="mb-4" style="color: #6b46c1;">
+                        Waiting for other members to complete...
+                    </p>
+                    <p style="color: #8b5cf6; font-size: 14px;">
+                        ${statusData.finished_members} / ${statusData.total_members} members completed
+                    </p>
+                    <button onclick="checkCompletionStatus()" 
+                            class="mt-6 px-6 py-3 rounded-lg inline-block" 
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; border: none; cursor: pointer;">
+                        🔄 Check Status
+                    </button>
+                </div>
+            `;
             emptyState.classList.remove('hidden');
+        }
+
+        async function checkCompletionStatus() {
+            try {
+                const response = await fetch(`/api/groups/${GROUP_CODE}/completion-status/`);
+                const data = await response.json();
+                
+                if (data.all_finished) {
+                    showFinalMatches();
+                } else {
+                    showWaitingForOthers(data);
+                }
+            } catch (error) {
+                console.error('[Check Status] Error:', error);
+            }
+        }
+
+        async function showFinalMatches() {
+            try {
+                const response = await fetch(`/api/groups/${GROUP_CODE}/final-matches/`);
+                const data = await response.json();
+                
+                console.log('[Final Matches]', data);
+                
+                const emptyState = document.getElementById('emptyState');
+                
+                if (data.common_matches.length === 0) {
+                    // 没有共同喜欢的电影
+                    emptyState.innerHTML = `
+                        <div class="text-center py-20">
+                            <div class="text-6xl mb-4">😢</div>
+                            <h2 class="text-2xl font-bold mb-2" style="color: #4c1d95;">No Common Matches</h2>
+                            <p class="mb-6" style="color: #6b46c1;">
+                                Unfortunately, you didn't find any movies that everyone liked.
+                            </p>
+                            <button onclick="location.reload()" 
+                                    class="px-6 py-3 rounded-lg inline-block" 
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; border: none; cursor: pointer;">
+                                Try Again
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // 显示共同喜欢的电影列表
+                    const matchesHtml = data.common_matches.map(movie => `
+                        <div class="movie-match-card" 
+                            onclick="openMovieDetails(${movie.tmdb_id})"
+                            style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s;"
+                            onmouseover="this.style.transform='translateY(-4px)'" 
+                            onmouseout="this.style.transform='translateY(0)'">
+                            <div style="display: flex; gap: 16px;">
+                                ${movie.poster_url ? `
+                                    <img src="${escapeHtml(movie.poster_url)}" 
+                                        alt="${escapeHtml(movie.movie_title)}"
+                                        style="width: 100px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                ` : ''}
+                                <div style="flex: 1;">
+                                    <h3 style="color: #4c1d95; font-weight: 600; font-size: 18px; margin-bottom: 8px;">
+                                        ${escapeHtml(movie.movie_title)} ${movie.year ? `(${movie.year})` : ''}
+                                    </h3>
+                                    ${movie.genres.length > 0 ? `
+                                        <div style="margin-bottom: 8px;">
+                                            ${movie.genres.map(g => `
+                                                <span style="background: #ede9fe; color: #6b46c1; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-right: 8px;">
+                                                    ${escapeHtml(g)}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                    ${movie.vote_average ? `
+                                        <p style="color: #8b5cf6; font-size: 14px; margin-bottom: 8px;">
+                                            ⭐ ${movie.vote_average.toFixed(1)} / 10
+                                        </p>
+                                    ` : ''}
+                                    ${movie.overview ? `
+                                        <p style="color: #6b7280; font-size: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                            ${escapeHtml(movie.overview)}
+                                        </p>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    emptyState.innerHTML = `
+                        <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+                            <div class="text-center mb-6">
+                                <div class="text-6xl mb-4">🎉</div>
+                                <h2 class="text-2xl font-bold mb-2" style="color: #4c1d95;">
+                                    Everyone Finished!
+                                </h2>
+                                <p style="color: #6b46c1; margin-bottom: 8px;">
+                                    You found ${data.common_matches.length} movie${data.common_matches.length > 1 ? 's' : ''} that everyone likes!
+                                </p>
+                                <p style="color: #8b5cf6; font-size: 14px;">
+                                    ${data.total_members} members completed swiping
+                                </p>
+                            </div>
+                            
+                            <div style="margin-top: 24px;">
+                                <h3 style="color: #4c1d95; font-weight: 600; font-size: 20px; margin-bottom: 16px; text-align: center;">
+                                    🍿 Your Common Matches
+                                </h3>
+                                ${matchesHtml}
+                            </div>
+                            
+                            <div class="text-center mt-6">
+                                <button onclick="location.href='/groups/${GROUP_CODE}/room/'" 
+                                        class="px-6 py-3 rounded-lg inline-block" 
+                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; border: none; cursor: pointer; margin-right: 12px;">
+                                    💬 Back to Group Room
+                                </button>
+                                <button onclick="startNewRound()" 
+                                        class="px-6 py-3 rounded-lg inline-block" 
+                                        style="background: white; border: 2px solid #e5e7eb; color: #6b46c1; font-weight: 600; cursor: pointer;">
+                                    🔄 Start Over
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                emptyState.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('[Final Matches] Error:', error);
+                emptyState.innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="text-6xl mb-4">❌</div>
+                        <h2 class="text-2xl font-bold mb-2" style="color: #4c1d95;">Error Loading Matches</h2>
+                        <p class="mb-6" style="color: #6b46c1;">Failed to load common matches. Please try again.</p>
+                        <button onclick="showFinalMatches()" 
+                                class="px-6 py-3 rounded-lg inline-block" 
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; border: none; cursor: pointer;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        async function startNewRound() {
+            if (!confirm('Start a new round? This will clear all current swipes.')) {
+                return;
+            }
+            
+            try {
+                const csrfToken = getCookie('csrftoken');
+                const response = await fetch(`/api/groups/${GROUP_CODE}/clear-swipes/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('[New Round] Cleared swipes, reloading...');
+                    location.reload();  // 刷新页面，重新开始
+                } else {
+                    alert('Failed to start new round: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('[New Round] Error:', error);
+                alert('Error starting new round');
+            }
         }
 
         function openMovieDetails(tmdbId) {

@@ -468,6 +468,18 @@ class MatchConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def all_members_finished(self, event):
+        """
+        Handle the event when all group members finished swiping
+        """
+        message = event.copy()
+        message.pop('type', None)
+        
+        # send to client
+        await self.send(text_data=json.dumps(message))
+        
+        print(f"[MatchConsumer] Sent all_members_finished event to client")
+        
     @database_sync_to_async
     def verify_group_membership(self):
         """
