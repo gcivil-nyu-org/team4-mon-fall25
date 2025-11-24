@@ -1208,3 +1208,127 @@ def get_similar_movies_api(request, tmdb_id):
 
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+# ============================================
+# GROUP MANAGEMENT - LEAVE & DELETE
+# ============================================
+
+
+@login_required
+@require_POST
+def leave_group(request, group_id):
+    """
+    API endpoint for a user to leave a group (sets is_active=False)
+    POST /api/groups/<uuid:group_id>/leave/
+    """
+    try:
+        group = get_object_or_404(GroupSession, id=group_id)
+
+        # Find the user's membership
+        membership = GroupMember.objects.filter(
+            group_session=group, user=request.user, is_active=True
+        ).first()
+
+        if not membership:
+            return JsonResponse(
+                {"success": False, "message": "You are not a member of this group"},
+                status=404,
+            )
+
+        # Creator cannot leave their own group - they must delete it
+        if membership.role == GroupMember.Role.CREATOR:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "As the creator, you cannot leave. You can delete the group instead.",
+                },
+                status=400,
+            )
+
+        # Soft delete - set is_active to False
+        membership.is_active = False
+        membership.save()
+
+        return JsonResponse(
+            {"success": True, "message": "You have left the group successfully"}
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Failed to leave group: {str(e)}"},
+            status=500,
+        )
+
+
+@login_required
+@require_POST
+def delete_group(request, group_id):
+    """
+    API endpoint for creator to delete a group entirely
+    POST /api/groups/<uuid:group_id>/delete/
+    """
+    try:
+        group = get_object_or_404(GroupSession, id=group_id)
+
+        # Only the creator can delete the group
+        if group.creator != request.user:
+            return JsonResponse(
+                {"success": False, "message": "Only the group creator can delete this group"},
+                status=403,
+            )
+
+        # Delete the group (CASCADE will delete related GroupMembers, GroupSwipes, etc.)
+        group_code = group.group_code
+        group.delete()
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"Group {group_code} has been deleted successfully",
+            }
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Failed to delete group: {str(e)}"},
+            status=500,
+        )
+
+
+@login_required
+@require_POST
+def leave_community(request, group_id):
+    """
+    API endpoint for a user to leave a community (sets is_active=False)
+    POST /api/communities/<uuid:group_id>/leave/
+    """
+    try:
+        group = get_object_or_404(
+            GroupSession, id=group_id, kind=GroupSession.Kind.COMMUNITY
+        )
+
+        # Find the user's membership
+        membership = GroupMember.objects.filter(
+            group_session=group, user=request.user, is_active=True
+        ).first()
+
+        if not membership:
+            return JsonResponse(
+                {"success": False, "message": "You are not a member of this community"},
+                status=404,
+            )
+
+        # Soft delete - set is_active to False
+        membership.is_active = False
+        membership.save()
+
+        return JsonResponse(
+            {"success": True, "message": "You have left the community successfully"}
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Failed to leave community: {str(e)}"},
+            status=500,
+        )
