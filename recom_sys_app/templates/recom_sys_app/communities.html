@@ -68,10 +68,17 @@
                             {% endif %}
                         </span>
                     </div>
-                    <button onclick="window.location.href='/communities/{{ membership.group_session.group_code }}/deck/'"
-                            class="w-full bg-white text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-50 transition-colors">
-                        Enter Community →
-                    </button>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="window.location.href='/communities/{{ membership.group_session.group_code }}/deck/'"
+                                class="flex-1 bg-white text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-50 transition-colors">
+                            Enter Community →
+                        </button>
+                        <button onclick="confirmLeaveCommunity('{{ membership.group_session.id }}', '{{ membership.group_session.community_key }}')"
+                                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                                title="Leave Community">
+                            🚪
+                        </button>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
@@ -185,6 +192,31 @@
                 }
             }
             return cookieValue;
+        }
+
+        // Leave community confirmation and action
+        async function confirmLeaveCommunity(groupId, communityName) {
+            if (confirm(`Are you sure you want to leave the "${communityName}" community? You can rejoin anytime.`)) {
+                try {
+                    const response = await fetch(`/api/communities/${groupId}/leave/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to leave community');
+                    }
+                } catch (error) {
+                    console.error('Error leaving community:', error);
+                    alert('Failed to leave community. Please try again.');
+                }
+            }
         }
     </script>
 </body>

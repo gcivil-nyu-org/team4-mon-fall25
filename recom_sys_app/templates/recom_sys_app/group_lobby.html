@@ -289,6 +289,27 @@
       box-shadow: 0 4px 12px rgba(168, 85, 55, 0.3);
     }
 
+    .btn-secondary {
+      padding: 16px 32px;
+      background: #6b7280;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+    }
+
     /* ===== Mobile Responsive ================================================== */
     @media (max-width: 600px) {
       body {
@@ -440,9 +461,18 @@
       <button id="startMatchingBtn" class="btn-primary">
         ▶️ Start Matching
       </button>
-      <button id="leaveLobbyBtn" class="btn-danger">
-        🚪 Leave Lobby
+      <button id="backToProfileBtn" class="btn-secondary">
+        ← Back to Profile
       </button>
+      {% if is_creator %}
+      <button id="deleteGroupBtn" class="btn-danger">
+        🗑️ Delete Group
+      </button>
+      {% else %}
+      <button id="leaveLobbyBtn" class="btn-danger">
+        🚪 Leave Group
+      </button>
+      {% endif %}
     </div>
 
   <script>
@@ -539,12 +569,84 @@
       window.location.href = `/groups/${groupCode}/deck/`;
     });
 
-    // Leave Lobby
-    document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
-      if (confirm('Are you sure you want to leave this group?')) {
-        window.location.href = '/profile/';
-      }
+    // Back to Profile (for everyone - just navigates back without leaving the group)
+    document.getElementById('backToProfileBtn').addEventListener('click', () => {
+      window.location.href = '/profile/';
     });
+
+    // Leave Group (for members)
+    const leaveLobbyBtn = document.getElementById('leaveLobbyBtn');
+    if (leaveLobbyBtn) {
+      leaveLobbyBtn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to leave this group? You can rejoin later with the group code.')) {
+          try {
+            const response = await fetch(`/api/groups/${groupId}/leave/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+              }
+            });
+            const data = await response.json();
+            if (data.success) {
+              alert(data.message);
+              window.location.href = '/profile/';
+            } else {
+              alert(data.message || 'Failed to leave group');
+            }
+          } catch (error) {
+            console.error('Error leaving group:', error);
+            alert('Failed to leave group. Please try again.');
+          }
+        }
+      });
+    }
+
+    // Delete Group (for creator only)
+    const deleteGroupBtn = document.getElementById('deleteGroupBtn');
+    if (deleteGroupBtn) {
+      deleteGroupBtn.addEventListener('click', async () => {
+        if (confirm(`Are you sure you want to DELETE group "${groupCode}"? This action cannot be undone.`)) {
+          if (confirm('FINAL WARNING: All group data, matches, and member information will be permanently deleted. Continue?')) {
+            try {
+              const response = await fetch(`/api/groups/${groupId}/delete/`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken')
+                }
+              });
+              const data = await response.json();
+              if (data.success) {
+                alert(data.message);
+                window.location.href = '/profile/';
+              } else {
+                alert(data.message || 'Failed to delete group');
+              }
+            } catch (error) {
+              console.error('Error deleting group:', error);
+              alert('Failed to delete group. Please try again.');
+            }
+          }
+        }
+      });
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
 
     // Load group details on page load
     loadGroupDetails();

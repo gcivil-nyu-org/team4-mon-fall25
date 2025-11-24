@@ -224,6 +224,14 @@ def get_solo_deck(request):
         # Get movies from TMDB based on selected genres
         movies = _fetch_movies_by_genres(selected_genres, limit)
 
+        # Filter out movies the user has already swiped on
+        swiped_ids = set(
+            Interaction.objects.filter(user=request.user).values_list(
+                "tmdb_id", flat=True
+            )
+        )
+        movies = [m for m in movies if m["tmdb_id"] not in swiped_ids]
+
         return JsonResponse(
             {
                 "success": True,
@@ -418,8 +426,8 @@ def _fetch_movies_by_genres(genre_ids: list, limit: int = 20) -> list:
     movies = []
     pages_to_fetch = min(3, (limit // 20) + 1)  # Fetch multiple pages if needed
 
-    # Convert genre_ids to comma-separated string
-    genre_string = ",".join(str(g) for g in genre_ids)
+    # Convert genre_ids to pipe-separated string (OR logic for TMDB API)
+    genre_string = "|".join(str(g) for g in genre_ids)
 
     for page in range(1, pages_to_fetch + 1):
         try:

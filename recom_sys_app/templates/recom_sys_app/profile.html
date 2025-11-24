@@ -326,6 +326,30 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
+    .group-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-leave-group, .btn-delete-group {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 8px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-leave-group:hover {
+      background: #fee2e2;
+    }
+
+    .btn-delete-group:hover {
+      background: #fee2e2;
+    }
+
     @media (max-width: 768px) {
       .welcome-title {
         font-size: 2rem;
@@ -478,9 +502,20 @@
               <span class="group-role member">Member</span>
               {% endif %}
             </div>
-            <a href="/group/{{ membership.group_session.id }}/" class="btn-enter">
-              Enter Lobby →
-            </a>
+            <div class="group-actions">
+              <a href="/group/{{ membership.group_session.id }}/" class="btn-enter">
+                Enter Lobby →
+              </a>
+              {% if membership.role == 'CREATOR' %}
+              <button class="btn-delete-group" onclick="confirmDeleteGroup('{{ membership.group_session.id }}', '{{ membership.group_session.group_code }}')" title="Delete Group">
+                🗑️
+              </button>
+              {% else %}
+              <button class="btn-leave-group" onclick="confirmLeaveGroup('{{ membership.group_session.id }}', '{{ membership.group_session.group_code }}')" title="Leave Group">
+                🚪
+              </button>
+              {% endif %}
+            </div>
           </div>
           {% endif %}
           {% endfor %}
@@ -790,6 +825,58 @@
         }
       }
       return cookieValue;
+    }
+
+    // Leave group confirmation and action
+    async function confirmLeaveGroup(groupId, groupCode) {
+      if (confirm(`Are you sure you want to leave group "${groupCode}"? You can rejoin later with the group code.`)) {
+        try {
+          const response = await fetch(`/api/groups/${groupId}/leave/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            alert(data.message);
+            window.location.reload();
+          } else {
+            alert(data.message || 'Failed to leave group');
+          }
+        } catch (error) {
+          console.error('Error leaving group:', error);
+          alert('Failed to leave group. Please try again.');
+        }
+      }
+    }
+
+    // Delete group confirmation and action (creator only)
+    async function confirmDeleteGroup(groupId, groupCode) {
+      if (confirm(`Are you sure you want to DELETE group "${groupCode}"? This action cannot be undone and all group data will be permanently removed.`)) {
+        if (confirm(`FINAL WARNING: Deleting "${groupCode}" will remove all matches and member data. Continue?`)) {
+          try {
+            const response = await fetch(`/api/groups/${groupId}/delete/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+              }
+            });
+            const data = await response.json();
+            if (data.success) {
+              alert(data.message);
+              window.location.reload();
+            } else {
+              alert(data.message || 'Failed to delete group');
+            }
+          } catch (error) {
+            console.error('Error deleting group:', error);
+            alert('Failed to delete group. Please try again.');
+          }
+        }
+      }
     }
   </script>
 </body>

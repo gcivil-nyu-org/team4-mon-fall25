@@ -12,6 +12,9 @@ from .views import (
     edit_profile_view,
     set_interaction_view,
     communities_view,
+    leave_group,
+    delete_group,
+    leave_community,
 )
 from .views_auth import signup_view
 from .views_group import (
@@ -121,6 +124,9 @@ urlpatterns = [
     path("api/groups", views.create_group, name="create_group"),
     path("api/groups/join", views.join_group, name="join_group"),
     path("api/groups/<uuid:group_id>", views.get_group_details, name="group_details"),
+    # Group management - leave and delete
+    path("api/groups/<uuid:group_id>/leave/", leave_group, name="leave_group"),
+    path("api/groups/<uuid:group_id>/delete/", delete_group, name="delete_group"),
     # Group Recommendation API (New)
     path("api/groups/<str:group_code>/deck/", get_group_deck, name="api_group_deck"),
     path("api/groups/<str:group_code>/swipe/like/", swipe_like, name="api_swipe_like"),
@@ -135,6 +141,11 @@ urlpatterns = [
         name="api_community_join",
     ),
     # Community API Endpoints (Genre-based)
+    path(
+        "api/communities/<uuid:group_id>/leave/",
+        leave_community,
+        name="leave_community",
+    ),
     path(
         "api/communities/<str:group_code>/deck/",
         views_community.get_community_deck,
