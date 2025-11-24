@@ -18,10 +18,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "recommendation_sys.settings")
 django_asgi_app = get_asgi_application()
 
 # # Import routing and channels after initializing Django
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
-from recom_sys_app import routing
+# Django must be initialized before importing channels (E402 expected)
+from channels.auth import AuthMiddlewareStack  # noqa: E402
+from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
+from channels.security.websocket import AllowedHostsOriginValidator  # noqa: E402
+from recom_sys_app import routing  # noqa: E402
 
 # ASGI application, handling HTTP and WebSocket
 application = ProtocolTypeRouter(

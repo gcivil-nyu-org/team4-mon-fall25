@@ -1,6 +1,7 @@
 # recom_sys_app/services.py
 from django.core.cache import cache
-from django.db.models import Count, Q
+
+# Count imported locally where needed
 from collections import Counter
 import requests
 import os
@@ -69,12 +70,12 @@ class RecommendationService:
                 else:
                     movie_ids = cls._get_popular_movies(limit * 2)
                     print(
-                        f"[DEBUG get_group_deck] No genre IDs found, using popular movies"
+                        "[DEBUG get_group_deck] No genre IDs found, using popular movies"
                     )
             else:
                 movie_ids = cls._get_popular_movies(limit * 2)
                 print(
-                    f"[DEBUG get_group_deck] No genre name found, using popular movies"
+                    "[DEBUG get_group_deck] No genre name found, using popular movies"
                 )
 
             # For communities, filter out movies user already swiped via Interaction model
@@ -651,20 +652,19 @@ class RecommendationService:
         except Exception as e:
             print(f"Error fetching similar movies: {e}")
             return []
-    
+
     @classmethod
     def check_all_members_finished(cls, group_session):
         """检查是否所有成员都滑完了"""
         active_members = GroupMember.objects.filter(
-            group_session=group_session,
-            is_active=True
-        ).select_related('user')
-        
+            group_session=group_session, is_active=True
+        ).select_related("user")
+
         total_members = active_members.count()
-        
+
         print(f"[DEBUG check_finished] Group: {group_session.group_code}")
         print(f"[DEBUG check_finished] Total active members: {total_members}")
-        
+
         if total_members == 0:
             return {
                 "all_finished": False,
@@ -672,38 +672,41 @@ class RecommendationService:
                 "finished_members": 0,
                 "total_movies": 5,
             }
-        
+
         # 固定每轮 20 部电影
         MOVIES_PER_ROUND = 5
         total_movies = MOVIES_PER_ROUND
-        
+
         print(f"[DEBUG check_finished] Movies per round: {total_movies}")
-        
+
         finished_members = 0
-        
+
         # 检查每个成员
         for member in active_members:
             # 统计该成员的滑动次数
             swipe_count = GroupSwipe.objects.filter(
-                group_session=group_session,
-                user=member.user
+                group_session=group_session, user=member.user
             ).count()
-            
+
             print(f"[DEBUG check_finished] User: {member.user.username}")
             print(f"[DEBUG check_finished]   - Total swipes: {swipe_count}")
-            
+
             # 滑动次数 >= 20 = 完成
             if swipe_count >= MOVIES_PER_ROUND:
-                print(f"[DEBUG check_finished]   - ✅ User FINISHED!")
+                print("[DEBUG check_finished]   - ✅ User FINISHED!")
                 finished_members += 1
             else:
-                print(f"[DEBUG check_finished]   - ❌ NOT finished ({swipe_count}/{MOVIES_PER_ROUND})")
-        
+                print(
+                    f"[DEBUG check_finished]   - ❌ NOT finished ({swipe_count}/{MOVIES_PER_ROUND})"
+                )
+
         all_finished = (finished_members == total_members) and total_members > 0
-        
-        print(f"[DEBUG check_finished] Result: {finished_members}/{total_members} finished")
+
+        print(
+            f"[DEBUG check_finished] Result: {finished_members}/{total_members} finished"
+        )
         print(f"[DEBUG check_finished] All finished: {all_finished}")
-        
+
         return {
             "all_finished": all_finished,
             "total_members": total_members,
@@ -715,10 +718,10 @@ class RecommendationService:
     def get_all_common_matches(cls, group_session):
         """
         获取所有成员都喜欢的电影列表
-        
+
         Args:
             group_session: GroupSession 实例
-            
+
         Returns:
             list: 所有人都喜欢的电影列表
             [
@@ -736,92 +739,98 @@ class RecommendationService:
             ]
         """
         print(f"[DEBUG get_all_common_matches] Group: {group_session.group_code}")
-        
+
         # 获取活跃成员数量
         active_members = GroupMember.objects.filter(
-            group_session=group_session,
-            is_active=True
+            group_session=group_session, is_active=True
         )
         total_members = active_members.count()
-        
+
         print(f"[DEBUG get_all_common_matches] Total active members: {total_members}")
-        
+
         if total_members == 0:
             return []
-        
+
         # 查询所有 LIKE 的电影，按 tmdb_id 分组，统计每部电影的点赞数
         from django.db.models import Count
-        
+
         common_movies = (
             GroupSwipe.objects.filter(
-                group_session=group_session,
-                action=GroupSwipe.Action.LIKE
+                group_session=group_session, action=GroupSwipe.Action.LIKE
             )
-            .values('tmdb_id')
-            .annotate(like_count=Count('id'))
+            .values("tmdb_id")
+            .annotate(like_count=Count("id"))
             .filter(like_count=total_members)  # 所有人都喜欢
-            .values_list('tmdb_id', flat=True)
+            .values_list("tmdb_id", flat=True)
         )
-        
+
         common_movie_ids = list(common_movies)
-        print(f"[DEBUG get_all_common_matches] Found {len(common_movie_ids)} common matches")
+        print(
+            f"[DEBUG get_all_common_matches] Found {len(common_movie_ids)} common matches"
+        )
         print(f"[DEBUG get_all_common_matches] Movie IDs: {common_movie_ids}")
-        
+
         # 获取每部电影的详细信息
         result = []
         for tmdb_id in common_movie_ids:
             # 从缓存或 TMDB API 获取电影详情
             movie_info = cls.get_movie_details(tmdb_id)
-            
+
             if movie_info:
                 # 构建海报 URL
                 poster_url = None
-                if movie_info.get('poster_path'):
-                    poster_url = f"https://image.tmdb.org/t/p/w500{movie_info['poster_path']}"
-                
+                if movie_info.get("poster_path"):
+                    poster_url = (
+                        f"https://image.tmdb.org/t/p/w500{movie_info['poster_path']}"
+                    )
+
                 # 处理类型
                 genres_list = []
-                if movie_info.get('genres'):
-                    genres = movie_info['genres']
+                if movie_info.get("genres"):
+                    genres = movie_info["genres"]
                     if isinstance(genres, list) and len(genres) > 0:
                         if isinstance(genres[0], dict):
-                            genres_list = [g.get('name', str(g)) for g in genres]
+                            genres_list = [g.get("name", str(g)) for g in genres]
                         elif isinstance(genres[0], str):
                             genres_list = genres
-                
+
                 # 获取电影标题
-                movie_title = movie_info.get('title', f'Movie {tmdb_id}')
-                
-                result.append({
-                    'tmdb_id': tmdb_id,
-                    'movie_title': movie_title,
-                    'movie_info': movie_info,
-                    'poster_url': poster_url,
-                    'year': (
-                        movie_info.get('release_date', '')[:4]
-                        if movie_info.get('release_date')
-                        else None
-                    ),
-                    'genres': genres_list,
-                    'overview': movie_info.get('overview', ''),
-                    'vote_average': movie_info.get('vote_average'),
-                })
-                
+                movie_title = movie_info.get("title", f"Movie {tmdb_id}")
+
+                result.append(
+                    {
+                        "tmdb_id": tmdb_id,
+                        "movie_title": movie_title,
+                        "movie_info": movie_info,
+                        "poster_url": poster_url,
+                        "year": (
+                            movie_info.get("release_date", "")[:4]
+                            if movie_info.get("release_date")
+                            else None
+                        ),
+                        "genres": genres_list,
+                        "overview": movie_info.get("overview", ""),
+                        "vote_average": movie_info.get("vote_average"),
+                    }
+                )
+
                 print(f"[DEBUG get_all_common_matches] Added movie: {movie_title}")
-        
+
         print(f"[DEBUG get_all_common_matches] Returning {len(result)} movies")
         return result
 
     @classmethod
     def clear_group_swipes(cls, group_session):
         """清空群组的所有滑动记录，开始新一轮"""
-        deleted_count = GroupSwipe.objects.filter(
-            group_session=group_session
-        ).delete()[0]
-        
-        print(f"[DEBUG clear_swipes] Cleared {deleted_count} swipe records for group {group_session.group_code}")
-        
+        deleted_count = GroupSwipe.objects.filter(group_session=group_session).delete()[
+            0
+        ]
+
+        print(
+            f"[DEBUG clear_swipes] Cleared {deleted_count} swipe records for group {group_session.group_code}"
+        )
+
         # 清除缓存
         cls.invalidate_deck_cache(group_session)
-        
+
         return deleted_count

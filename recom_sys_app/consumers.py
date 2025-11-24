@@ -259,7 +259,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Returns:
             bool: True if user is a member, False otherwise
         """
-        from recom_sys_app.models import GroupSession, GroupMember
+        from recom_sys_app.models import GroupMember
 
         try:
             # group_id 在你的系统中是 group_code
@@ -473,13 +473,13 @@ class MatchConsumer(AsyncWebsocketConsumer):
         Handle the event when all group members finished swiping
         """
         message = event.copy()
-        message.pop('type', None)
-        
+        message.pop("type", None)
+
         # send to client
         await self.send(text_data=json.dumps(message))
-        
-        print(f"[MatchConsumer] Sent all_members_finished event to client")
-        
+
+        print("[MatchConsumer] Sent all_members_finished event to client")
+
     @database_sync_to_async
     def verify_group_membership(self):
         """

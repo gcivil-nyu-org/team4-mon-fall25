@@ -5,7 +5,7 @@ Separated from group views for better organization and clarity
 """
 
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view, permission_classes
@@ -15,7 +15,7 @@ from rest_framework import status
 from django.db import transaction
 import json
 
-from .models import GroupSession, GroupMember, Interaction, Genre
+from .models import GroupSession, GroupMember, Interaction
 from .services import RecommendationService
 
 # ============================================
