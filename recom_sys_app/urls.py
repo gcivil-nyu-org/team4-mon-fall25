@@ -20,10 +20,11 @@ from .views_auth import signup_view
 from .views_group import (
     get_group_deck,
     swipe_like,
+    swipe_dislike,
     group_room_view,
     group_deck_view,  # New: Swipe Card Page View
     get_group_matches,  # New: Retrieve matching records
-    join_or_create_community_group,  # New: Community group creation
+    clear_group_swipes,
 )
 from . import views_group
 from . import views  # For additional helper views
@@ -131,6 +132,11 @@ urlpatterns = [
     path("api/groups/<str:group_code>/deck/", get_group_deck, name="api_group_deck"),
     path("api/groups/<str:group_code>/swipe/like/", swipe_like, name="api_swipe_like"),
     path(
+        "api/groups/<str:group_code>/swipe/dislike/",
+        swipe_dislike,
+        name="api_swipe_dislike",
+    ),
+    path(
         "api/groups/<str:group_code>/matches/",
         get_group_matches,
         name="api_group_matches",
@@ -139,6 +145,22 @@ urlpatterns = [
         "api/groups/community/join/",
         views_community.join_community,
         name="api_community_join",
+    ),
+    # GROUP MATCHING
+    path(
+        "api/groups/<str:group_code>/completion-status/",
+        views_group.check_completion_status,
+        name="check_completion_status",
+    ),
+    path(
+        "api/groups/<str:group_code>/final-matches/",
+        views_group.get_final_matches,
+        name="get_final_matches",
+    ),
+    path(
+        "api/groups/<str:group_code>/clear-swipes/",
+        clear_group_swipes,
+        name="clear_group_swipes",
     ),
     # Community API Endpoints (Genre-based)
     path(

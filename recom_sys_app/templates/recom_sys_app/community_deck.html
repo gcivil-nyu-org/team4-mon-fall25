@@ -396,7 +396,7 @@
 
             chatSocket.onclose = function(e) {
                 console.log('[Chat] WebSocket closed:', e.code);
-                setTimeout(connectWebSockets, 3000);
+                // setTimeout(connectWebSockets, 3000);
             };
 
             chatSocket.onerror = function(e) {
@@ -425,7 +425,7 @@
 
                 matchSocket.onclose = function(e) {
                     console.log('[Match] WebSocket closed:', e.code);
-                    setTimeout(connectWebSockets, 3000);
+                    // setTimeout(connectWebSockets, 3000);
                 };
 
                 matchSocket.onerror = function(e) {

@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.shortcuts import render, redirect
 import os
@@ -6,7 +6,6 @@ import re
 import json
 import ast
 import requests
-from django.http import JsonResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from dotenv import load_dotenv
