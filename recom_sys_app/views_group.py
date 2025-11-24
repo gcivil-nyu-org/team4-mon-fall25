@@ -1212,12 +1212,16 @@ def get_final_matches(request, group_code):
             formatted_match = {
                 "tmdb_id": match["tmdb_id"],
                 "movie_title": match["movie_title"],
-                "poster_url": f"https://image.tmdb.org/t/p/w500{movie_info.get('poster_path')}"
-                if movie_info.get("poster_path")
-                else None,
-                "year": movie_info.get("release_date", "")[:4]
-                if movie_info.get("release_date")
-                else None,
+                "poster_url": (
+                    f"https://image.tmdb.org/t/p/w500{movie_info.get('poster_path')}"
+                    if movie_info.get("poster_path")
+                    else None
+                ),
+                "year": (
+                    movie_info.get("release_date", "")[:4]
+                    if movie_info.get("release_date")
+                    else None
+                ),
                 "genres": movie_info.get("genres", []),
                 "overview": movie_info.get("overview", ""),
                 "vote_average": movie_info.get("vote_average"),
