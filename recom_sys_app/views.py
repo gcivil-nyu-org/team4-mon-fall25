@@ -1274,7 +1274,10 @@ def delete_group(request, group_id):
         # Only the creator can delete the group
         if group.creator != request.user:
             return JsonResponse(
-                {"success": False, "message": "Only the group creator can delete this group"},
+                {
+                    "success": False,
+                    "message": "Only the group creator can delete this group",
+                },
                 status=403,
             )
 
