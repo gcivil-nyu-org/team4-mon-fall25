@@ -117,6 +117,8 @@ urlpatterns = [
     path("api/solo/deck/", views_solo.get_solo_deck, name="get_solo_deck"),
     path("api/solo/swipe/", views_solo.solo_swipe, name="solo_swipe"),
     path("api/solo/likes/", views_solo.get_solo_likes, name="get_solo_likes"),
+    path("api/solo/watch-later/", views_solo.get_watch_later, name="get_watch_later"),
+    path("api/solo/watched/", views_solo.get_watched, name="get_watched"),
     path(
         "api/solo/unlike/<int:tmdb_id>/", views_solo.unlike_movie, name="unlike_movie"
     ),

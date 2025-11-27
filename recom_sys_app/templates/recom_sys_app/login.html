@@ -15,7 +15,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #141414;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -25,128 +25,69 @@
       overflow: hidden;
     }
 
-    /* Film Reel Ribbon Stripes - Enhanced with CineMatch Text */
-    /* Left Side - Ribbon 1 */
+    /* Cinematic Background with Three Layered Images - Red Blend */
     body::before {
       content: '';
       position: fixed;
-      bottom: -10%;
-      left: -22%;
-      width: 180%;
-      height: 650px;
-      background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="280" viewBox="0 0 1800 280"><defs><pattern id="filmRibbon1" x="0" y="0" width="95" height="280" patternUnits="userSpaceOnUse"><rect width="95" height="280" fill="none"/><rect x="0" y="0" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><rect x="5" y="20" width="85" height="240" fill="rgba(255,255,255,0.9)" rx="4"/><text x="47.5" y="90" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 90)">CineMatch</text><text x="47.5" y="140" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 140)">CineMatch</text><text x="47.5" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 190)">CineMatch</text><text x="47.5" y="240" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 240)">CineMatch</text><line x1="23.75" y1="20" x2="23.75" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="47.5" y1="20" x2="47.5" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="71.25" y1="20" x2="71.25" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><rect x="0" y="260" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="270" r="3" fill="rgba(230,230,250,0.9)"/></pattern></defs><path d="M -150 140 Q 350 50 750 100 Q 1150 150 1650 100" stroke="none" fill="url(%23filmRibbon1)" opacity="1"/></svg>');
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'),
+        url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+        url('{% static "recom_sys_app/images/images.png" %}');
+      background-size: cover, cover, cover;
+      background-position: center top, center center, center bottom;
       background-repeat: no-repeat;
-      background-size: contain;
-      opacity: 0.07;
-      transform: rotate(35deg);
-      pointer-events: none;
+      background-blend-mode: screen, lighten, overlay;
+      opacity: 0.25;
       z-index: 0;
-      filter: blur(0.8px);
-      mix-blend-mode: normal;
+      filter:
+        brightness(0.4)
+        contrast(1.8)
+        saturate(0)
+        sepia(100%)
+        hue-rotate(345deg)
+        drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+        drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+        drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+      mix-blend-mode: screen;
     }
 
-    /* Left Side - Ribbon 2 */
     body::after {
       content: '';
       position: fixed;
-      bottom: -1%;
-      left: -16%;
-      width: 180%;
-      height: 650px;
-      background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="280" viewBox="0 0 1800 280"><defs><pattern id="filmRibbon2" x="0" y="0" width="95" height="280" patternUnits="userSpaceOnUse"><rect width="95" height="280" fill="none"/><rect x="0" y="0" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><rect x="5" y="20" width="85" height="240" fill="rgba(255,255,255,0.9)" rx="4"/><text x="47.5" y="90" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 90)">CineMatch</text><text x="47.5" y="140" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 140)">CineMatch</text><text x="47.5" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 190)">CineMatch</text><text x="47.5" y="240" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 240)">CineMatch</text><line x1="23.75" y1="20" x2="23.75" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="47.5" y1="20" x2="47.5" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="71.25" y1="20" x2="71.25" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><rect x="0" y="260" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="270" r="3" fill="rgba(230,230,250,0.9)"/></pattern></defs><path d="M -150 140 Q 350 70 750 140 Q 1150 210 1650 140" stroke="none" fill="url(%23filmRibbon2)" opacity="1"/></svg>');
-      background-repeat: no-repeat;
-      background-size: contain;
-      opacity: 0.07;
-      transform: rotate(32deg);
-      pointer-events: none;
-      z-index: 0;
-      filter: blur(0.8px);
-      mix-blend-mode: normal;
-    }
-
-    /* Right Side - Ribbon 3 */
-    .watermark-layer {
-      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      background:
+        radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+        linear-gradient(
+          135deg,
+          rgba(229, 9, 20, 0.05) 0%,
+          rgba(20, 20, 20, 0.95) 50%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      z-index: 1;
       pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .watermark-layer::before {
-      content: '';
-      position: absolute;
-      bottom: -10%;
-      right: -22%;
-      width: 180%;
-      height: 650px;
-      background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="280" viewBox="0 0 1800 280"><defs><pattern id="filmRibbon3" x="0" y="0" width="95" height="280" patternUnits="userSpaceOnUse"><rect width="95" height="280" fill="none"/><rect x="0" y="0" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><rect x="5" y="20" width="85" height="240" fill="rgba(255,255,255,0.9)" rx="4"/><text x="47.5" y="90" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 90)">CineMatch</text><text x="47.5" y="140" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 140)">CineMatch</text><text x="47.5" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 190)">CineMatch</text><text x="47.5" y="240" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 240)">CineMatch</text><line x1="23.75" y1="20" x2="23.75" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="47.5" y1="20" x2="47.5" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="71.25" y1="20" x2="71.25" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><rect x="0" y="260" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="270" r="3" fill="rgba(230,230,250,0.9)"/></pattern></defs><path d="M -150 140 Q 350 50 750 100 Q 1150 150 1650 100" stroke="none" fill="url(%23filmRibbon3)" opacity="1"/></svg>');
-      background-repeat: no-repeat;
-      background-size: contain;
-      opacity: 0.07;
-      transform: rotate(35deg);
-      filter: blur(0.8px);
-      mix-blend-mode: normal;
-    }
-
-    /* Right Side - Ribbon 4 */
-    .watermark-layer::after {
-      content: '';
-      position: absolute;
-      bottom: -1%;
-      right: -16%;
-      width: 180%;
-      height: 650px;
-      background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="280" viewBox="0 0 1800 280"><defs><pattern id="filmRibbon4" x="0" y="0" width="95" height="280" patternUnits="userSpaceOnUse"><rect width="95" height="280" fill="none"/><rect x="0" y="0" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><rect x="5" y="20" width="85" height="240" fill="rgba(255,255,255,0.9)" rx="4"/><text x="47.5" y="90" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 90)">CineMatch</text><text x="47.5" y="140" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 140)">CineMatch</text><text x="47.5" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 190)">CineMatch</text><text x="47.5" y="240" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 240)">CineMatch</text><line x1="23.75" y1="20" x2="23.75" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="47.5" y1="20" x2="47.5" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="71.25" y1="20" x2="71.25" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><rect x="0" y="260" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="270" r="3" fill="rgba(230,230,250,0.9)"/></pattern></defs><path d="M -150 140 Q 350 70 750 140 Q 1150 210 1650 140" stroke="none" fill="url(%23filmRibbon4)" opacity="1"/></svg>');
-      background-repeat: no-repeat;
-      background-size: contain;
-      opacity: 0.07;
-      transform: rotate(32deg);
-      filter: blur(0.8px);
-      mix-blend-mode: normal;
-    }
-
-    /* Center Diagonal - Ribbon 5 (Additional Enhancement) */
-    .watermark-layer-center {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .watermark-layer-center::before {
-      content: '';
-      position: absolute;
-      bottom: -6%;
-      left: 38%;
-      width: 150%;
-      height: 650px;
-      background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="280" viewBox="0 0 1500 280"><defs><pattern id="filmRibbon5" x="0" y="0" width="95" height="280" patternUnits="userSpaceOnUse"><rect width="95" height="280" fill="none"/><rect x="0" y="0" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="10" r="3" fill="rgba(230,230,250,0.9)"/><rect x="5" y="20" width="85" height="240" fill="rgba(255,255,255,0.9)" rx="4"/><text x="47.5" y="90" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 90)">CineMatch</text><text x="47.5" y="140" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 140)">CineMatch</text><text x="47.5" y="190" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 190)">CineMatch</text><text x="47.5" y="240" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="rgba(230,230,250,0.1)" text-anchor="middle" transform="rotate(-90 47.5 240)">CineMatch</text><line x1="23.75" y1="20" x2="23.75" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="47.5" y1="20" x2="47.5" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><line x1="71.25" y1="20" x2="71.25" y2="260" stroke="rgba(230,230,250,0.5)" stroke-width="0.4"/><rect x="0" y="260" width="95" height="20" fill="rgba(255,255,255,0.9)"/><circle cx="12" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="29" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="46" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="63" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="80" cy="270" r="3" fill="rgba(230,230,250,0.9)"/><circle cx="83" cy="270" r="3" fill="rgba(230,230,250,0.9)"/></pattern></defs><path d="M -100 140 Q 250 70 550 140 Q 850 210 1200 140" stroke="none" fill="url(%23filmRibbon5)" opacity="1"/></svg>');
-      background-repeat: no-repeat;
-      background-size: contain;
-      opacity: 0.06;
-      transform: rotate(33.5deg);
-      filter: blur(0.8px);
-      mix-blend-mode: normal;
     }
 
     .login-container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      background: rgba(20, 20, 20, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(229, 9, 20, 0.1);
       padding: 50px;
       width: 100%;
       max-width: 450px;
       animation: slideUp 0.5s ease;
       position: relative;
-      z-index: 1;
+      z-index: 2;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     @keyframes slideUp {
@@ -163,20 +104,43 @@
     .logo {
       text-align: center;
       margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.4);
+      overflow: hidden;
+    }
+
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(1.1) contrast(1.2);
     }
 
     .logo h1 {
       font-size: 2.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #E50914;
+      text-shadow: 0 0 30px rgba(229, 9, 20, 0.5);
       margin-bottom: 10px;
+      font-weight: 800;
+      letter-spacing: -1px;
     }
 
     .logo p {
-      color: #718096;
+      color: #999;
       font-size: 1rem;
+      letter-spacing: 0.5px;
     }
 
     .form-group {
@@ -185,58 +149,67 @@
 
     label {
       display: block;
-      color: #2d3748;
+      color: #ccc;
       font-weight: 600;
       margin-bottom: 8px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
     }
 
     input[type="text"],
     input[type="password"] {
       width: 100%;
       padding: 14px 18px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
       font-size: 1rem;
       transition: all 0.3s ease;
-      background: #f7fafc;
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-family: inherit;
     }
 
     input[type="text"]:focus,
     input[type="password"]:focus {
       outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #E50914;
+      background: rgba(0, 0, 0, 0.6);
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
+    }
+
+    input::placeholder {
+      color: #666;
     }
 
     .error-message {
-      background: #fed7d7;
-      color: #c53030;
+      background: rgba(229, 9, 20, 0.1);
+      color: #ff6b6b;
       padding: 12px 16px;
       border-radius: 8px;
       margin-bottom: 20px;
       font-size: 0.9rem;
-      border-left: 4px solid #c53030;
+      border-left: 4px solid #E50914;
     }
 
     .btn-login {
       width: 100%;
       padding: 15px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #E50914;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+      letter-spacing: 0.5px;
     }
 
     .btn-login:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      box-shadow: 0 6px 25px rgba(229, 9, 20, 0.6);
+      background: #ff0a16;
     }
 
     .btn-login:active {
@@ -256,33 +229,35 @@
       top: 50%;
       width: 100%;
       height: 1px;
-      background: #e2e8f0;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .divider span {
-      background: white;
+      background: rgba(20, 20, 20, 0.95);
       padding: 0 15px;
-      color: #718096;
+      color: #999;
       position: relative;
       z-index: 1;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
     }
 
     .signup-link {
       text-align: center;
       margin-top: 20px;
-      color: #4a5568;
+      color: #999;
     }
 
     .signup-link a {
-      color: #667eea;
+      color: #E50914;
       text-decoration: none;
       font-weight: 600;
       transition: color 0.3s ease;
     }
 
     .signup-link a:hover {
-      color: #764ba2;
-      text-decoration: underline;
+      color: #ff0a16;
+      text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
     }
 
     @media (max-width: 480px) {
@@ -293,15 +268,21 @@
       .logo h1 {
         font-size: 2rem;
       }
+
+      .logo-icon {
+        width: 55px;
+        height: 55px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="watermark-layer"></div>
-  <div class="watermark-layer-center"></div>
   <div class="login-container">
     <div class="logo">
-      <h1>🎬 CineMatch</h1>
+      <div class="logo-icon">
+        <img src="{% static 'recom_sys_app/images/cinematch_logo.png' %}" alt="CineMatch Logo">
+      </div>
+      <h1>CineMatch</h1>
       <p>Find your next favorite movie</p>
     </div>
 

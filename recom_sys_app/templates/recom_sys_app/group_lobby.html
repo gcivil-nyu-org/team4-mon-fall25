@@ -15,20 +15,74 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(to bottom, #b794f6 0%, #e9d5ff 100%);
+      background: #141414;
       min-height: 100vh;
       padding: 20px;
-      color: #4c1d95;
+      color: #fff;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'),
+        url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+        url('{% static "recom_sys_app/images/images.png" %}');
+      background-size: cover, cover, cover;
+      background-position: center top, center center, center bottom;
+      background-repeat: no-repeat;
+      background-blend-mode: screen, lighten, overlay;
+      opacity: 0.25;
+      z-index: 0;
+      filter:
+        brightness(0.4)
+        contrast(1.8)
+        saturate(0)
+        sepia(100%)
+        hue-rotate(345deg)
+        drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+        drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+        drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+        linear-gradient(
+          135deg,
+          rgba(229, 9, 20, 0.05) 0%,
+          rgba(20, 20, 20, 0.95) 50%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      z-index: 1;
+      pointer-events: none;
     }
 
     .lobby-container {
       max-width: 900px;
       margin: 0 auto;
+      position: relative;
+      z-index: 2;
     }
 
     /* ===== Header Card ============================================================= */
     .lobby-header {
-      background: white;
+      background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 20px;
       padding: 40px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -44,7 +98,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      color: #4c1d95;
+      color: #fff;
     }
 
     .group-code-display {
@@ -52,15 +106,15 @@
       align-items: center;
       gap: 16px;
       padding: 20px 28px;
-      background: #f9fafb;
-      border: 2px solid #8b5cf6;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(229, 9, 20, 0.5);
       border-radius: 12px;
       margin: 20px 0;
     }
 
     .code-label {
       font-size: 12px;
-      color: #6b46c1;
+      color: #999;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-weight: 600;
@@ -71,12 +125,12 @@
       font-size: 32px;
       font-weight: 700;
       letter-spacing: 4px;
-      color: #8b5cf6;
+      color: #E50914;
     }
 
     .btn-copy {
       padding: 10px 20px;
-      background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%);
+      background: #E50914;
       border: none;
       border-radius: 10px;
       color: white;
@@ -99,14 +153,14 @@
     }
 
     .invite-text {
-      color: #6b46c1;
+      color: #E50914;
       font-size: 14px;
       margin-top: 16px;
     }
 
     /* ===== Members Section ==================================================== */
     .members-section {
-      background: white;
+      background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 20px;
       padding: 30px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -129,11 +183,11 @@
       align-items: center;
       gap: 10px;
       margin: 0;
-      color: #4c1d95;
+      color: #fff;
     }
 
     .member-count {
-      background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%);
+      background: #E50914;
       border-radius: 20px;
       padding: 6px 14px;
       font-size: 14px;
@@ -152,14 +206,14 @@
       justify-content: space-between;
       align-items: center;
       padding: 16px;
-      background: #f9fafb;
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       transition: all 0.3s ease;
     }
 
     .member-item:hover {
-      border-color: #8b5cf6;
+      border-color: #E50914;
       transform: translateX(4px);
       box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
     }
@@ -173,7 +227,7 @@
     .member-avatar {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%);
+      background: #E50914;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -191,13 +245,13 @@
 
     .member-name {
       font-weight: 600;
-      color: #4c1d95;
+      color: #fff;
       font-size: 15px;
     }
 
     .member-username {
       font-size: 13px;
-      color: #6b46c1;
+      color: #E50914;
     }
 
     .member-role {
@@ -212,8 +266,8 @@
 
     .member-role.creator {
       background: rgba(139, 92, 246, 0.1);
-      border-color: #8b5cf6;
-      color: #6b46c1;
+      border-color: #E50914;
+      color: #E50914;
     }
 
     .member-role.member {
@@ -225,13 +279,13 @@
     .loading {
       text-align: center;
       padding: 40px;
-      color: #6b46c1;
+      color: #E50914;
     }
 
     .no-members {
       text-align: center;
       padding: 40px;
-      color: #6b46c1;
+      color: #E50914;
     }
 
     /* ===== Actions Section ==================================================== */
@@ -430,7 +484,7 @@
         </h2>
       </div>
 
-      <div id="chatMessages" style="background: white; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; min-height: 200px;">
+      <div id="chatMessages" style="background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; min-height: 200px;">
         <div style="text-align: center; color: #9ca3af; padding: 40px 20px;">
           No messages yet. Start chatting!
         </div>
@@ -447,7 +501,7 @@
         />
         <button
           type="submit"
-          style="padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;"
+          style="padding: 12px 24px; background: #E50914; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;"
           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'"
           onmouseout="this.style.transform=''; this.style.boxShadow=''"
         >

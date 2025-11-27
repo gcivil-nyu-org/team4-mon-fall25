@@ -184,6 +184,7 @@ def community_deck_view(request, group_code):
             "member_count": member_count,
             "user": request.user,
             "genre_name": genre_name,
+            "is_community": True,
         }
 
         return render(request, "recom_sys_app/community_deck.html", context)

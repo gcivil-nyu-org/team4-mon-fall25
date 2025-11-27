@@ -7,8 +7,67 @@
     <title>Solo Swipe - Find Your Movie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #141414;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Cinematic Background with Three Layered Images - Red Blend */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                url('{% static "recom_sys_app/images/cinematch_logo.png" %}'),
+                url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+                url('{% static "recom_sys_app/images/images.png" %}');
+            background-size: cover, cover, cover;
+            background-position: center top, center center, center bottom;
+            background-repeat: no-repeat;
+            background-blend-mode: screen, lighten, overlay;
+            opacity: 0.25;
+            z-index: 0;
+            filter:
+                brightness(0.4)
+                contrast(1.8)
+                saturate(0)
+                sepia(100%)
+                hue-rotate(345deg)
+                drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+                drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+                drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+            mix-blend-mode: screen;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+                linear-gradient(
+                    135deg,
+                    rgba(229, 9, 20, 0.05) 0%,
+                    rgba(20, 20, 20, 0.95) 50%,
+                    rgba(0, 0, 0, 0.98) 100%
+                );
+            z-index: 1;
+            pointer-events: none;
         }
 
         .card-container {
@@ -17,18 +76,21 @@
             max-width: 400px;
             height: 600px;
             margin: 0 auto;
+            z-index: 2;
         }
 
         .swipe-card {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: white;
+            background: rgba(20, 20, 20, 0.9);
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(229, 9, 20, 0.1);
             cursor: grab;
             user-select: none;
             transition: transform 0.3s ease;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .swipe-card:active {
@@ -71,7 +133,7 @@
 
         .overlay.dislike {
             right: 20px;
-            background: rgba(244, 67, 54, 0.9);
+            background: rgba(229, 9, 20, 0.9);
             color: white;
         }
 
@@ -84,6 +146,8 @@
             justify-content: center;
             gap: 30px;
             margin-top: 30px;
+            position: relative;
+            z-index: 2;
         }
 
         .action-btn {
@@ -96,12 +160,12 @@
             font-size: 32px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .action-btn:hover {
             transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
 
         .action-btn:active {
@@ -109,8 +173,13 @@
         }
 
         .dislike-btn {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            background: #E50914;
             color: white;
+        }
+
+        .dislike-btn:hover {
+            background: #ff0a16;
+            box-shadow: 0 6px 25px rgba(229, 9, 20, 0.6);
         }
 
         .like-btn {
@@ -118,12 +187,32 @@
             color: white;
         }
 
+        .watch-later-btn {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+        }
+
+        .watch-later-btn:hover {
+            background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+            box-shadow: 0 6px 25px rgba(255, 152, 0, 0.6);
+        }
+
+        .watched-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+
+        .watched-btn:hover {
+            background: linear-gradient(135deg, #64B5F6 0%, #2196F3 100%);
+            box-shadow: 0 6px 25px rgba(33, 150, 243, 0.6);
+        }
+
         .loading-spinner {
             display: inline-block;
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: white;
+            border: 4px solid rgba(229, 9, 20, 0.3);
+            border-top-color: #E50914;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -138,11 +227,13 @@
             right: -400px;
             width: 400px;
             height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+            background: rgba(20, 20, 20, 0.9);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
             transition: right 0.3s ease;
             z-index: 1000;
             overflow-y: auto;
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(229, 9, 20, 0.2);
         }
 
         .likes-panel.open {
@@ -153,28 +244,31 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #E50914;
             color: white;
             padding: 12px 20px;
             border-radius: 25px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
             z-index: 999;
             transition: all 0.3s;
+            font-weight: 600;
         }
 
         .likes-toggle:hover {
             transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 25px rgba(229, 9, 20, 0.6);
+            background: #ff0a16;
         }
 
         .liked-movie {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 10px;
             display: flex;
             gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .liked-movie img {
@@ -205,15 +299,17 @@
         }
 
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: rgba(20, 20, 20, 0.95);
             border-radius: 20px;
             max-width: 600px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(229, 9, 20, 0.2);
             color: white;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .modal-close {
@@ -223,7 +319,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.1);
+            background: rgba(229, 9, 20, 0.9);
             border: none;
             color: white;
             font-size: 24px;
@@ -236,8 +332,9 @@
         }
 
         .modal-close:hover {
-            background: rgba(255,255,255,0.2);
+            background: #E50914;
             transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
         }
 
         .info-button {
@@ -247,9 +344,9 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(20, 20, 20, 0.9);
             color: white;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(229, 9, 20, 0.5);
             font-size: 20px;
             cursor: pointer;
             display: flex;
@@ -257,12 +354,14 @@
             justify-content: center;
             transition: all 0.3s;
             z-index: 50;
+            backdrop-filter: blur(10px);
         }
 
         .info-button:hover {
-            background: rgba(0,0,0,0.9);
-            border-color: rgba(255,255,255,0.6);
+            background: rgba(229, 9, 20, 0.9);
+            border-color: #E50914;
             transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
         }
 
         .modal-poster {
@@ -274,13 +373,14 @@
 
         .genre-tag {
             display: inline-block;
-            background: rgba(103, 126, 234, 0.3);
+            background: rgba(229, 9, 20, 0.2);
             padding: 5px 12px;
             border-radius: 15px;
             margin-right: 8px;
             margin-bottom: 8px;
             font-size: 12px;
-            border: 1px solid rgba(103, 126, 234, 0.5);
+            border: 1px solid rgba(229, 9, 20, 0.4);
+            color: #fff;
         }
 
         .cast-member {
@@ -291,30 +391,52 @@
             margin-bottom: 8px;
             display: inline-block;
             font-size: 14px;
+            color: #ccc;
         }
 
         .streaming-provider {
             display: inline-flex;
             align-items: center;
-            background: rgba(103, 126, 234, 0.2);
+            background: rgba(229, 9, 20, 0.2);
             padding: 8px 16px;
             border-radius: 10px;
             margin-right: 10px;
             margin-bottom: 10px;
             font-size: 14px;
+            border: 1px solid rgba(229, 9, 20, 0.3);
         }
 
         .modal-loading {
             text-align: center;
             padding: 40px;
         }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.4);
+            overflow: hidden;
+        }
+
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(1.1) contrast(1.2);
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-black min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8">
+<body>
+    <div class="container mx-auto px-4 py-8" style="position: relative; z-index: 2;">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-2">🎬 Solo Mode</h1>
+            <div class="flex items-center justify-center gap-4 mb-4">
+                <div class="header-logo">
+                    <img src="{% static 'recom_sys_app/images/cinematch_logo.png' %}" alt="CineMatch Logo">
+                </div>
+                <h1 class="text-4xl font-bold" style="color: #E50914; text-shadow: 0 0 30px rgba(229, 9, 20, 0.5);">Solo Mode</h1>
+            </div>
             <p class="text-gray-300">{{ selected_genre_names }}</p>
             <p class="text-sm text-gray-400 mt-2" id="cards-remaining">Loading movies...</p>
         </div>
@@ -328,8 +450,8 @@
         <div id="likes-panel" class="likes-panel">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Your Liked Movies</h2>
-                    <button onclick="toggleLikesPanel()" class="text-2xl">✕</button>
+                    <h2 class="text-2xl font-bold" style="color: #E50914;">Your Liked Movies</h2>
+                    <button onclick="toggleLikesPanel()" class="text-2xl text-white hover:text-red-500">✕</button>
                 </div>
                 <div id="likes-list">
                     <p class="text-gray-300 text-center">No likes yet. Start swiping!</p>
@@ -341,27 +463,33 @@
         <div class="card-container" id="card-container">
             <div class="text-center text-gray-400 mt-20">
                 <div class="loading-spinner mx-auto"></div>
-                <p class="mt-4">Loading your personalized movies...</p>
+                <p class="mt-4" style="color: #999;">Loading your personalized movies...</p>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <div class="action-btn dislike-btn" onclick="swipeCard('dislike')">
+            <div class="action-btn dislike-btn" onclick="swipeCard('dislike')" title="Pass">
                 ✕
             </div>
-            <div class="action-btn like-btn" onclick="swipeCard('like')">
+            <div class="action-btn watch-later-btn" onclick="swipeCard('watch_later')" title="Watch Later">
+                🕒
+            </div>
+            <div class="action-btn watched-btn" onclick="swipeCard('watched')" title="Watched">
+                ✓
+            </div>
+            <div class="action-btn like-btn" onclick="swipeCard('like')" title="Like">
                 ♥
             </div>
         </div>
 
         <!-- Navigation -->
-        <div class="text-center mt-8 space-x-4">
-            <a href="{% url 'recom_sys:solo_genre_selection' %}" class="text-gray-400 hover:text-white transition-colors">
+        <div class="text-center mt-8 space-x-4" style="position: relative; z-index: 2;">
+            <a href="{% url 'recom_sys:solo_genre_selection' %}" class="text-gray-400 hover:text-white transition-colors" style="text-decoration: none;">
                 ← Change Genres
             </a>
             <span class="text-gray-600">|</span>
-            <a href="{% url 'recom_sys:profile' %}" class="text-gray-400 hover:text-white transition-colors">
+            <a href="{% url 'recom_sys:profile' %}" class="text-gray-400 hover:text-white transition-colors" style="text-decoration: none;">
                 Back to Profile
             </a>
         </div>
@@ -463,13 +591,13 @@
                 <img src="${posterUrl}" alt="${movie.title}" class="card-image">
                 <div class="overlay like">LIKE</div>
                 <div class="overlay dislike">NOPE</div>
-                <div class="p-6 text-gray-900">
+                <div class="p-6" style="color: white;">
                     <h2 class="text-2xl font-bold mb-2">${movie.title}</h2>
-                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                    <div class="flex items-center gap-4 text-sm mb-3" style="color: #999;">
                         <span>⭐ ${rating}</span>
                         <span>📅 ${year}</span>
                     </div>
-                    <p class="text-sm text-gray-700 line-clamp-3">${movie.overview || 'No description available.'}</p>
+                    <p class="text-sm line-clamp-3" style="color: #ccc;">${movie.overview || 'No description available.'}</p>
                 </div>
             `;
 
@@ -478,7 +606,16 @@
 
         function startDrag(e) {
             if (currentIndex >= movies.length) return;
-            
+
+            // Prevent dragging when clicking on interactive elements
+            const target = e.target;
+            const isClickableElement = target.tagName === 'BUTTON' ||
+                                      target.tagName === 'A' ||
+                                      target.onclick !== null ||
+                                      target.closest('button') !== null;
+
+            if (isClickableElement) return;
+
             isDragging = true;
             const card = e.currentTarget;
             card.classList.add('swiping');
@@ -554,9 +691,25 @@
         }
 
         function animateCardRemoval(card, action) {
-            const direction = action === 'like' ? 1 : -1;
-            card.classList.add('removed');
-            card.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 45}deg)`;
+            let direction = 0;
+
+            if (action === 'like') {
+                direction = 1; // Swipe right
+            } else if (action === 'dislike') {
+                direction = -1; // Swipe left
+            } else if (action === 'watch_later' || action === 'watched') {
+                // Fade out and slide down for watch later/watched
+                card.classList.add('removed');
+                card.style.transform = 'translateY(1000px) scale(0.8)';
+                card.style.opacity = '0';
+            } else {
+                direction = -1; // Default to left swipe
+            }
+
+            if (direction !== 0) {
+                card.classList.add('removed');
+                card.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 45}deg)`;
+            }
 
             setTimeout(() => {
                 currentIndex++;
@@ -567,7 +720,7 @@
 
         async function recordSwipe(action) {
             const movie = movies[currentIndex];
-            
+
             try {
                 const response = await fetch('/api/solo/swipe/', {
                     method: 'POST',
@@ -595,7 +748,7 @@
 
         function updateCardsRemaining() {
             const remaining = movies.length - currentIndex;
-            document.getElementById('cards-remaining').textContent = 
+            document.getElementById('cards-remaining').textContent =
                 `${remaining} movie${remaining !== 1 ? 's' : ''} remaining`;
         }
 
@@ -615,7 +768,7 @@
                     <button onclick="removeLike(${movie.tmdb_id}, event)"
                             class="remove-like-btn"
                             title="Remove from likes"
-                            style="position: absolute; top: 4px; right: 4px; background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;">
+                            style="position: absolute; top: 4px; right: 4px; background: rgba(229, 9, 20, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;">
                         ×
                     </button>
                     <img src="${movie.poster_url || 'https://via.placeholder.com/60x90'}" alt="${movie.title}">
@@ -669,8 +822,11 @@
                     <div class="text-6xl mb-4">🎉</div>
                     <h2 class="text-3xl font-bold mb-4">That's all for now!</h2>
                     <p class="text-gray-300 mb-6">You've seen all the movies we have for you.</p>
-                    <button onclick="location.href='{% url 'recom_sys:solo_genre_selection' %}'" 
-                            class="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 rounded-full font-bold hover:shadow-xl transform hover:scale-105 transition-all">
+                    <button onclick="location.href='{% url 'recom_sys:solo_genre_selection' %}'"
+                            class="px-8 py-3 rounded-full font-bold transition-all"
+                            style="background: #E50914; color: white; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);"
+                            onmouseover="this.style.boxShadow='0 6px 25px rgba(229, 9, 20, 0.6)'; this.style.transform='scale(1.05)';"
+                            onmouseout="this.style.boxShadow='0 4px 15px rgba(229, 9, 20, 0.4)'; this.style.transform='scale(1)';">
                         Choose Different Genres
                     </button>
                 </div>
@@ -684,8 +840,11 @@
                     <div class="text-6xl mb-4">😕</div>
                     <h2 class="text-2xl font-bold mb-4">Oops!</h2>
                     <p class="text-gray-300 mb-6">${message}</p>
-                    <button onclick="loadMovies()" 
-                            class="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 rounded-full font-bold hover:shadow-xl transform hover:scale-105 transition-all">
+                    <button onclick="loadMovies()"
+                            class="px-8 py-3 rounded-full font-bold transition-all"
+                            style="background: #E50914; color: white; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);"
+                            onmouseover="this.style.boxShadow='0 6px 25px rgba(229, 9, 20, 0.6)'; this.style.transform='scale(1.05)';"
+                            onmouseout="this.style.boxShadow='0 4px 15px rgba(229, 9, 20, 0.4)'; this.style.transform='scale(1)';">
                         Try Again
                     </button>
                 </div>
@@ -859,6 +1018,15 @@
         // Prevent swiping when modal is open
         function startDrag(e) {
             if (currentIndex >= movies.length || modalOpen) return;
+
+            // Prevent dragging when clicking on interactive elements
+            const target = e.target;
+            const isClickableElement = target.tagName === 'BUTTON' ||
+                                      target.tagName === 'A' ||
+                                      target.onclick !== null ||
+                                      target.closest('button') !== null;
+
+            if (isClickableElement) return;
 
             isDragging = true;
             const card = e.currentTarget;

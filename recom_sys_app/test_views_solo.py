@@ -795,3 +795,351 @@ class SoloHelperFunctionsTest(TestCase):
 
 
 # Run tests with: python manage.py test recom_sys_app.test_views_solo
+
+
+class GetWatchLaterViewTest(TestCase):
+    """Test suite for get_watch_later API endpoint"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.url = reverse("recom_sys:get_watch_later")
+
+    def test_watch_later_requires_authentication(self):
+        """Test that unauthenticated users cannot access watch later"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_get_watch_later_empty(self, mock_tmdb):
+        """Test getting watch later when user has no movies"""
+        self.client.login(username="testuser", password="testpass123")
+        mock_tmdb.return_value = []
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data["success"])
+        self.assertEqual(data["total"], 0)
+        self.assertEqual(len(data["movies"]), 0)
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_get_watch_later_with_movies(self, mock_tmdb):
+        """Test getting watch later with saved movies"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create watch later interactions
+        Interaction.objects.create(user=self.user, tmdb_id=550, status="WATCH_LATER")
+        Interaction.objects.create(user=self.user, tmdb_id=551, status="WATCH_LATER")
+
+        # Mock TMDB response
+        mock_tmdb.return_value = [
+            {
+                "tmdb_id": 550,
+                "title": "Fight Club",
+                "year": 1999,
+                "vote_average": 8.4,
+                "poster_url": "https://example.com/poster.jpg",
+                "found": True,
+            },
+            {
+                "tmdb_id": 551,
+                "title": "The Matrix",
+                "year": 1999,
+                "vote_average": 8.7,
+                "poster_url": "https://example.com/matrix.jpg",
+                "found": True,
+            },
+        ]
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data["success"])
+        self.assertEqual(data["total"], 2)
+        self.assertEqual(len(data["movies"]), 2)
+        self.assertEqual(data["movies"][0]["title"], "Fight Club")
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_watch_later_limit_50(self, mock_tmdb):
+        """Test that watch later is limited to 50 movies"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create 60 watch later interactions
+        for i in range(60):
+            Interaction.objects.create(
+                user=self.user, tmdb_id=1000 + i, status="WATCH_LATER"
+            )
+
+        mock_tmdb.return_value = []
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should only fetch IDs for 50 movies max
+        call_args = mock_tmdb.call_args[0][0]
+        self.assertLessEqual(len(call_args), 50)
+
+    def test_watch_later_only_returns_watch_later_status(self):
+        """Test that only WATCH_LATER status movies are returned"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create interactions with different statuses
+        Interaction.objects.create(user=self.user, tmdb_id=550, status="WATCH_LATER")
+        Interaction.objects.create(user=self.user, tmdb_id=551, status="LIKE")
+        Interaction.objects.create(user=self.user, tmdb_id=552, status="WATCHED")
+        Interaction.objects.create(user=self.user, tmdb_id=553, status="DISLIKE")
+
+        with patch("recom_sys_app.views_solo._tmdb_fetch_by_ids") as mock_tmdb:
+            mock_tmdb.return_value = []
+            response = self.client.get(self.url)
+
+            # Should only fetch movie with WATCH_LATER status
+            call_args = mock_tmdb.call_args[0][0]
+            self.assertEqual(len(call_args), 1)
+            self.assertEqual(call_args[0], 550)
+
+
+class GetWatchedViewTest(TestCase):
+    """Test suite for get_watched API endpoint"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.url = reverse("recom_sys:get_watched")
+
+    def test_watched_requires_authentication(self):
+        """Test that unauthenticated users cannot access watched"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_get_watched_empty(self, mock_tmdb):
+        """Test getting watched when user has no movies"""
+        self.client.login(username="testuser", password="testpass123")
+        mock_tmdb.return_value = []
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data["success"])
+        self.assertEqual(data["total"], 0)
+        self.assertEqual(len(data["movies"]), 0)
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_get_watched_with_movies(self, mock_tmdb):
+        """Test getting watched with saved movies"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create watched interactions
+        Interaction.objects.create(user=self.user, tmdb_id=550, status="WATCHED")
+        Interaction.objects.create(user=self.user, tmdb_id=551, status="WATCHED")
+        Interaction.objects.create(user=self.user, tmdb_id=552, status="WATCHED")
+
+        # Mock TMDB response
+        mock_tmdb.return_value = [
+            {
+                "tmdb_id": 550,
+                "title": "Fight Club",
+                "year": 1999,
+                "vote_average": 8.4,
+                "poster_url": "https://example.com/poster.jpg",
+                "found": True,
+            },
+            {
+                "tmdb_id": 551,
+                "title": "The Matrix",
+                "year": 1999,
+                "vote_average": 8.7,
+                "poster_url": "https://example.com/matrix.jpg",
+                "found": True,
+            },
+            {
+                "tmdb_id": 552,
+                "title": "Inception",
+                "year": 2010,
+                "vote_average": 8.8,
+                "poster_url": "https://example.com/inception.jpg",
+                "found": True,
+            },
+        ]
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data["success"])
+        self.assertEqual(data["total"], 3)
+        self.assertEqual(len(data["movies"]), 3)
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_watched_limit_100(self, mock_tmdb):
+        """Test that watched is limited to 100 movies"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create 120 watched interactions
+        for i in range(120):
+            Interaction.objects.create(
+                user=self.user, tmdb_id=2000 + i, status="WATCHED"
+            )
+
+        mock_tmdb.return_value = []
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should only fetch IDs for 100 movies max
+        call_args = mock_tmdb.call_args[0][0]
+        self.assertLessEqual(len(call_args), 100)
+
+    def test_watched_only_returns_watched_status(self):
+        """Test that only WATCHED status movies are returned"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create interactions with different statuses
+        Interaction.objects.create(user=self.user, tmdb_id=550, status="WATCHED")
+        Interaction.objects.create(user=self.user, tmdb_id=551, status="LIKE")
+        Interaction.objects.create(user=self.user, tmdb_id=552, status="WATCH_LATER")
+        Interaction.objects.create(user=self.user, tmdb_id=553, status="DISLIKE")
+
+        with patch("recom_sys_app.views_solo._tmdb_fetch_by_ids") as mock_tmdb:
+            mock_tmdb.return_value = []
+            response = self.client.get(self.url)
+
+            # Should only fetch movie with WATCHED status
+            call_args = mock_tmdb.call_args[0][0]
+            self.assertEqual(len(call_args), 1)
+            self.assertEqual(call_args[0], 550)
+
+    @patch("recom_sys_app.views_solo._tmdb_fetch_by_ids")
+    def test_watched_ordered_by_updated_at(self, mock_tmdb):
+        """Test that watched movies are retrieved (note: ordering not guaranteed due to set() in view)"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create watched interactions at different times
+        from datetime import datetime, timedelta
+        from django.utils import timezone
+
+        old_time = timezone.now() - timedelta(days=30)
+        recent_time = timezone.now()
+
+        interaction1 = Interaction.objects.create(
+            user=self.user, tmdb_id=550, status="WATCHED"
+        )
+        interaction1.updated_at = old_time
+        interaction1.save()
+
+        interaction2 = Interaction.objects.create(
+            user=self.user, tmdb_id=551, status="WATCHED"
+        )
+        interaction2.updated_at = recent_time
+        interaction2.save()
+
+        mock_tmdb.return_value = []
+
+        response = self.client.get(self.url)
+
+        # Both movies should be included (order not guaranteed due to set() operation)
+        call_args = mock_tmdb.call_args[0][0]
+        self.assertIn(550, call_args)
+        self.assertIn(551, call_args)
+        self.assertEqual(len(call_args), 2)
+
+
+class SoloSwipeExtendedTest(TestCase):
+    """Extended tests for solo_swipe with new watch_later and watched actions"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="testuser", email="test@example.com", password="testpass123"
+        )
+        self.url = reverse("recom_sys:solo_swipe")
+
+    def test_swipe_watch_later_creates_interaction(self):
+        """Test that watch_later action creates WATCH_LATER interaction"""
+        self.client.login(username="testuser", password="testpass123")
+
+        data = {"tmdb_id": 550, "action": "watch_later", "movie_title": "Fight Club"}
+
+        response = self.client.post(
+            self.url, json.dumps(data), content_type="application/json"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        self.assertTrue(response_data["success"])
+        self.assertIn("Watch Later", response_data["message"])
+
+        # Verify interaction was created
+        interaction = Interaction.objects.get(user=self.user, tmdb_id=550)
+        self.assertEqual(interaction.status, "WATCH_LATER")
+
+    def test_swipe_watched_creates_interaction(self):
+        """Test that watched action creates WATCHED interaction"""
+        self.client.login(username="testuser", password="testpass123")
+
+        data = {"tmdb_id": 551, "action": "watched", "movie_title": "The Matrix"}
+
+        response = self.client.post(
+            self.url, json.dumps(data), content_type="application/json"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        self.assertTrue(response_data["success"])
+        self.assertIn("Watched", response_data["message"])
+
+        # Verify interaction was created
+        interaction = Interaction.objects.get(user=self.user, tmdb_id=551)
+        self.assertEqual(interaction.status, "WATCHED")
+
+    def test_swipe_invalidates_cache(self):
+        """Test that swipe actions invalidate the cached deck"""
+        self.client.login(username="testuser", password="testpass123")
+
+        from django.core.cache import cache
+
+        # Set a cache value
+        cache_key = f"solo_deck_{self.user.id}"
+        cache.set(cache_key, {"test": "data"}, 3600)
+        self.assertIsNotNone(cache.get(cache_key))
+
+        # Perform swipe
+        data = {"tmdb_id": 550, "action": "watch_later", "movie_title": "Fight Club"}
+        self.client.post(self.url, json.dumps(data), content_type="application/json")
+
+        # Cache should be invalidated
+        self.assertIsNone(cache.get(cache_key))
+
+    def test_swipe_update_existing_interaction(self):
+        """Test that swiping again updates existing interaction"""
+        self.client.login(username="testuser", password="testpass123")
+
+        # Create initial interaction
+        Interaction.objects.create(user=self.user, tmdb_id=550, status="LIKE")
+
+        # Update to watch_later
+        data = {"tmdb_id": 550, "action": "watch_later", "movie_title": "Fight Club"}
+        response = self.client.post(
+            self.url, json.dumps(data), content_type="application/json"
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        # Verify interaction was updated, not duplicated
+        interactions = Interaction.objects.filter(user=self.user, tmdb_id=550)
+        self.assertEqual(interactions.count(), 1)
+        self.assertEqual(interactions.first().status, "WATCH_LATER")

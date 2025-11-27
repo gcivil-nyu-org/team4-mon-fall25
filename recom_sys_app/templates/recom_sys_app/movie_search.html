@@ -15,14 +15,68 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(to bottom, #b794f6 0%, #e9d5ff 100%);
+      background: #141414;
       min-height: 100vh;
       padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'),
+        url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+        url('{% static "recom_sys_app/images/images.png" %}');
+      background-size: cover, cover, cover;
+      background-position: center top, center center, center bottom;
+      background-repeat: no-repeat;
+      background-blend-mode: screen, lighten, overlay;
+      opacity: 0.25;
+      z-index: 0;
+      filter:
+        brightness(0.4)
+        contrast(1.8)
+        saturate(0)
+        sepia(100%)
+        hue-rotate(345deg)
+        drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+        drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+        drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+        linear-gradient(
+          135deg,
+          rgba(229, 9, 20, 0.05) 0%,
+          rgba(20, 20, 20, 0.95) 50%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      z-index: 1;
+      pointer-events: none;
     }
 
     .container {
       max-width: 1000px;
       margin: 0 auto;
+      position: relative;
+      z-index: 2;
     }
 
     /* Header */
@@ -44,19 +98,26 @@
     .logo-icon {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      color: white;
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.4);
+      overflow: hidden;
+    }
+
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(1.1) contrast(1.2);
     }
 
     .logo-text {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #4c1d95;
+      color: #E50914;
+      text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
     }
 
     .btn-back {
@@ -142,7 +203,7 @@
 
     .search-btn {
       padding: 16px 32px;
-      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      background: #E50914;
       color: white;
       border: none;
       border-radius: 12px;
@@ -237,7 +298,7 @@
 
     /* Selected Movie Display */
     .selected-movie-display {
-      background: linear-gradient(135deg, #f59e0b15 0%, #ef444415 100%);
+      background: rgba(229, 9, 20, 0.1);
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
@@ -270,7 +331,7 @@
 
     .btn-find-similar {
       padding: 12px 24px;
-      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      background: #E50914;
       color: white;
       border: none;
       border-radius: 10px;
@@ -350,7 +411,9 @@
     <!-- Header -->
     <div class="header">
       <div class="logo-section">
-        <div class="logo-icon">🎬</div>
+        <div class="logo-icon">
+          <img src="{% static 'recom_sys_app/images/cinematch_logo.png' %}" alt="CineMatch Logo">
+        </div>
         <div class="logo-text">CineMatch</div>
       </div>
       <a href="{% url 'recom_sys:profile' %}" class="btn-back">← Back to Profile</a>
