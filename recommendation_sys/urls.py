@@ -33,7 +33,9 @@ def root_view(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("recom_sys_app.urls", namespace="recom_sys")),  # App routes - MUST come first
+    path(
+        "", include("recom_sys_app.urls", namespace="recom_sys")
+    ),  # App routes - MUST come first
     re_path(r"^.*$", root_view),  # Catch-all for React routes (SPA)
 ]
 if settings.DEBUG:

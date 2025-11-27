@@ -521,13 +521,17 @@ def profile_view(request):
         if user_genres:
             genre_ids = RecommendationService._get_genre_ids_by_names(user_genres)
             if genre_ids:
-                group_movie_ids = RecommendationService._get_movies_by_genres(genre_ids, limit=4)
+                group_movie_ids = RecommendationService._get_movies_by_genres(
+                    genre_ids, limit=4
+                )
             else:
                 group_movie_ids = RecommendationService._get_popular_movies(limit=4)
         else:
             group_movie_ids = RecommendationService._get_popular_movies(limit=4)
 
-        group_movies = _tmdb_fetch_by_ids(group_movie_ids[:4]) if group_movie_ids else []
+        group_movies = (
+            _tmdb_fetch_by_ids(group_movie_ids[:4]) if group_movie_ids else []
+        )
 
         # Communities - Get one movie per genre for preview (7-8 genres)
         community_genres = [
@@ -544,15 +548,19 @@ def profile_view(request):
         community_previews = []
         for genre in community_genres:
             try:
-                genre_movie_ids = RecommendationService._get_movies_by_genres([genre["id"]], limit=1)
+                genre_movie_ids = RecommendationService._get_movies_by_genres(
+                    [genre["id"]], limit=1
+                )
                 if genre_movie_ids:
                     movies = _tmdb_fetch_by_ids([genre_movie_ids[0]])
                     if movies:
-                        community_previews.append({
-                            "genre": genre["name"],
-                            "genre_id": genre["id"],
-                            "movie": movies[0]
-                        })
+                        community_previews.append(
+                            {
+                                "genre": genre["name"],
+                                "genre_id": genre["id"],
+                                "movie": movies[0],
+                            }
+                        )
             except Exception as e:
                 print(f"Error fetching preview for {genre['name']}: {e}")
                 continue
@@ -560,6 +568,7 @@ def profile_view(request):
     except Exception as e:
         print(f"Error fetching preview movies: {e}")
         import traceback
+
         traceback.print_exc()
         solo_movies = []
         group_movies = []

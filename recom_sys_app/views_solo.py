@@ -285,7 +285,10 @@ def solo_swipe(request):
         valid_actions = ["like", "dislike", "watch_later", "watched"]
         if action not in valid_actions:
             return JsonResponse(
-                {"success": False, "error": f'action must be one of: {", ".join(valid_actions)}'},
+                {
+                    "success": False,
+                    "error": f'action must be one of: {", ".join(valid_actions)}',
+                },
                 status=400,
             )
 
@@ -317,7 +320,7 @@ def solo_swipe(request):
             "like": f"Liked {movie_title}",
             "dislike": f"Passed on {movie_title}",
             "watch_later": f"Added {movie_title} to Watch Later",
-            "watched": f"Marked {movie_title} as Watched"
+            "watched": f"Marked {movie_title} as Watched",
         }
 
         response_data = {
@@ -440,7 +443,9 @@ def get_watch_later(request):
         # Get all watch later interactions for this user
         watch_later_interactions = Interaction.objects.filter(
             user=request.user, status="WATCH_LATER"
-        ).order_by("-updated_at")[:50]  # Get last 50 watch later
+        ).order_by("-updated_at")[
+            :50
+        ]  # Get last 50 watch later
 
         # Get unique tmdb_ids
         tmdb_ids = list(set(watch_later_interactions.values_list("tmdb_id", flat=True)))
@@ -475,7 +480,9 @@ def get_watched(request):
         # Get all watched interactions for this user
         watched_interactions = Interaction.objects.filter(
             user=request.user, status="WATCHED"
-        ).order_by("-updated_at")[:100]  # Get last 100 watched
+        ).order_by("-updated_at")[
+            :100
+        ]  # Get last 100 watched
 
         # Get unique tmdb_ids
         tmdb_ids = list(set(watched_interactions.values_list("tmdb_id", flat=True)))

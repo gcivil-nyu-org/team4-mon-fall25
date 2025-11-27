@@ -55,7 +55,8 @@ class CommunityLobbyViewTest(TestCase):
     def test_community_lobby_requires_authentication(self):
         """Test that unauthenticated users are redirected to login"""
         url = reverse(
-            "recom_sys:community_lobby", kwargs={"group_code": self.community.group_code}
+            "recom_sys:community_lobby",
+            kwargs={"group_code": self.community.group_code},
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
@@ -65,7 +66,8 @@ class CommunityLobbyViewTest(TestCase):
         """Test that community members can access the lobby"""
         self.client.login(username="testuser", password="testpass123")
         url = reverse(
-            "recom_sys:community_lobby", kwargs={"group_code": self.community.group_code}
+            "recom_sys:community_lobby",
+            kwargs={"group_code": self.community.group_code},
         )
         response = self.client.get(url)
 
@@ -79,7 +81,8 @@ class CommunityLobbyViewTest(TestCase):
         """Test that non-members cannot access the lobby"""
         self.client.login(username="otheruser", password="testpass123")
         url = reverse(
-            "recom_sys:community_lobby", kwargs={"group_code": self.community.group_code}
+            "recom_sys:community_lobby",
+            kwargs={"group_code": self.community.group_code},
         )
         response = self.client.get(url)
 
@@ -101,7 +104,8 @@ class CommunityLobbyViewTest(TestCase):
         """Test that genre name is extracted from community_key"""
         self.client.login(username="testuser", password="testpass123")
         url = reverse(
-            "recom_sys:community_lobby", kwargs={"group_code": self.community.group_code}
+            "recom_sys:community_lobby",
+            kwargs={"group_code": self.community.group_code},
         )
         response = self.client.get(url)
 
@@ -116,7 +120,8 @@ class CommunityLobbyViewTest(TestCase):
 
         self.client.login(username="testuser", password="testpass123")
         url = reverse(
-            "recom_sys:community_lobby", kwargs={"group_code": self.community.group_code}
+            "recom_sys:community_lobby",
+            kwargs={"group_code": self.community.group_code},
         )
         response = self.client.get(url)
 
@@ -241,7 +246,9 @@ class GetCommunityDeckAPITest(TestCase):
     def test_get_community_deck_requires_authentication(self):
         """Test that unauthenticated users cannot access the API"""
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)  # DRF returns 401 for unauthenticated
+        self.assertEqual(
+            response.status_code, 401
+        )  # DRF returns 401 for unauthenticated
 
     @patch("recom_sys_app.views_community.RecommendationService.get_movie_details")
     @patch("recom_sys_app.views_community.RecommendationService.get_group_deck")
@@ -329,7 +336,9 @@ class CommunitySwipeLikeAPITest(TestCase):
             data=json.dumps({"tmdb_id": 550}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 401)  # DRF returns 401 for unauthenticated
+        self.assertEqual(
+            response.status_code, 401
+        )  # DRF returns 401 for unauthenticated
 
     def test_swipe_like_creates_new_interaction(self):
         """Test that liking a movie creates a new interaction"""
@@ -444,7 +453,9 @@ class CommunitySwipeDislikeAPITest(TestCase):
             data=json.dumps({"tmdb_id": 550}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 401)  # DRF returns 401 for unauthenticated
+        self.assertEqual(
+            response.status_code, 401
+        )  # DRF returns 401 for unauthenticated
 
     def test_swipe_dislike_creates_new_interaction(self):
         """Test that disliking a movie creates a new interaction"""
@@ -543,9 +554,13 @@ class GetAIRecommendationsAPITest(TestCase):
             data=json.dumps({}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 401)  # DRF returns 401 for unauthenticated
+        self.assertEqual(
+            response.status_code, 401
+        )  # DRF returns 401 for unauthenticated
 
-    @unittest.skip("Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479")
+    @unittest.skip(
+        "Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479"
+    )
     @patch("recom_sys_app.views_community.get_movie_agent")
     def test_ai_recommendations_when_disabled(self, mock_get_agent):
         """Test that API returns 501 when AI is disabled"""
@@ -563,7 +578,9 @@ class GetAIRecommendationsAPITest(TestCase):
         self.assertFalse(data["success"])
         self.assertIn("disabled or not configured", data["error"])
 
-    @unittest.skip("Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479")
+    @unittest.skip(
+        "Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479"
+    )
     @patch("recom_sys_app.views_community.get_movie_agent")
     def test_ai_recommendations_with_agent_enabled(self, mock_get_agent):
         """Test that API returns recommendations when AI is enabled"""
@@ -577,7 +594,9 @@ class GetAIRecommendationsAPITest(TestCase):
         self.client.login(username="testuser", password="testpass123")
         response = self.client.post(
             self.url,
-            data=json.dumps({"genre": "Romance", "preferences": "Classic love stories"}),
+            data=json.dumps(
+                {"genre": "Romance", "preferences": "Classic love stories"}
+            ),
             content_type="application/json",
         )
 
@@ -587,7 +606,9 @@ class GetAIRecommendationsAPITest(TestCase):
         self.assertIn("recommendations", data)
         self.assertIn("The Notebook", data["recommendations"])
 
-    @unittest.skip("Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479")
+    @unittest.skip(
+        "Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479"
+    )
     @patch("recom_sys_app.views_community.get_movie_agent")
     def test_ai_recommendations_uses_community_genre(self, mock_get_agent):
         """Test that AI uses community's genre when not specified in request"""
@@ -610,7 +631,9 @@ class GetAIRecommendationsAPITest(TestCase):
         call_args = mock_agent.run.call_args[0][0]
         self.assertIn("Romance", call_args)
 
-    @unittest.skip("Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479")
+    @unittest.skip(
+        "Skipped due to bug in views_community.py - duplicate @api_view decorator on line 477-479"
+    )
     def test_ai_recommendations_denies_non_member(self):
         """Test that non-members cannot get AI recommendations"""
         other_user = User.objects.create_user(
