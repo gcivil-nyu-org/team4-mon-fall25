@@ -10,26 +10,79 @@
     <title>Communities - CineMatch</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        body {
+            background: #141414;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(229, 9, 20, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(229, 9, 20, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(229, 9, 20, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
         .community-card {
             transition: all 0.3s ease;
             cursor: pointer;
             outline: none;
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .community-card:hover, .community-card:focus-visible {
             transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(229, 9, 20, 0.3);
+            border: 1px solid rgba(229, 9, 20, 0.5);
         }
+
         .community-card.joined {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: rgba(229, 9, 20, 0.9);
             color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .my-community-card {
+            background: rgba(229, 9, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-container {
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .netflix-button {
+            background: #E50914;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .netflix-button:hover {
+            background: #f40612;
+            transform: scale(1.05);
+        }
+
+        .gemini-logo {
+            width: 40px;
+            height: 40px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 12px;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-black min-h-screen text-white">
+<body class="min-h-screen text-white">
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="text-center mb-12">
-            <h1 class="text-5xl font-bold mb-4">🌐 Communities</h1>
+            <h1 class="text-5xl font-bold mb-4">
+                Communities
+                <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+                     alt="Gemini"
+                     class="gemini-logo"
+                     onerror="this.style.display='none'">
+            </h1>
             <p class="text-xl text-gray-300">Browse movies by mood with others who share your taste!</p>
             <p class="text-sm text-gray-400 mt-2">Join genre-based communities and discover new movies</p>
         </div>
@@ -37,14 +90,14 @@
         <!-- My Communities Section -->
         {% if user_communities %}
         <div class="max-w-6xl mx-auto mb-12">
-            <h2 class="text-2xl font-bold mb-6 text-center">My Communities</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-white">My Communities</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {% for membership in user_communities %}
-                <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg p-6 shadow-lg">
+                <div class="my-community-card rounded-lg p-6 shadow-lg">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h3 class="text-xl font-bold">{{ membership.group_session.community_key|title }}</h3>
-                            <p class="text-sm text-green-100 mt-1">Joined {{ membership.joined_at|date:"M d, Y" }}</p>
+                            <h3 class="text-xl font-bold text-white">{{ membership.group_session.community_key|title }}</h3>
+                            <p class="text-sm text-gray-200 mt-1">Joined {{ membership.joined_at|date:"M d, Y" }}</p>
                         </div>
                         <span class="text-3xl">
                             {% if "Action" in membership.group_session.community_key %}⚡
@@ -70,11 +123,11 @@
                     </div>
                     <div class="flex gap-2 mt-2">
                         <button onclick="window.location.href='/communities/{{ membership.group_session.group_code }}/deck/'"
-                                class="flex-1 bg-white text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-50 transition-colors">
+                                class="flex-1 bg-white text-black font-semibold py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors">
                             Enter Community →
                         </button>
                         <button onclick="confirmLeaveCommunity('{{ membership.group_session.id }}', '{{ membership.group_session.community_key }}')"
-                                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                                class="bg-black bg-opacity-50 hover:bg-opacity-70 text-white font-semibold py-2 px-4 rounded-lg transition-colors border border-white border-opacity-30"
                                 title="Leave Community">
                             🚪
                         </button>
@@ -87,10 +140,10 @@
 
         <!-- Browse Communities -->
         <div class="max-w-6xl mx-auto mb-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Browse by Genre</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-white">Browse by Genre</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {% for genre in genres %}
-                <div class="community-card bg-gray-800 rounded-lg p-6 text-center"
+                <div class="community-card rounded-lg p-6 text-center"
                      role="button" tabindex="0"
                      data-genre="{{ genre.name }}"
                      data-genre-id="{{ genre.id }}"
@@ -117,7 +170,7 @@
                         {% else %}🎬
                         {% endif %}
                     </div>
-                    <h3 class="text-lg font-semibold">{{ genre.name }}</h3>
+                    <h3 class="text-lg font-semibold text-white">{{ genre.name }}</h3>
                     <p class="text-sm text-gray-400 mt-2">Browse movies together</p>
                 </div>
                 {% endfor %}

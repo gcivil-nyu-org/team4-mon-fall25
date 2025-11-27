@@ -3,9 +3,10 @@ URL configuration for recommendation_sys project.
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.views.generic import TemplateView
 
 import os
 from django.conf import settings
@@ -16,7 +17,7 @@ def root_view(request):
     """
     Root path handler:
     - Returns 200 OK for ELB health checker
-    - Redirects to login for regular users
+    - Serves React app for regular users
     """
     user_agent = request.META.get("HTTP_USER_AGENT", "")
 
@@ -24,16 +25,16 @@ def root_view(request):
     if "ELB-HealthChecker" in user_agent:
         return HttpResponse("OK", status=200)
 
-    # Regular users: redirect based on authentication
-    if request.user.is_authenticated:
-        return redirect("recom_sys:profile")
-    return redirect("recom_sys:login")
+    # Serve React app
+    index_path = os.path.join(settings.BASE_DIR, "frontend", "dist", "index.html")
+    with open(index_path) as f:
+        return HttpResponse(f.read())
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", root_view),  # Smart root handler
-    path("", include("recom_sys_app.urls", namespace="recom_sys")),  # App routes
+    path("", include("recom_sys_app.urls", namespace="recom_sys")),  # App routes - MUST come first
+    re_path(r"^.*$", root_view),  # Catch-all for React routes (SPA)
 ]
 if settings.DEBUG:
     urlpatterns += static(

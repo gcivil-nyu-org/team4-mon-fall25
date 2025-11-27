@@ -187,7 +187,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 # Tell Django where to find static files (for development debugging)
-STATICFILES_DIRS = [BASE_DIR / "recom_sys_app" / "static"]
+STATICFILES_DIRS = [
+    BASE_DIR / "recom_sys_app" / "static",
+    BASE_DIR / "frontend" / "dist",  # React build directory
+]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type

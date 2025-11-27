@@ -9,6 +9,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
+from django.core.cache import cache
 import os
 import json
 import requests
@@ -249,13 +250,13 @@ def get_solo_deck(request):
 @require_http_methods(["POST"])
 def solo_swipe(request):
     """
-    API endpoint to record a solo swipe (like/dislike)
+    API endpoint to record a solo swipe/interaction
     POST /api/solo/swipe/
 
     Request Body:
         {
             "tmdb_id": 123,
-            "action": "like",  // or "dislike"
+            "action": "like",  // or "dislike", "watch_later", "watched"
             "movie_title": "Movie Name"
         }
 
@@ -270,7 +271,7 @@ def solo_swipe(request):
     try:
         data = json.loads(request.body)
         tmdb_id = data.get("tmdb_id")
-        action = data.get("action")  # 'like' or 'dislike'
+        action = data.get("action")  # 'like', 'dislike', 'watch_later', or 'watched'
         movie_title = data.get("movie_title", "")
 
         # Validate required fields
@@ -281,9 +282,10 @@ def solo_swipe(request):
             )
 
         # Validate action value
-        if action not in ["like", "dislike"]:
+        valid_actions = ["like", "dislike", "watch_later", "watched"]
+        if action not in valid_actions:
             return JsonResponse(
-                {"success": False, "error": 'action must be "like" or "dislike"'},
+                {"success": False, "error": f'action must be one of: {", ".join(valid_actions)}'},
                 status=400,
             )
 
@@ -306,11 +308,23 @@ def solo_swipe(request):
                 status=action.upper(),  # Convert to 'LIKE' or 'DISLIKE'
             )
 
+        # Invalidate the cached solo deck to ensure fresh recommendations
+        cache_key = f"solo_deck_{request.user.id}"
+        cache.delete(cache_key)
+
+        # Generate appropriate message based on action
+        action_messages = {
+            "like": f"Liked {movie_title}",
+            "dislike": f"Passed on {movie_title}",
+            "watch_later": f"Added {movie_title} to Watch Later",
+            "watched": f"Marked {movie_title} as Watched"
+        }
+
         response_data = {
             "success": True,
             "tmdb_id": tmdb_id,
             "action": action,
-            "message": f'{"Liked" if action == "like" else "Passed on"} {movie_title}',
+            "message": action_messages.get(action, f"Updated {movie_title}"),
         }
 
         return JsonResponse(response_data)
@@ -352,6 +366,10 @@ def unlike_movie(request, tmdb_id):
         # Delete the interaction
         interaction.delete()
 
+        # Invalidate the cached solo deck to ensure fresh recommendations
+        cache_key = f"solo_deck_{request.user.id}"
+        cache.delete(cache_key)
+
         return JsonResponse(
             {
                 "success": True,
@@ -391,6 +409,76 @@ def get_solo_likes(request):
 
         # Get unique tmdb_ids
         tmdb_ids = list(set(liked_interactions.values_list("tmdb_id", flat=True)))
+
+        # Fetch details from TMDB
+        movies = _tmdb_fetch_by_ids(tmdb_ids)
+
+        return JsonResponse({"success": True, "movies": movies, "total": len(movies)})
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_watch_later(request):
+    """
+    API endpoint to get user's Watch Later movies
+    GET /api/solo/watch-later/
+
+    Response:
+        {
+            "success": true,
+            "movies": [...],
+            "total": 10
+        }
+    """
+    try:
+        # Get all watch later interactions for this user
+        watch_later_interactions = Interaction.objects.filter(
+            user=request.user, status="WATCH_LATER"
+        ).order_by("-updated_at")[:50]  # Get last 50 watch later
+
+        # Get unique tmdb_ids
+        tmdb_ids = list(set(watch_later_interactions.values_list("tmdb_id", flat=True)))
+
+        # Fetch details from TMDB
+        movies = _tmdb_fetch_by_ids(tmdb_ids)
+
+        return JsonResponse({"success": True, "movies": movies, "total": len(movies)})
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_watched(request):
+    """
+    API endpoint to get user's Watched movies
+    GET /api/solo/watched/
+
+    Response:
+        {
+            "success": true,
+            "movies": [...],
+            "total": 10
+        }
+    """
+    try:
+        # Get all watched interactions for this user
+        watched_interactions = Interaction.objects.filter(
+            user=request.user, status="WATCHED"
+        ).order_by("-updated_at")[:100]  # Get last 100 watched
+
+        # Get unique tmdb_ids
+        tmdb_ids = list(set(watched_interactions.values_list("tmdb_id", flat=True)))
 
         # Fetch details from TMDB
         movies = _tmdb_fetch_by_ids(tmdb_ids)

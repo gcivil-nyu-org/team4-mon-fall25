@@ -52,28 +52,31 @@
         }
     </style>
 </head>
-<body style="min-height: 100vh; background: radial-gradient(1200px 800px at 20% -20%, #121525, transparent 55%), radial-gradient(1000px 600px at 120% 0%, #0e111a, transparent 50%), #0b0b10; margin: 0; color: #e9eaf2;">
-    <div class="container mx-auto px-4 py-8 max-w-2xl">
+<body style="min-height: 100vh; background: #141414; margin: 0; color: #fff; position: relative; overflow-x: hidden;">
+    <!-- Cinematic Background with Three Layered Images - Red Blend -->
+    <div style="content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'), url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'), url('{% static "recom_sys_app/images/images.png" %}'); background-size: cover, cover, cover; background-position: center top, center center, center bottom; background-repeat: no-repeat; background-blend-mode: screen, lighten, overlay; opacity: 0.25; z-index: 0; filter: brightness(0.4) contrast(1.8) saturate(0) sepia(100%) hue-rotate(345deg) drop-shadow(0 0 40px rgba(229, 9, 20, 0.6)) drop-shadow(0 0 20px rgba(229, 9, 20, 0.5)) drop-shadow(0 0 10px rgba(229, 9, 20, 0.4)); mix-blend-mode: screen;"></div>
+    <div style="content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%), radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%), linear-gradient(135deg, rgba(229, 9, 20, 0.05) 0%, rgba(20, 20, 20, 0.95) 50%, rgba(0, 0, 0, 0.98) 100%); z-index: 1; pointer-events: none;"></div>
+    <div class="container mx-auto px-4 py-8 max-w-2xl" style="position: relative; z-index: 2;">
         <!-- Header -->
         <div class="mb-8 text-center">
             <div class="flex items-center justify-between mb-4">
-                <a href="{% url 'recom_sys:profile' %}" class="flex items-center gap-2 font-semibold transition-colors" style="color: #7aa2f7; text-decoration: none;">
+                <a href="{% url 'recom_sys:profile' %}" class="flex items-center gap-2 font-semibold transition-colors" style="color: #E50914; text-decoration: none;">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     Back to Profile
                 </a>
-                <a href="{% url 'recom_sys:recommend' %}" style="color: #7aa2f7; text-decoration: none;">🔄 Refresh</a>
+                <a href="{% url 'recom_sys:recommend' %}" style="color: #E50914; text-decoration: none;">🔄 Refresh</a>
             </div>
-            <h1 class="text-3xl font-bold mb-2" style="color: #e9eaf2;">
+            <h1 class="text-3xl font-bold mb-2" style="color: #fff;">
                 Recommended Movies
             </h1>
         </div>
 
         <!-- Loading State -->
         <div id="loadingState" class="hidden text-center py-20">
-            <div class="animate-spin rounded-full h-16 w-16 mx-auto mb-4" style="border: 4px solid rgba(122,162,247,.2); border-top-color: #7aa2f7;"></div>
-            <p style="color: #b5b8c3;">Loading movie...</p>
+            <div class="animate-spin rounded-full h-16 w-16 mx-auto mb-4" style="border: 4px solid rgba(229, 9, 20, .2); border-top-color: #E50914;"></div>
+            <p style="color: #999;">Loading movie...</p>
         </div>
 
         <!-- Movie Deck Container -->
@@ -84,9 +87,9 @@
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-20">
             <div class="text-6xl mb-4">🎬</div>
-            <h2 class="text-2xl font-bold mb-2" style="color: #e9eaf2;">No more movies!</h2>
-            <p class="mb-6" style="color: #b5b8c3;">You've seen all the recommendations.</p>
-            <a href="{% url 'recom_sys:recommend' %}" class="px-6 py-3 rounded-lg inline-block" style="background: linear-gradient(135deg, #7aa2f7, #9d7cd8); color: white; text-decoration: none; font-weight: 600;">
+            <h2 class="text-2xl font-bold mb-2" style="color: #fff;">No more movies!</h2>
+            <p class="mb-6" style="color: #999;">You've seen all the recommendations.</p>
+            <a href="{% url 'recom_sys:recommend' %}" class="px-6 py-3 rounded-lg inline-block" style="background: #E50914; color: white; text-decoration: none; font-weight: 600; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4); transition: all 0.3s ease;">
                 Get More
             </a>
         </div>
@@ -110,10 +113,10 @@
 
     <!-- Movie Details Modal -->
     <div id="movieModal" class="hidden fixed inset-0 flex items-center justify-center" style="background: rgba(0,0,0,0.9); z-index: 9999;">
-        <div class="rounded-2xl p-8 max-w-4xl mx-4 overflow-y-auto" style="background: linear-gradient(180deg, #1a1e2b 0%, #151822 100%); border: 1px solid #262a3d; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-height: 90vh; position: relative; z-index: 10000;">
+        <div class="rounded-2xl p-8 max-w-4xl mx-4 overflow-y-auto" style="background: rgba(20, 20, 20, 0.95); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(229, 9, 20, 0.1); max-height: 90vh; position: relative; z-index: 10000; backdrop-filter: blur(20px);">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="modalTitle" class="text-2xl font-bold" style="color: #e9eaf2;"></h2>
-                <button onclick="closeMovieDetails()" class="text-3xl" style="color: #b5b8c3; background: none; border: none; cursor: pointer;">&times;</button>
+                <h2 id="modalTitle" class="text-2xl font-bold" style="color: #fff;"></h2>
+                <button onclick="closeMovieDetails()" class="text-3xl" style="color: #999; background: none; border: none; cursor: pointer;">&times;</button>
             </div>
             <div id="modalBody"></div>
         </div>
@@ -154,8 +157,8 @@
 
             const card = document.createElement('div');
             card.className = 'movie-card absolute inset-0 rounded-2xl shadow-2xl overflow-hidden cursor-pointer';
-            card.style.background = 'linear-gradient(180deg, #1a1e2b 0%, #151822 100%)';
-            card.style.border = '1px solid #262a3d';
+            card.style.background = 'rgba(20, 20, 20, 0.9)';
+            card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
             card.style.zIndex = zIndex;
             card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             card.dataset.index = index;

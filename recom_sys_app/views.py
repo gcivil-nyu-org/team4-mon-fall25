@@ -500,6 +500,71 @@ def profile_view(request):
         creator=request.user, is_active=True, kind=GroupSession.Kind.PRIVATE
     ).order_by("-created_at")
 
+    # Fetch personalized movie recommendations for preview sections
+    try:
+        # Solo Mode - Get personalized recommendations based on user preferences
+        solo_movie_ids = RecommendationService.get_solo_deck(request.user, limit=6)
+        print(f"[DEBUG profile_view] Solo movie IDs: {solo_movie_ids}")
+
+        if solo_movie_ids:
+            solo_movies = _tmdb_fetch_by_ids(solo_movie_ids[:6])
+            print(f"[DEBUG profile_view] Solo movies fetched: {len(solo_movies)}")
+        else:
+            # Fallback to popular movies if no recommendations
+            print("[DEBUG profile_view] No solo recommendations, using popular movies")
+            fallback_ids = RecommendationService._get_popular_movies(limit=6)
+            solo_movies = _tmdb_fetch_by_ids(fallback_ids[:6]) if fallback_ids else []
+
+        # Private Groups - Get popular/trending movies for preview
+        # Use user's favorite genres if available, otherwise use popular movies
+        user_genres = _get_signup_genre(request.user)
+        if user_genres:
+            genre_ids = RecommendationService._get_genre_ids_by_names(user_genres)
+            if genre_ids:
+                group_movie_ids = RecommendationService._get_movies_by_genres(genre_ids, limit=4)
+            else:
+                group_movie_ids = RecommendationService._get_popular_movies(limit=4)
+        else:
+            group_movie_ids = RecommendationService._get_popular_movies(limit=4)
+
+        group_movies = _tmdb_fetch_by_ids(group_movie_ids[:4]) if group_movie_ids else []
+
+        # Communities - Get one movie per genre for preview (7-8 genres)
+        community_genres = [
+            {"name": "Action", "id": 28},
+            {"name": "Horror", "id": 27},
+            {"name": "Comedy", "id": 35},
+            {"name": "Romance", "id": 10749},
+            {"name": "Science Fiction", "id": 878},
+            {"name": "Thriller", "id": 53},
+            {"name": "Drama", "id": 18},
+            {"name": "Animation", "id": 16},
+        ]
+
+        community_previews = []
+        for genre in community_genres:
+            try:
+                genre_movie_ids = RecommendationService._get_movies_by_genres([genre["id"]], limit=1)
+                if genre_movie_ids:
+                    movies = _tmdb_fetch_by_ids([genre_movie_ids[0]])
+                    if movies:
+                        community_previews.append({
+                            "genre": genre["name"],
+                            "genre_id": genre["id"],
+                            "movie": movies[0]
+                        })
+            except Exception as e:
+                print(f"Error fetching preview for {genre['name']}: {e}")
+                continue
+
+    except Exception as e:
+        print(f"Error fetching preview movies: {e}")
+        import traceback
+        traceback.print_exc()
+        solo_movies = []
+        group_movies = []
+        community_previews = []
+
     get_token(request)  # ensure CSRF cookie
     return render(
         request,
@@ -508,6 +573,9 @@ def profile_view(request):
             "profile": profile,
             "user_groups": user_groups,
             "created_groups": created_groups,
+            "solo_movies": solo_movies,
+            "group_movies": group_movies,
+            "community_previews": community_previews,
         },
     )
 
@@ -890,7 +958,7 @@ def home_view(request):
     Shows login/signup for anonymous users, dashboard for authenticated users.
     """
     if request.user.is_authenticated:
-        return redirect("profile")
+        return redirect("recom_sys:profile")
 
     return render(request, "recom_sys_app/home.html")
 
