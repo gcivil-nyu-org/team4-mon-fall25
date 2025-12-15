@@ -1,22 +1,80 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>错误</title>
+    <title>Error - CineMatch</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: #141414;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'),
+                url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+                url('{% static "recom_sys_app/images/images.png" %}');
+            background-size: cover, cover, cover;
+            background-position: center top, center center, center bottom;
+            background-repeat: no-repeat;
+            background-blend-mode: screen, lighten, overlay;
+            opacity: 0.25;
+            z-index: 0;
+            filter:
+                brightness(0.4)
+                contrast(1.8)
+                saturate(0)
+                sepia(100%)
+                hue-rotate(345deg)
+                drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+                drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+                drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+            mix-blend-mode: screen;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+                linear-gradient(
+                    135deg,
+                    rgba(229, 9, 20, 0.05) 0%,
+                    rgba(20, 20, 20, 0.95) 50%,
+                    rgba(0, 0, 0, 0.98) 100%
+                );
+            z-index: 1;
+            pointer-events: none;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
+<body class="min-h-screen flex items-center justify-center">
+    <div style="background: rgba(20, 20, 20, 0.95); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); position: relative; z-index: 2;" class="p-8 rounded-lg shadow-lg max-w-md text-center">
         <div class="text-6xl mb-4">⚠️</div>
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">出错了</h1>
-        <p class="text-gray-600 mb-6">{{ error_message }}</p>
+        <h1 class="text-2xl font-bold mb-4" style="color: #E50914;">Something Went Wrong</h1>
+        <p class="mb-6" style="color: #999;">{{ error_message }}</p>
         <div class="space-x-4">
-            <a href="javascript:history.back()" class="inline-block bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600">
-                返回
+            <a href="javascript:history.back()" class="inline-block px-6 py-2 rounded" style="background: rgba(255, 255, 255, 0.1); color: #fff; text-decoration: none; transition: all 0.3s ease;">
+                Go Back
             </a>
-            <a href="/" class="inline-block bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700">
-                回到首页
+            <a href="/" class="inline-block px-6 py-2 rounded" style="background: #E50914; color: white; text-decoration: none; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4); transition: all 0.3s ease;">
+                Home
             </a>
         </div>
     </div>

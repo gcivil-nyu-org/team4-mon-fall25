@@ -7,7 +7,6 @@ authentication, and error scenarios.
 Designed for Travis CI compatibility.
 """
 
-import json
 import pytest
 from channels.testing import WebsocketCommunicator
 from channels.layers import get_channel_layer
@@ -674,7 +673,7 @@ class ChatConsumerIntegrationTest(TestCase):
 
     def test_models_exist(self):
         """Test that required models are available."""
-        from recom_sys_app.models import GroupSession, GroupMember, GroupChatMessage
+        from recom_sys_app.models import GroupSession, GroupMember
 
         # Create test group
         group = GroupSession.objects.create(group_code="INTTEST", creator=self.user)

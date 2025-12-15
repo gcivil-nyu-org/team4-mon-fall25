@@ -226,6 +226,39 @@ def send_chat_message(request, group_code):
 # ====================  Helper Functions ====================
 
 
+def _broadcast_completion_event(group_code, completion_status):
+    """
+    Broadcast a WebSocket event to notify all group members that everyone has finished swiping.
+
+    Args:
+        group_code: The unique group identifier.
+        completion_status: A dict containing completion stats.
+    """
+    try:
+        print(f"[_broadcast_completion_event] Broadcasting to group {group_code}")
+        # Get Django Channels' channel layer (Redis backend)
+        channel_layer = get_channel_layer()
+        # Build the group name used in WebSocket connections
+        group_name = f"match_{group_code}"
+
+        # Prepare the message payload to send to the WebSocket group
+        event_data = {
+            "type": "all_members_finished",
+            "total_members": completion_status["total_members"],
+            "finished_members": completion_status["finished_members"],
+            "total_movies": completion_status["total_movies"],
+            "common_matches_count": completion_status.get("common_matches_count", 0),
+            "message": "🎉 Everyone has finished swiping! Check out your common matches!",
+        }
+
+        # Send the event to all WebSocket clients in the group
+        async_to_sync(channel_layer.group_send)(group_name, event_data)
+        print(f"[WebSocket] Broadcast completion event for group {group_code}")
+
+    except Exception as e:
+        print(f"[WebSocket] Error broadcasting completion event: {e}")
+
+
 def _broadcast_match_event(
     group_code, match_id, tmdb_id, movie_title, movie_info, matched_by_users, matched_at
 ):
@@ -290,7 +323,7 @@ def group_room_view(request, group_code):
     Group Room Page (Original)
     URL: /groups/<group_code>/room/
     """
-    return render(request, "recom_sys_app/group_room.html", {"group_code": group_code})
+    return render(request, "recom_sys_app/group_lobby.html", {"group_code": group_code})
 
 
 @login_required
@@ -314,7 +347,10 @@ def group_deck_view(request, group_code):
             return render(
                 request,
                 "recom_sys_app/error.html",
-                {"error_message": "你不是这个群组的成员", "group_code": group_code},
+                {
+                    "error_message": "You are not a member of this group.",
+                    "group_code": group_code,
+                },
             )
 
         # Get the number of members
@@ -377,20 +413,20 @@ def get_group_deck(request, group_code):
         limit = int(request.GET.get("limit", 20))
         with_details = request.GET.get("with_details", "false").lower() == "true"
 
-        print(f"[DEBUG] limit = {limit}, with_details = {with_details}")
+        print(f"[DEBUG] limit = {limit}, with_details = {with_details}")  # noqa: F541
 
         # Scope of Restriction
         limit = min(max(limit, 1), 100)
 
         # Get a list of recommended movies
-        print(f"[DEBUG] calling RecommendationService.get_group_deck()")
+        print("[DEBUG] calling RecommendationService.get_group_deck()")
         movie_ids = RecommendationService.get_group_deck(group_session, limit=limit)
 
         print(f"[DEBUG] got {len(movie_ids)} movie IDs")
 
         # For detailed information, retrieve it from TMDB.
         if with_details:
-            print(f"[DEBUG] fetching movie details from TMDB...")
+            print("[DEBUG] fetching movie details from TMDB...")
             movies = []
             for tmdb_id in movie_ids:
                 movie_info = RecommendationService.get_movie_details(tmdb_id)
@@ -447,7 +483,7 @@ def swipe_like(request, group_code):
     Body:
     {
         "tmdb_id": 12345,
-        "movie_title": "Fight Club"  // 可选
+        "movie_title": "Fight Club"
     }
 
     Response:
@@ -463,7 +499,7 @@ def swipe_like(request, group_code):
         f"[DEBUG swipe_like] Called for group {group_code} by user {request.user.username}"
     )
     try:
-        # 获取群组
+        # fetch group
         group_session = get_object_or_404(
             GroupSession, group_code=group_code, is_active=True
         )
@@ -471,7 +507,7 @@ def swipe_like(request, group_code):
             f"[DEBUG swipe_like] Group found: {group_code}, kind: {group_session.kind}"
         )
 
-        # 验证成员身份
+        # validate identity of member
         is_member = GroupMember.objects.filter(
             group_session=group_session, user=request.user, is_active=True
         ).exists()
@@ -482,9 +518,10 @@ def swipe_like(request, group_code):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Retrieve Movie ID
+        # Retrieve Movie ID and detailed action
         tmdb_id = request.data.get("tmdb_id")
         movie_title = request.data.get("movie_title", "")
+        detailed_action = request.data.get("detailed_action", "LIKE")  # Default to LIKE
 
         if not tmdb_id:
             return Response(
@@ -540,34 +577,93 @@ def swipe_like(request, group_code):
                     status=status.HTTP_201_CREATED,
                 )
 
-        # For PRIVATE groups, use GroupSwipe model (original behavior)
-        # Check if it has already been swiped.
+        # For PRIVATE groups, use GroupSwipe model AND Interaction model for consistency
+        from .models import Interaction
+
+        # Determine interaction status based on detailed_action
+        # WATCHED_LIKED counts as LIKE for group matching but stored as WATCHED_LIKED in Interaction
+        interaction_status = Interaction.Status.LIKE
+        if detailed_action == "WATCHED_LIKED":
+            interaction_status = Interaction.Status.WATCHED_LIKED
+        elif detailed_action == "WATCHED_DISLIKED":
+            interaction_status = Interaction.Status.WATCHED_DISLIKED
+
+        # 1 Create or update swipe record (GroupSwipe for group matching)
         existing_swipe = GroupSwipe.objects.filter(
             group_session=group_session, user=request.user, tmdb_id=tmdb_id
         ).first()
 
-        if existing_swipe:
-            return Response(
-                {
-                    "error": "You have already performed an operation on this movie.",
-                    "previous_action": existing_swipe.action,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        response_status = status.HTTP_200_OK
+        message = None
 
-        # Use transactions to ensure data consistency.
+        # use transactions to ensure data consistency
         with transaction.atomic():
-            # Create a sliding record
-            swipe = GroupSwipe.objects.create(
-                group_session=group_session,
-                user=request.user,
-                tmdb_id=tmdb_id,
-                action=GroupSwipe.Action.LIKE,
-            )
+            # Store in Interaction model for consistency across all sessions
+            existing_interaction = Interaction.objects.filter(
+                user=request.user, tmdb_id=tmdb_id
+            ).first()
 
+            if existing_interaction:
+                # Update existing interaction
+                existing_interaction.status = interaction_status
+                existing_interaction.source = "group"
+                existing_interaction.save()
+                print(
+                    f"[DEBUG] Updated Interaction to {interaction_status} for movie {tmdb_id}"
+                )
+            else:
+                # Create new interaction
+                Interaction.objects.create(
+                    user=request.user,
+                    tmdb_id=tmdb_id,
+                    status=interaction_status,
+                    source="group",
+                )
+                print(
+                    f"[DEBUG] Created new Interaction {interaction_status} for movie {tmdb_id}"
+                )
+
+            # Handle GroupSwipe for group matching (only LIKE/DISLIKE for matching logic)
+            if existing_swipe:
+                # existed: check if need update
+                if existing_swipe.action == GroupSwipe.Action.LIKE:
+                    # already LIKE, nothing to update, return early
+                    return Response(
+                        {
+                            "success": True,
+                            "swipe_id": existing_swipe.id,
+                            "action": existing_swipe.action,
+                            "tmdb_id": tmdb_id,
+                            "is_match": False,
+                            "match_data": None,
+                            "message": "Already liked this movie",
+                            "timestamp": existing_swipe.created_at.isoformat(),
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                else:
+                    # Swipe exists but not LIKE → update to LIKE
+                    existing_swipe.action = GroupSwipe.Action.LIKE
+                    existing_swipe.save()
+                    swipe = existing_swipe
+                    response_status = status.HTTP_200_OK
+                    message = "Updated to LIKE"
+                    print(f"[DEBUG] Updated swipe to LIKE for movie {tmdb_id}")
+            else:
+                # No record exists → create a new LIKE swipe (for matching purposes)
+                # WATCHED_LIKED also counts as LIKE for group matching
+                swipe = GroupSwipe.objects.create(
+                    group_session=group_session,
+                    user=request.user,
+                    tmdb_id=tmdb_id,
+                    action=GroupSwipe.Action.LIKE,
+                )
+                response_status = status.HTTP_201_CREATED
+                print(f"[DEBUG] Created new LIKE swipe for movie {tmdb_id}")
+
+            # 2. Full-group match detection
             # Check if everyone likes (matches)
             is_match = RecommendationService.check_group_match(group_session, tmdb_id)
-
             print(
                 f"[DEBUG] Match check result: is_match = {is_match} for movie {tmdb_id}"
             )
@@ -575,7 +671,7 @@ def swipe_like(request, group_code):
             match_data = None
             if is_match:
                 print(
-                    f"[DEBUG] MATCH DETECTED! Broadcasting to group {group_session.group_code}"
+                    f"[DEBUG] MATCH DETECTED! Processing match for group {group_session.group_code}"
                 )
                 try:
                     # Create or retrieve matching records
@@ -586,7 +682,7 @@ def swipe_like(request, group_code):
                     )
 
                     print(
-                        f"[DEBUG] Match object created: created={created}, match_id={match.id}"
+                        f"[DEBUG] Match object: created={created}, match_id={match.id}"
                     )
 
                     # Get movie details for response and broadcasting
@@ -640,11 +736,9 @@ def swipe_like(request, group_code):
                         "message": f"[MATCH] Everyone likes '{movie_title or (movie_info.get('title') if movie_info else 'this movie')}'!",
                     }
 
-                    # Only broadcast if this is a newly created match (to avoid duplicate broadcasts)
+                    #  Only broadcast if this is a newly created match (to avoid duplicate broadcasts)
                     if created:
-                        print(
-                            f"[DEBUG] New match created, broadcasting to WebSocket..."
-                        )
+                        print("[DEBUG] New match created, broadcasting to WebSocket...")
                         _broadcast_match_event(
                             group_session.group_code,
                             match.id,
@@ -654,9 +748,9 @@ def swipe_like(request, group_code):
                             matched_by_users,
                             match.matched_at.isoformat(),
                         )
-                        print(f"[DEBUG] Match event broadcast completed")
+                        print("[DEBUG] Match event broadcast completed")
                     else:
-                        print(f"[DEBUG] Match already existed, skipping broadcast")
+                        print("[DEBUG] Match already existed, skipping broadcast")
 
                 except Exception as e:
                     print(f"[ERROR] Exception in match handling: {e}")
@@ -668,6 +762,7 @@ def swipe_like(request, group_code):
             # Clear recommendation cache
             RecommendationService.invalidate_deck_cache(group_session)
 
+        # 3. Build final API response
         response_data = {
             "success": True,
             "swipe_id": swipe.id,
@@ -678,9 +773,244 @@ def swipe_like(request, group_code):
             "timestamp": swipe.created_at.isoformat(),
         }
 
-        return Response(response_data, status=status.HTTP_201_CREATED)
+        if message:
+            response_data["message"] = message
+
+        # 4. Check if all group members completed swiping
+        completion_status = RecommendationService.check_all_members_finished(
+            group_session
+        )
+
+        if completion_status["all_finished"]:
+            print("[DEBUG] All members finished! Broadcasting completion event")
+            common_matches = RecommendationService.get_all_common_matches(group_session)
+            completion_status["common_matches_count"] = len(common_matches)
+            _broadcast_completion_event(group_session.group_code, completion_status)
+
+        return Response(response_data, status=response_status)
 
     except Exception as e:
+        print(f"[ERROR] swipe_like exception: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return Response(
+            {"error": f"Server Error: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def swipe_dislike(request, group_code):
+    """
+    用户对电影点踩 (DISLIKE)
+
+    URL: POST /api/groups/<group_code>/swipe/dislike/
+
+    Request Body:
+    {
+        "tmdb_id": 550,
+        "movie_title": "Fight Club"
+    }
+
+    Response:
+    {
+        "success": true,
+        "swipe_id": 123,
+        "action": "DISLIKE",
+        "tmdb_id": 550,
+        "timestamp": "2024-01-01T12:00:00Z"
+    }
+    """
+    print(
+        f"[DEBUG swipe_dislike] Called for group {group_code} by user {request.user.username}"
+    )
+    try:
+        # 获取群组信息
+        group_session = get_object_or_404(
+            GroupSession, group_code=group_code, is_active=True
+        )
+        print(
+            f"[DEBUG swipe_dislike] Group found: {group_code}, kind: {group_session.kind}"
+        )
+
+        # 验证用户是否是群组成员
+        is_member = GroupMember.objects.filter(
+            group_session=group_session, user=request.user, is_active=True
+        ).exists()
+
+        if not is_member:
+            return Response(
+                {"error": "You are not a member of this group."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # 获取电影 ID 和详细操作
+        tmdb_id = request.data.get("tmdb_id")
+        detailed_action = request.data.get(
+            "detailed_action", "DISLIKE"
+        )  # Default to DISLIKE
+
+        if not tmdb_id:
+            return Response(
+                {"error": "The tmdb_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 对于 COMMUNITY 群组，使用 Interaction 模型
+        if group_session.kind == GroupSession.Kind.COMMUNITY:
+            from .models import Interaction
+
+            # 检查是否已经滑过
+            existing_interaction = Interaction.objects.filter(
+                user=request.user, tmdb_id=tmdb_id
+            ).first()
+
+            if existing_interaction:
+                # 更新现有交互
+                existing_interaction.status = Interaction.Status.DISLIKE
+                existing_interaction.save()
+
+                return Response(
+                    {
+                        "success": True,
+                        "interaction_id": existing_interaction.id,
+                        "action": "DISLIKE",
+                        "tmdb_id": tmdb_id,
+                        "timestamp": existing_interaction.updated_at.isoformat(),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                # 创建新交互
+                interaction = Interaction.objects.create(
+                    user=request.user,
+                    tmdb_id=tmdb_id,
+                    status=Interaction.Status.DISLIKE,
+                    source="community",
+                )
+
+                return Response(
+                    {
+                        "success": True,
+                        "interaction_id": interaction.id,
+                        "action": "DISLIKE",
+                        "tmdb_id": tmdb_id,
+                        "timestamp": interaction.created_at.isoformat(),
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
+        # 对于 PRIVATE 群组，使用 GroupSwipe 模型 AND Interaction 模型以保持一致性
+        from .models import Interaction
+
+        # Determine interaction status based on detailed_action
+        interaction_status = Interaction.Status.DISLIKE
+        if detailed_action == "WATCHED_DISLIKED":
+            interaction_status = Interaction.Status.WATCHED_DISLIKED
+
+        # 检查是否已经滑过
+        existing_swipe = GroupSwipe.objects.filter(
+            group_session=group_session, user=request.user, tmdb_id=tmdb_id
+        ).first()
+
+        response_status = status.HTTP_200_OK
+        message = None
+
+        with transaction.atomic():
+            # Store in Interaction model for consistency across all sessions
+            existing_interaction = Interaction.objects.filter(
+                user=request.user, tmdb_id=tmdb_id
+            ).first()
+
+            if existing_interaction:
+                # Update existing interaction
+                existing_interaction.status = interaction_status
+                existing_interaction.source = "group"
+                existing_interaction.save()
+                print(
+                    f"[DEBUG] Updated Interaction to {interaction_status} for movie {tmdb_id}"
+                )
+            else:
+                # Create new interaction
+                Interaction.objects.create(
+                    user=request.user,
+                    tmdb_id=tmdb_id,
+                    status=interaction_status,
+                    source="group",
+                )
+                print(
+                    f"[DEBUG] Created new Interaction {interaction_status} for movie {tmdb_id}"
+                )
+
+            # Handle GroupSwipe for group matching (only LIKE/DISLIKE for matching logic)
+            if existing_swipe:
+                # 如果之前的操作也是 DISLIKE，直接返回成功
+                if existing_swipe.action == GroupSwipe.Action.DISLIKE:
+                    return Response(
+                        {
+                            "success": True,
+                            "swipe_id": existing_swipe.id,
+                            "action": existing_swipe.action,
+                            "tmdb_id": tmdb_id,
+                            "message": "Already disliked this movie",
+                            "timestamp": existing_swipe.created_at.isoformat(),
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                else:
+                    # 用户改变主意，更新操作为 DISLIKE
+                    existing_swipe.action = GroupSwipe.Action.DISLIKE
+                    existing_swipe.save()
+                    swipe = existing_swipe
+                    response_status = status.HTTP_200_OK
+                    message = "Updated to DISLIKE"
+                    print(f"[DEBUG] Updated swipe to DISLIKE for movie {tmdb_id}")
+            else:
+                # 新建记录
+                swipe = GroupSwipe.objects.create(
+                    group_session=group_session,
+                    user=request.user,
+                    tmdb_id=tmdb_id,
+                    action=GroupSwipe.Action.DISLIKE,
+                )
+                response_status = status.HTTP_201_CREATED
+                print(f"[DEBUG] Created new DISLIKE swipe for movie {tmdb_id}")
+
+            # 清除推荐缓存
+            RecommendationService.invalidate_deck_cache(group_session)
+
+        # 构建响应
+        response_data = {
+            "success": True,
+            "swipe_id": swipe.id,
+            "action": swipe.action,
+            "tmdb_id": tmdb_id,
+            "timestamp": swipe.created_at.isoformat(),
+        }
+
+        if message:
+            response_data["message"] = message
+
+        # 检查是否所有人都完成了
+        completion_status = RecommendationService.check_all_members_finished(
+            group_session
+        )
+
+        if completion_status["all_finished"]:
+            print("[DEBUG] All members finished! Broadcasting completion event")
+            common_matches = RecommendationService.get_all_common_matches(group_session)
+            completion_status["common_matches_count"] = len(common_matches)
+            _broadcast_completion_event(group_session.group_code, completion_status)
+
+        return Response(response_data, status=response_status)
+
+    except Exception as e:
+        print(f"[ERROR] swipe_dislike exception: {e}")
+        import traceback
+
+        traceback.print_exc()
         return Response(
             {"error": f"Server Error: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -842,3 +1172,187 @@ def join_or_create_community_group(request):
             {"error": f"Server Error: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+# new API endpoints
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def check_completion_status(request, group_code):
+    """
+    Check the completion status of a group session.
+    URL: GET /api/groups/<group_code>/completion-status/
+    Response:
+    {
+        "all_finished": true/false,
+        "total_members": 3,
+        "finished_members": 2,
+        "total_movies": 50,
+        "common_matches_count": 5
+    }
+    """
+    try:
+        group_session = get_object_or_404(
+            GroupSession, group_code=group_code, is_active=True
+        )
+
+        # Verify Member Identity
+        is_member = GroupMember.objects.filter(
+            group_session=group_session, user=request.user, is_active=True
+        ).exists()
+
+        if not is_member:
+            return Response(
+                {"error": "You are not a member of this group."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # check whether all members finished
+        completion_status = RecommendationService.check_all_members_finished(
+            group_session
+        )
+
+        # If all members have finished, compute the number of common liked movies.
+        if completion_status["all_finished"]:
+            common_matches = RecommendationService.get_all_common_matches(group_session)
+            completion_status["common_matches_count"] = len(common_matches)
+        else:
+            completion_status["common_matches_count"] = 0
+
+        return Response(completion_status, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {"error": f"Server Error: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_final_matches(request, group_code):
+    """
+    Retrieve the final list of movies that all active group members
+    URL: GET /api/groups/<group_code>/final-matches/
+    Response:
+    {
+        "group_code": "ABC123",
+        "all_finished": true,
+        "common_matches": [
+            {
+                "tmdb_id": 550,
+                "movie_title": "Fight Club",
+                "poster_url": "https://...",
+                "year": "1999",
+                "genres": ["Drama", "Thriller"],
+                "overview": "...",
+                "vote_average": 8.4
+            },
+            ...
+        ],
+        "total": 5
+    }
+    """
+    try:
+        group_session = get_object_or_404(
+            GroupSession, group_code=group_code, is_active=True
+        )
+
+        # Verify Member Identity
+        is_member = GroupMember.objects.filter(
+            group_session=group_session, user=request.user, is_active=True
+        ).exists()
+
+        if not is_member:
+            return Response(
+                {"error": "You are not a member of this group."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Check whether all members have completed swiping.
+        completion_status = RecommendationService.check_all_members_finished(
+            group_session
+        )
+
+        # Fetch common liked movies using RecommendationService.
+        common_matches = RecommendationService.get_all_common_matches(group_session)
+
+        # Format movie details for the frontend
+        formatted_matches = []
+        for match in common_matches:
+            movie_info = match.get("movie_info", {})
+
+            formatted_match = {
+                "tmdb_id": match["tmdb_id"],
+                "movie_title": match["movie_title"],
+                "poster_url": (
+                    f"https://image.tmdb.org/t/p/w500{movie_info.get('poster_path')}"
+                    if movie_info.get("poster_path")
+                    else None
+                ),
+                "year": (
+                    movie_info.get("release_date", "")[:4]
+                    if movie_info.get("release_date")
+                    else None
+                ),
+                "genres": movie_info.get("genres", []),
+                "overview": movie_info.get("overview", ""),
+                "vote_average": movie_info.get("vote_average"),
+            }
+            formatted_matches.append(formatted_match)
+
+        return Response(
+            {
+                "group_code": group_code,
+                "all_finished": completion_status["all_finished"],
+                "total_members": completion_status["total_members"],
+                "finished_members": completion_status["finished_members"],
+                "common_matches": formatted_matches,
+                "total": len(formatted_matches),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        return Response(
+            {"error": f"Server Error: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def clear_group_swipes(request, group_code):
+    """清空群组的滑动记录，开始新一轮"""
+    try:
+        group_session = get_object_or_404(
+            GroupSession, group_code=group_code, is_active=True
+        )
+
+        # 验证用户是否是群组成员
+        is_member = GroupMember.objects.filter(
+            group_session=group_session, user=request.user, is_active=True
+        ).exists()
+
+        if not is_member:
+            return Response(
+                {"error": "You are not a member of this group."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # 清空记录
+        deleted_count = RecommendationService.clear_group_swipes(group_session)
+
+        return Response(
+            {
+                "success": True,
+                "deleted_count": deleted_count,
+                "message": "Ready for new round!",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        print(f"[ERROR clear_group_swipes] {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

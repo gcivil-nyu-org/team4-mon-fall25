@@ -33,7 +33,18 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
+# Production domain settings (defined early for use in ALLOWED_HOSTS)
+PRODUCTION_DOMAIN = os.getenv("PRODUCTION_DOMAIN", "")
+CLOUDFRONT_DOMAIN = os.getenv("CLOUDFRONT_DOMAIN", "")
+
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+
+# Always allow CloudFront domains
+if CLOUDFRONT_DOMAIN and CLOUDFRONT_DOMAIN not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(CLOUDFRONT_DOMAIN)
+# Allow all cloudfront.net subdomains if in production
+if ".cloudfront.net" not in ALLOWED_HOSTS and os.getenv("USE_HTTPS", "False") == "True":
+    ALLOWED_HOSTS.append(".cloudfront.net")
 
 
 # Application definition
@@ -54,8 +65,18 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
 ]
 
+# Add SSL server for local HTTPS development (only in DEBUG mode)
+if DEBUG:
+    try:
+        import sslserver  # noqa: F401
+
+        INSTALLED_APPS.append("sslserver")
+    except ImportError:
+        pass  # sslserver not installed, skip
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -87,13 +108,99 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 ROOT_URLCONF = "recommendation_sys.urls"
+# ============================================================================
+# HTTPS/SSL Security Settings
+# ============================================================================
+# Check if we're in production (HTTPS enabled)
+USE_HTTPS = os.getenv("USE_HTTPS", "False") == "True"
+
+if USE_HTTPS:
+    # Redirect all HTTP requests to HTTPS
+    SECURE_SSL_REDIRECT = True
+
+    # Trust the X-Forwarded-Proto header from the load balancer
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    # HTTP Strict Transport Security (HSTS)
+    # Start with 1 hour, increase to 31536000 (1 year) after testing
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Secure cookies
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Additional security headers
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
+else:
+    # Development settings - no HTTPS redirect
+    SECURE_SSL_REDIRECT = False
+
+# ============================================================================
+# CORS Configuration
+# ============================================================================
+# WebSocket host - if CloudFront doesn't proxy WebSockets well, set this to your EB domain
+# Leave empty to use the same host as the page (works if CloudFront proxies WebSockets)
+WEBSOCKET_HOST = os.getenv("WEBSOCKET_HOST", "")
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:8000",
+    "https://localhost:5173",
+    "https://localhost:3000",
+    "https://localhost:8000",
 ]
+
+# Add production domain if set
+if PRODUCTION_DOMAIN:
+    CORS_ALLOWED_ORIGINS.extend(
+        [
+            f"https://{PRODUCTION_DOMAIN}",
+            f"http://{PRODUCTION_DOMAIN}",
+        ]
+    )
+
+# Add CloudFront domain if set
+if CLOUDFRONT_DOMAIN:
+    CORS_ALLOWED_ORIGINS.extend(
+        [
+            f"https://{CLOUDFRONT_DOMAIN}",
+        ]
+    )
+
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
+
+# ============================================================================
+# CSRF Trusted Origins
+# ============================================================================
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://localhost:5173",
+    "https://localhost:3000",
+    "https://*.cloudfront.net",  # Allow all CloudFront distributions
+]
+
+# Add production domain if set
+if PRODUCTION_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.extend(
+        [
+            f"https://{PRODUCTION_DOMAIN}",
+            f"http://{PRODUCTION_DOMAIN}",
+        ]
+    )
+
+# Add CloudFront domain if set
+if CLOUDFRONT_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.extend(
+        [
+            f"https://{CLOUDFRONT_DOMAIN}",
+        ]
+    )
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -104,6 +211,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "recom_sys_app.context_processors.websocket_settings",
             ],
         },
     },
@@ -122,30 +230,23 @@ DATABASES = {
     }
 }
 
-# Use PostgreSQL if configured
-if True:  # Change to True to use PostgreSQL
+# Use PostgreSQL if configured (only when POSTGRES_HOST is explicitly set)
+postgres_host = os.getenv("POSTGRES_HOST")
+if postgres_host:  # Only use PostgreSQL if POSTGRES_HOST is set
     # Build database configuration
     db_config = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("POSTGRES_DB", "cinematch_d"),
         "USER": os.getenv("POSTGRES_USER", "cinematch"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "cinematch123"),
+        "HOST": postgres_host,
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
         "CONN_MAX_AGE": 60,
-    }
-
-    # Add HOST and PORT only if POSTGRES_HOST is explicitly set
-    # (Travis CI uses Unix socket connection when HOST is not set)
-    postgres_host = os.getenv("POSTGRES_HOST")
-    if postgres_host:
-        db_config["HOST"] = postgres_host
-        db_config["PORT"] = os.getenv("POSTGRES_PORT", "5432")
-        db_config["OPTIONS"] = {
+        "OPTIONS": {
             "connect_timeout": 10,
             "sslmode": "require" if "rds.amazonaws.com" in postgres_host else "disable",
-        }
-    else:
-        # For Travis CI: use Unix socket (no HOST/PORT needed)
-        db_config["OPTIONS"] = {"connect_timeout": 10}
+        },
+    }
 
     DATABASES = {"default": db_config}
 
@@ -185,10 +286,79 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 # Tell Django where to find static files (for development debugging)
-STATICFILES_DIRS = [BASE_DIR / "recom_sys_app" / "static"]
+STATICFILES_DIRS = [
+    BASE_DIR / "recom_sys_app" / "static",
+]
+# Only include frontend/dist if it exists (React build directory)
+_frontend_dist = BASE_DIR / "frontend" / "dist"
+if _frontend_dist.exists():
+    STATICFILES_DIRS.append(_frontend_dist)
+
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Media files (user uploads)
+# Use S3 if configured, otherwise use local filesystem
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
+AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN", "")
+
+# Determine default file storage backend
+if AWS_STORAGE_BUCKET_NAME:
+    # Use S3 for media files
+    try:
+        import storages  # noqa: F401
+
+        DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN or f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'}/media/"
+        MEDIA_ROOT = ""  # Not used when using S3
+        AWS_S3_FILE_OVERWRITE = False
+        # Set ACL to None if bucket has ACLs disabled (bucket policy handles access)
+        # Otherwise use public-read for public access
+        AWS_DEFAULT_ACL = None  # Let bucket policy handle public access
+        AWS_S3_OBJECT_PARAMETERS = {
+            "CacheControl": "max-age=86400",  # Cache for 1 day
+        }
+        # AWS credentials are handled by IAM role on EB instances
+        # No need to set AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY
+        # Ensure the IAM role has s3:PutObject, s3:GetObject, s3:DeleteObject permissions
+    except ImportError:
+        # Fallback to filesystem if django-storages not installed
+        print("[WARNING] django-storages not installed, using filesystem storage")
+        DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+        MEDIA_URL = "/media/"
+        MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+else:
+    # Use local filesystem for media files
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# WhiteNoise configuration for serving static files in production
+# Only use manifest storage in production (requires collectstatic to be run first)
+if DEBUG:
+    # In development/testing, use simple storage that doesn't require manifest
+    STORAGES = {
+        "default": {
+            "BACKEND": DEFAULT_FILE_STORAGE,
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    # In production, use WhiteNoise with compression
+    # Using CompressedStaticFilesStorage instead of CompressedManifestStaticFilesStorage
+    # to avoid manifest errors if files are missing from manifest
+    STORAGES = {
+        "default": {
+            "BACKEND": DEFAULT_FILE_STORAGE,
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

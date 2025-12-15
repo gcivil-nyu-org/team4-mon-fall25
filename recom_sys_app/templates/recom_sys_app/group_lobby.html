@@ -15,20 +15,74 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(to bottom, #b794f6 0%, #e9d5ff 100%);
+      background: #141414;
       min-height: 100vh;
       padding: 20px;
-      color: #4c1d95;
+      color: #fff;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'),
+        url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+        url('{% static "recom_sys_app/images/images.png" %}');
+      background-size: cover, cover, cover;
+      background-position: center top, center center, center bottom;
+      background-repeat: no-repeat;
+      background-blend-mode: screen, lighten, overlay;
+      opacity: 0.25;
+      z-index: 0;
+      filter:
+        brightness(0.4)
+        contrast(1.8)
+        saturate(0)
+        sepia(100%)
+        hue-rotate(345deg)
+        drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+        drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+        drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+        linear-gradient(
+          135deg,
+          rgba(229, 9, 20, 0.05) 0%,
+          rgba(20, 20, 20, 0.95) 50%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      z-index: 1;
+      pointer-events: none;
     }
 
     .lobby-container {
       max-width: 900px;
       margin: 0 auto;
+      position: relative;
+      z-index: 2;
     }
 
     /* ===== Header Card ============================================================= */
     .lobby-header {
-      background: white;
+      background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 20px;
       padding: 40px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -44,7 +98,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      color: #4c1d95;
+      color: #fff;
     }
 
     .group-code-display {
@@ -52,15 +106,15 @@
       align-items: center;
       gap: 16px;
       padding: 20px 28px;
-      background: #f9fafb;
-      border: 2px solid #8b5cf6;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(229, 9, 20, 0.5);
       border-radius: 12px;
       margin: 20px 0;
     }
 
     .code-label {
       font-size: 12px;
-      color: #6b46c1;
+      color: #999;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-weight: 600;
@@ -71,12 +125,12 @@
       font-size: 32px;
       font-weight: 700;
       letter-spacing: 4px;
-      color: #8b5cf6;
+      color: #E50914;
     }
 
     .btn-copy {
       padding: 10px 20px;
-      background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%);
+      background: #E50914;
       border: none;
       border-radius: 10px;
       color: white;
@@ -99,14 +153,14 @@
     }
 
     .invite-text {
-      color: #6b46c1;
+      color: #E50914;
       font-size: 14px;
       margin-top: 16px;
     }
 
     /* ===== Members Section ==================================================== */
     .members-section {
-      background: white;
+      background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 20px;
       padding: 30px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -129,11 +183,11 @@
       align-items: center;
       gap: 10px;
       margin: 0;
-      color: #4c1d95;
+      color: #fff;
     }
 
     .member-count {
-      background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%);
+      background: #E50914;
       border-radius: 20px;
       padding: 6px 14px;
       font-size: 14px;
@@ -152,14 +206,14 @@
       justify-content: space-between;
       align-items: center;
       padding: 16px;
-      background: #f9fafb;
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       transition: all 0.3s ease;
     }
 
     .member-item:hover {
-      border-color: #8b5cf6;
+      border-color: #E50914;
       transform: translateX(4px);
       box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
     }
@@ -173,7 +227,7 @@
     .member-avatar {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%);
+      background: #E50914;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -191,13 +245,13 @@
 
     .member-name {
       font-weight: 600;
-      color: #4c1d95;
+      color: #fff;
       font-size: 15px;
     }
 
     .member-username {
       font-size: 13px;
-      color: #6b46c1;
+      color: #E50914;
     }
 
     .member-role {
@@ -212,8 +266,8 @@
 
     .member-role.creator {
       background: rgba(139, 92, 246, 0.1);
-      border-color: #8b5cf6;
-      color: #6b46c1;
+      border-color: #E50914;
+      color: #E50914;
     }
 
     .member-role.member {
@@ -225,13 +279,13 @@
     .loading {
       text-align: center;
       padding: 40px;
-      color: #6b46c1;
+      color: #E50914;
     }
 
     .no-members {
       text-align: center;
       padding: 40px;
-      color: #6b46c1;
+      color: #E50914;
     }
 
     /* ===== Actions Section ==================================================== */
@@ -287,6 +341,27 @@
       background: #92452a;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(168, 85, 55, 0.3);
+    }
+
+    .btn-secondary {
+      padding: 16px 32px;
+      background: #6b7280;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
     }
 
     /* ===== Mobile Responsive ================================================== */
@@ -409,7 +484,7 @@
         </h2>
       </div>
 
-      <div id="chatMessages" style="background: white; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; min-height: 200px;">
+      <div id="chatMessages" style="background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; min-height: 200px;">
         <div style="text-align: center; color: #9ca3af; padding: 40px 20px;">
           No messages yet. Start chatting!
         </div>
@@ -426,7 +501,7 @@
         />
         <button
           type="submit"
-          style="padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6 0%, #667eea 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;"
+          style="padding: 12px 24px; background: #E50914; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;"
           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'"
           onmouseout="this.style.transform=''; this.style.boxShadow=''"
         >
@@ -440,9 +515,18 @@
       <button id="startMatchingBtn" class="btn-primary">
         ▶️ Start Matching
       </button>
-      <button id="leaveLobbyBtn" class="btn-danger">
-        🚪 Leave Lobby
+      <button id="backToProfileBtn" class="btn-secondary">
+        ← Back to Profile
       </button>
+      {% if is_creator %}
+      <button id="deleteGroupBtn" class="btn-danger">
+        🗑️ Delete Group
+      </button>
+      {% else %}
+      <button id="leaveLobbyBtn" class="btn-danger">
+        🚪 Leave Group
+      </button>
+      {% endif %}
     </div>
 
   <script>
@@ -525,9 +609,17 @@
         textArea.select();
         try {
           document.execCommand('copy');
-          alert('Group code copied: ' + groupCode);
+          // Show brief success message (no popup needed for copy)
+          const btn = document.getElementById('copyCodeBtn');
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '✓ Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('copied');
+          }, 2000);
         } catch (err) {
-          alert('Failed to copy. Group code: ' + groupCode);
+          showConfirmationModal('Error', 'Failed to copy. Group code: ' + groupCode, () => {});
         }
         document.body.removeChild(textArea);
       }
@@ -539,12 +631,205 @@
       window.location.href = `/groups/${groupCode}/deck/`;
     });
 
-    // Leave Lobby
-    document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
-      if (confirm('Are you sure you want to leave this group?')) {
-        window.location.href = '/profile/';
-      }
+    // Back to Profile (for everyone - just navigates back without leaving the group)
+    document.getElementById('backToProfileBtn').addEventListener('click', () => {
+      window.location.href = '/profile/';
     });
+
+    // Popup confirmation modal (reusable)
+    function showConfirmationModal(title, message, onConfirm, onCancel = null, isDestructive = false) {
+      const modal = document.createElement('div');
+      modal.className = 'confirmation-modal';
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        backdrop-filter: blur(10px);
+      `;
+      
+      const icon = isDestructive ? '🗑️' : '⚠️';
+      const confirmColor = isDestructive ? '#dc2626' : '#E50914';
+      const confirmHover = isDestructive ? '#b91c1c' : '#f40612';
+      
+      modal.innerHTML = `
+        <div style="
+          background: rgba(20, 20, 20, 0.95);
+          border: 2px solid ${isDestructive ? 'rgba(220, 38, 38, 0.3)' : 'rgba(229, 9, 20, 0.3)'};
+          border-radius: 16px;
+          padding: 32px;
+          max-width: 450px;
+          width: 90%;
+          text-align: center;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        ">
+          <div style="font-size: 3em; margin-bottom: 16px;">${icon}</div>
+          <h2 style="color: #ffffff; font-size: 1.5em; font-weight: bold; margin-bottom: 16px;">
+            ${escapeHtml(title)}
+          </h2>
+          <p style="color: #cccccc; font-size: 1em; margin-bottom: 24px; line-height: 1.5; white-space: pre-line;">
+            ${escapeHtml(message)}
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button class="confirm-btn" style="
+              background: ${confirmColor};
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-weight: 600;
+              cursor: pointer;
+              font-size: 1em;
+              transition: background 0.2s;
+            " onmouseover="this.style.background='${confirmHover}'" onmouseout="this.style.background='${confirmColor}'">
+              Confirm
+            </button>
+            <button class="cancel-btn" style="
+              background: rgba(255, 255, 255, 0.1);
+              color: #cccccc;
+              border: 2px solid rgba(255, 255, 255, 0.2);
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-weight: 600;
+              cursor: pointer;
+              font-size: 1em;
+              transition: all 0.2s;
+            " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.color='#ffffff'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#cccccc'">
+              Cancel
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const confirmBtn = modal.querySelector('.confirm-btn');
+      const cancelBtn = modal.querySelector('.cancel-btn');
+      
+      confirmBtn.addEventListener('click', () => {
+        modal.remove();
+        if (onConfirm) onConfirm();
+      });
+      
+      cancelBtn.addEventListener('click', () => {
+        modal.remove();
+        if (onCancel) onCancel();
+      });
+      
+      // Close on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+          if (onCancel) onCancel();
+        }
+      });
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Leave Group (for members)
+    const leaveLobbyBtn = document.getElementById('leaveLobbyBtn');
+    if (leaveLobbyBtn) {
+      leaveLobbyBtn.addEventListener('click', async () => {
+        showConfirmationModal(
+          'Leave Group?',
+          'Are you sure you want to leave this group?\n\nYou can rejoin later with the group code.',
+          async () => {
+            try {
+              const response = await fetch(`/api/groups/${groupId}/leave/`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken')
+                }
+              });
+              const data = await response.json();
+              if (data.success) {
+                showConfirmationModal('Success', data.message, () => {
+                  window.location.href = '/profile/';
+                });
+              } else {
+                showConfirmationModal('Error', data.message || 'Failed to leave group', () => {});
+              }
+            } catch (error) {
+              console.error('Error leaving group:', error);
+              showConfirmationModal('Error', 'Failed to leave group. Please try again.', () => {});
+            }
+          }
+        );
+      });
+    }
+
+    // Delete Group (for creator only)
+    const deleteGroupBtn = document.getElementById('deleteGroupBtn');
+    if (deleteGroupBtn) {
+      deleteGroupBtn.addEventListener('click', async () => {
+        showConfirmationModal(
+          'Delete Group?',
+          `Are you sure you want to DELETE group "${groupCode}"?\n\nThis action cannot be undone.`,
+          () => {
+            // Second confirmation for destructive action
+            showConfirmationModal(
+              'Final Warning',
+              'FINAL WARNING: All group data, matches, and member information will be permanently deleted.\n\nThis action cannot be undone. Continue?',
+              async () => {
+                try {
+                  const response = await fetch(`/api/groups/${groupId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': getCookie('csrftoken')
+                    }
+                  });
+                  const data = await response.json();
+                  if (data.success) {
+                    showConfirmationModal('Success', data.message, () => {
+                      window.location.href = '/profile/';
+                    });
+                  } else {
+                    showConfirmationModal('Error', data.message || 'Failed to delete group', () => {});
+                  }
+                } catch (error) {
+                  console.error('Error deleting group:', error);
+                  showConfirmationModal('Error', 'Failed to delete group. Please try again.', () => {});
+                }
+              },
+              null,
+              true
+            );
+          },
+          null,
+          true
+        );
+      });
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
 
     // Load group details on page load
     loadGroupDetails();
@@ -557,8 +842,25 @@
     const currentUsername = '{{ request.user.username }}';
 
     function connectChatWebSocket() {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const chatWsUrl = `${protocol}//${window.location.host}/ws/chat/${groupCode}/`;
+      // CloudFront DOES support WebSockets - use it when available
+      const isCloudFront = window.location.hostname.includes('cloudfront.net');
+      let wsHost;
+      let wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      
+      if (isCloudFront) {
+        // Use CloudFront for WebSocket (it supports WebSocket proxying)
+        wsHost = window.location.host;
+        console.log('[WebSocket] Using CloudFront for WebSocket connection');
+      } else {
+        // Direct connection to EB (for local dev or direct EB access)
+        wsHost = '{{ WEBSOCKET_HOST }}' || window.location.host;
+        if (window.location.protocol === 'http:') {
+          wsProtocol = 'ws:';
+        }
+      }
+      
+      const chatWsUrl = `${wsProtocol}//${wsHost}/ws/chat/${groupCode}/`;
+      console.log('[WebSocket] Connecting to:', chatWsUrl, 'from origin:', window.location.origin);
 
       chatSocket = new WebSocket(chatWsUrl);
 

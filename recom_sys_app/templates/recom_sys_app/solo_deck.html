@@ -7,8 +7,67 @@
     <title>Solo Swipe - Find Your Movie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #141414;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Cinematic Background with Three Layered Images - Red Blend */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                url('{% static "recom_sys_app/images/cinematch_logo.png" %}'),
+                url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+                url('{% static "recom_sys_app/images/images.png" %}');
+            background-size: cover, cover, cover;
+            background-position: center top, center center, center bottom;
+            background-repeat: no-repeat;
+            background-blend-mode: screen, lighten, overlay;
+            opacity: 0.25;
+            z-index: 0;
+            filter:
+                brightness(0.4)
+                contrast(1.8)
+                saturate(0)
+                sepia(100%)
+                hue-rotate(345deg)
+                drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+                drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+                drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+            mix-blend-mode: screen;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+                linear-gradient(
+                    135deg,
+                    rgba(229, 9, 20, 0.05) 0%,
+                    rgba(20, 20, 20, 0.95) 50%,
+                    rgba(0, 0, 0, 0.98) 100%
+                );
+            z-index: 1;
+            pointer-events: none;
         }
 
         .card-container {
@@ -17,18 +76,21 @@
             max-width: 400px;
             height: 600px;
             margin: 0 auto;
+            z-index: 2;
         }
 
         .swipe-card {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: white;
+            background: rgba(20, 20, 20, 0.9);
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(229, 9, 20, 0.1);
             cursor: grab;
             user-select: none;
             transition: transform 0.3s ease;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .swipe-card:active {
@@ -71,7 +133,7 @@
 
         .overlay.dislike {
             right: 20px;
-            background: rgba(244, 67, 54, 0.9);
+            background: rgba(229, 9, 20, 0.9);
             color: white;
         }
 
@@ -82,48 +144,133 @@
         .action-buttons {
             display: flex;
             justify-content: center;
-            gap: 30px;
+            align-items: center;
+            gap: 15px;
             margin-top: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .action-btn-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 70px;
         }
 
         .action-btn {
-            width: 70px;
-            height: 70px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
+            font-size: 24px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: none;
+            position: relative;
         }
 
         .action-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transform: scale(1.15) translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
 
         .action-btn:active {
             transform: scale(0.95);
         }
 
-        .dislike-btn {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        /* Tooltip Styles */
+        .action-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .action-btn:hover::after {
+            opacity: 1;
+            visibility: visible;
+            bottom: -40px;
+        }
+
+        /* Pass Button - Red */
+        .pass-btn {
+            background: linear-gradient(135deg, #E50914 0%, #b20710 100%);
             color: white;
         }
 
-        .like-btn {
-            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+        .pass-btn:hover {
+            background: linear-gradient(135deg, #ff1a25 0%, #E50914 100%);
+            box-shadow: 0 8px 30px rgba(229, 9, 20, 0.6);
+        }
+
+        /* Watched but didn't like - Orange/Amber */
+        .watched-disliked-btn {
+            background: linear-gradient(135deg, #FF6B35 0%, #d4531f 100%);
             color: white;
+        }
+
+        .watched-disliked-btn:hover {
+            background: linear-gradient(135deg, #ff8555 0%, #FF6B35 100%);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.6);
+        }
+
+        /* Watched and liked - Blue */
+        .watched-liked-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+        }
+
+        .watched-liked-btn:hover {
+            background: linear-gradient(135deg, #42a5f5 0%, #2196F3 100%);
+            box-shadow: 0 8px 30px rgba(33, 150, 243, 0.6);
+        }
+
+        /* Like Button - Green */
+        .like-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+            color: white;
+        }
+
+        .like-btn:hover {
+            background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+            box-shadow: 0 8px 30px rgba(76, 175, 80, 0.6);
+        }
+
+        /* Button Labels */
+        .btn-label {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            margin-top: 6px;
+            width: 70px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .loading-spinner {
             display: inline-block;
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: white;
+            border: 4px solid rgba(229, 9, 20, 0.3);
+            border-top-color: #E50914;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -138,11 +285,13 @@
             right: -400px;
             width: 400px;
             height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+            background: rgba(20, 20, 20, 0.9);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
             transition: right 0.3s ease;
             z-index: 1000;
             overflow-y: auto;
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(229, 9, 20, 0.2);
         }
 
         .likes-panel.open {
@@ -153,28 +302,31 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #E50914;
             color: white;
             padding: 12px 20px;
             border-radius: 25px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
             z-index: 999;
             transition: all 0.3s;
+            font-weight: 600;
         }
 
         .likes-toggle:hover {
             transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 25px rgba(229, 9, 20, 0.6);
+            background: #ff0a16;
         }
 
         .liked-movie {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 10px;
             display: flex;
             gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .liked-movie img {
@@ -182,6 +334,79 @@
             height: 90px;
             object-fit: cover;
             border-radius: 5px;
+        }
+
+        /* Likes Panel Tabs */
+        .likes-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .likes-tab {
+            flex: 1;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #999;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .likes-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .likes-tab.active {
+            background: rgba(229, 9, 20, 0.2);
+            border-color: #E50914;
+            color: #E50914;
+        }
+
+        .tab-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .likes-tab.active .tab-badge {
+            background: rgba(229, 9, 20, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .remove-all-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(229, 9, 20, 0.1);
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            border-radius: 8px;
+            color: #E50914;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .remove-all-btn:hover {
+            background: rgba(229, 9, 20, 0.2);
+            border-color: #E50914;
         }
 
         /* Movie Details Modal */
@@ -205,15 +430,17 @@
         }
 
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: rgba(20, 20, 20, 0.95);
             border-radius: 20px;
             max-width: 600px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(229, 9, 20, 0.2);
             color: white;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .modal-close {
@@ -223,7 +450,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.1);
+            background: rgba(229, 9, 20, 0.9);
             border: none;
             color: white;
             font-size: 24px;
@@ -236,8 +463,9 @@
         }
 
         .modal-close:hover {
-            background: rgba(255,255,255,0.2);
+            background: #E50914;
             transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
         }
 
         .info-button {
@@ -247,9 +475,9 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(20, 20, 20, 0.9);
             color: white;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(229, 9, 20, 0.5);
             font-size: 20px;
             cursor: pointer;
             display: flex;
@@ -257,12 +485,14 @@
             justify-content: center;
             transition: all 0.3s;
             z-index: 50;
+            backdrop-filter: blur(10px);
         }
 
         .info-button:hover {
-            background: rgba(0,0,0,0.9);
-            border-color: rgba(255,255,255,0.6);
+            background: rgba(229, 9, 20, 0.9);
+            border-color: #E50914;
             transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
         }
 
         .modal-poster {
@@ -274,13 +504,14 @@
 
         .genre-tag {
             display: inline-block;
-            background: rgba(103, 126, 234, 0.3);
+            background: rgba(229, 9, 20, 0.2);
             padding: 5px 12px;
             border-radius: 15px;
             margin-right: 8px;
             margin-bottom: 8px;
             font-size: 12px;
-            border: 1px solid rgba(103, 126, 234, 0.5);
+            border: 1px solid rgba(229, 9, 20, 0.4);
+            color: #fff;
         }
 
         .cast-member {
@@ -291,30 +522,52 @@
             margin-bottom: 8px;
             display: inline-block;
             font-size: 14px;
+            color: #ccc;
         }
 
         .streaming-provider {
             display: inline-flex;
             align-items: center;
-            background: rgba(103, 126, 234, 0.2);
+            background: rgba(229, 9, 20, 0.2);
             padding: 8px 16px;
             border-radius: 10px;
             margin-right: 10px;
             margin-bottom: 10px;
             font-size: 14px;
+            border: 1px solid rgba(229, 9, 20, 0.3);
         }
 
         .modal-loading {
             text-align: center;
             padding: 40px;
         }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.4);
+            overflow: hidden;
+        }
+
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(1.1) contrast(1.2);
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-black min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8">
+<body>
+    <div class="container mx-auto px-4 py-8" style="position: relative; z-index: 2;">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-2">🎬 Solo Mode</h1>
+            <div class="flex items-center justify-center gap-4 mb-4">
+                <div class="header-logo">
+                    <img src="{% static 'recom_sys_app/images/cinematch_logo.png' %}" alt="CineMatch Logo">
+                </div>
+                <h1 class="text-4xl font-bold" style="color: #E50914; text-shadow: 0 0 30px rgba(229, 9, 20, 0.5);">Solo Mode</h1>
+            </div>
             <p class="text-gray-300">{{ selected_genre_names }}</p>
             <p class="text-sm text-gray-400 mt-2" id="cards-remaining">Loading movies...</p>
         </div>
@@ -327,12 +580,36 @@
         <!-- Likes Panel -->
         <div id="likes-panel" class="likes-panel">
             <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Your Liked Movies</h2>
-                    <button onclick="toggleLikesPanel()" class="text-2xl">✕</button>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold" style="color: #E50914;">Your Movies</h2>
+                    <button onclick="toggleLikesPanel()" class="text-2xl text-white hover:text-red-500">✕</button>
                 </div>
-                <div id="likes-list">
-                    <p class="text-gray-300 text-center">No likes yet. Start swiping!</p>
+                
+                <!-- Tabs -->
+                <div class="likes-tabs mb-4">
+                    <button class="likes-tab active" data-tab="liked" onclick="switchLikesTab('liked')">
+                        ♥ Liked <span id="liked-count-badge" class="tab-badge">0</span>
+                    </button>
+                    <button class="likes-tab" data-tab="watched" onclick="switchLikesTab('watched')">
+                        👍 Watched & Liked <span id="watched-count-badge" class="tab-badge">0</span>
+                    </button>
+                </div>
+                
+                <!-- Remove All Button -->
+                <button id="remove-all-btn" onclick="removeAllLikes()" class="remove-all-btn" style="display: none;">
+                    🗑️ Remove All
+                </button>
+                
+                <!-- Tab Contents -->
+                <div id="liked-tab-content" class="tab-content active">
+                    <div id="likes-list">
+                        <p class="text-gray-300 text-center">No liked movies yet. Start swiping!</p>
+                    </div>
+                </div>
+                <div id="watched-tab-content" class="tab-content" style="display: none;">
+                    <div id="watched-list">
+                        <p class="text-gray-300 text-center">No watched movies yet. Start swiping!</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -341,27 +618,45 @@
         <div class="card-container" id="card-container">
             <div class="text-center text-gray-400 mt-20">
                 <div class="loading-spinner mx-auto"></div>
-                <p class="mt-4">Loading your personalized movies...</p>
+                <p class="mt-4" style="color: #999;">Loading your personalized movies...</p>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <div class="action-btn dislike-btn" onclick="swipeCard('dislike')">
-                ✕
+            <div class="action-btn-wrapper">
+                <button class="action-btn pass-btn" onclick="swipeCard('dislike')" data-tooltip="Not interested">
+                    ✕
+                </button>
+                <span class="btn-label">Pass</span>
             </div>
-            <div class="action-btn like-btn" onclick="swipeCard('like')">
-                ♥
+            <div class="action-btn-wrapper">
+                <button class="action-btn watched-disliked-btn" onclick="swipeCard('watched_disliked')" data-tooltip="Watched but didn't like">
+                    👎
+                </button>
+                <span class="btn-label">Didn't Like</span>
+            </div>
+            <div class="action-btn-wrapper">
+                <button class="action-btn watched-liked-btn" onclick="swipeCard('watched_liked')" data-tooltip="Watched and loved it!">
+                    👍
+                </button>
+                <span class="btn-label">Watched</span>
+            </div>
+            <div class="action-btn-wrapper">
+                <button class="action-btn like-btn" onclick="swipeCard('like')" data-tooltip="Want to watch!">
+                    ♥
+                </button>
+                <span class="btn-label">Like</span>
             </div>
         </div>
 
         <!-- Navigation -->
-        <div class="text-center mt-8 space-x-4">
-            <a href="{% url 'recom_sys:solo_genre_selection' %}" class="text-gray-400 hover:text-white transition-colors">
+        <div class="text-center mt-8 space-x-4" style="position: relative; z-index: 2;">
+            <a href="{% url 'recom_sys:solo_genre_selection' %}" class="text-gray-400 hover:text-white transition-colors" style="text-decoration: none;">
                 ← Change Genres
             </a>
             <span class="text-gray-600">|</span>
-            <a href="{% url 'recom_sys:profile' %}" class="text-gray-400 hover:text-white transition-colors">
+            <a href="{% url 'recom_sys:profile' %}" class="text-gray-400 hover:text-white transition-colors" style="text-decoration: none;">
                 Back to Profile
             </a>
         </div>
@@ -385,8 +680,10 @@
         let currentIndex = 0;
         let likedMovies = [];
         let isDragging = false;
+        let wasDragging = false;  // Track if a drag occurred to prevent click triggering
         let startX = 0;
         let currentX = 0;
+        let dragStartTime = 0;
 
         // Load movies on page load
         window.addEventListener('DOMContentLoaded', async () => {
@@ -396,14 +693,22 @@
 
         async function loadMovies() {
             try {
-                const response = await fetch('/api/solo/deck/?limit=30');
+                const response = await fetch('/api/solo/deck/?limit=50');
                 const data = await response.json();
 
                 if (data.success) {
                     movies = data.movies;
                     currentIndex = 0;
-                    renderCards();
+                    renderCards(); // Don't await - render immediately
                     updateCardsRemaining();
+                    
+                    // Preload images for first few cards in background
+                    movies.slice(0, 5).forEach(movie => {
+                        if (movie.poster_url) {
+                            const img = new Image();
+                            img.src = movie.poster_url;
+                        }
+                    });
                 } else {
                     showError('Failed to load movies');
                 }
@@ -413,13 +718,18 @@
             }
         }
 
+        let watchedLikedMovies = [];
+        let currentLikesTab = 'liked';
+
         async function loadLikedMovies() {
             try {
-                const response = await fetch('/api/solo/likes/');
-                const data = await response.json();
+                // Load liked movies (LIKE status)
+                const likesResponse = await fetch('/api/solo/likes/');
+                const likesData = await likesResponse.json();
 
-                if (data.success) {
-                    likedMovies = data.movies;
+                if (likesData.success) {
+                    likedMovies = likesData.movies.filter(m => m.action_type !== 'watched_liked');
+                    watchedLikedMovies = likesData.movies.filter(m => m.action_type === 'watched_liked');
                     updateLikesPanel();
                 }
             } catch (error) {
@@ -427,19 +737,133 @@
             }
         }
 
+        function switchLikesTab(tab) {
+            currentLikesTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.likes-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            
+            // Update tab contents
+            document.getElementById('liked-tab-content').style.display = tab === 'liked' ? 'block' : 'none';
+            document.getElementById('watched-tab-content').style.display = tab === 'watched' ? 'block' : 'none';
+            
+            // Update remove all button visibility
+            updateRemoveAllButton();
+        }
+
+        function updateRemoveAllButton() {
+            const removeAllBtn = document.getElementById('remove-all-btn');
+            const hasMovies = currentLikesTab === 'liked' ? likedMovies.length > 0 : watchedLikedMovies.length > 0;
+            removeAllBtn.style.display = hasMovies ? 'block' : 'none';
+        }
+
+        async function removeAllLikes() {
+            const tabName = currentLikesTab === 'liked' ? 'Liked Movies' : 'Watched & Liked Movies';
+            const moviesList = currentLikesTab === 'liked' ? likedMovies : watchedLikedMovies;
+            
+            if (moviesList.length === 0) {
+                showConfirmationModal(
+                    'No Movies',
+                    'No movies to remove.',
+                    () => {}
+                );
+                return;
+            }
+            
+            showConfirmationModal(
+                'Remove All Movies?',
+                `Are you sure you want to remove all ${moviesList.length} movies from "${tabName}"?\n\nThis action cannot be undone.`,
+                async () => {
+                    try {
+                        const csrfToken = getCookie('csrftoken');
+                        
+                        // Remove all movies one by one
+                        for (const movie of moviesList) {
+                            await fetch(`/api/solo/unlike/${movie.tmdb_id}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                }
+                            });
+                        }
+                        
+                        // Refresh the list
+                        await loadLikedMovies();
+                        showConfirmationModal(
+                            'Success',
+                            `Successfully removed all movies from "${tabName}".`,
+                            () => {}
+                        );
+                    } catch (error) {
+                        console.error('Error removing movies:', error);
+                        showConfirmationModal(
+                            'Error',
+                            'An error occurred while removing movies.',
+                            () => {}
+                        );
+                    }
+                }
+            );
+        }
+
         function renderCards() {
             const container = document.getElementById('card-container');
             container.innerHTML = '';
+
+            // Preload more movies earlier (when 10 remaining, not 5)
+            // This ensures movies are ready before we need them
+            if (currentIndex >= movies.length - 10 && movies.length > 0) {
+                // Load in background, don't wait
+                loadMoreMovies().catch(err => console.error('Error preloading movies:', err));
+            }
 
             // Render next 3 cards (for stacking effect)
             for (let i = 0; i < Math.min(3, movies.length - currentIndex); i++) {
                 const movie = movies[currentIndex + i];
                 const card = createCard(movie, i);
                 container.appendChild(card);
+                
+                // Preload images for next cards immediately
+                if (i === 0 && currentIndex + 1 < movies.length) {
+                    preloadNextCardImage(movies[currentIndex + 1]);
+                }
             }
 
             if (currentIndex >= movies.length) {
                 showNoMoreCards();
+            }
+        }
+
+        // Preload image for next card to reduce lag
+        function preloadNextCardImage(movie) {
+            if (!movie || !movie.poster_url) return;
+            
+            const img = new Image();
+            img.src = movie.poster_url;
+            // Also preload backdrop if available
+            if (movie.backdrop_url) {
+                const backdrop = new Image();
+                backdrop.src = movie.backdrop_url;
+            }
+        }
+
+        async function loadMoreMovies() {
+            try {
+                const offset = movies.length;
+                const response = await fetch(`/api/solo/deck/?limit=50&offset=${offset}`);
+                const data = await response.json();
+
+                if (data.success && data.movies && data.movies.length > 0) {
+                    // Add new movies, avoiding duplicates
+                    const existingIds = new Set(movies.map(m => m.tmdb_id));
+                    const newMovies = data.movies.filter(m => !existingIds.has(m.tmdb_id));
+                    movies = movies.concat(newMovies);
+                    console.log(`Loaded ${newMovies.length} more movies. Total: ${movies.length}`);
+                }
+            } catch (error) {
+                console.error('Error loading more movies:', error);
             }
         }
 
@@ -448,28 +872,55 @@
             card.className = 'swipe-card';
             card.style.zIndex = 100 - stackIndex;
             card.style.transform = `scale(${1 - stackIndex * 0.05}) translateY(${stackIndex * 10}px)`;
+            card.dataset.tmdbId = movie.tmdb_id;
 
             if (stackIndex === 0) {
                 card.addEventListener('mousedown', startDrag);
                 card.addEventListener('touchstart', startDrag);
+                // Add click handler for showing details (only fires if not dragging)
+                card.addEventListener('click', (e) => {
+                    // Only trigger if we haven't dragged significantly
+                    if (!wasDragging) {
+                        showMovieDetails(movie.tmdb_id, e);
+                    }
+                    wasDragging = false;
+                });
             }
 
             const posterUrl = movie.poster_url || 'https://via.placeholder.com/400x600?text=No+Poster';
             const year = movie.year || 'N/A';
             const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+            
+            // Add recommendation reason if available
+            const recommendationReason = movie.recommendation_reason || '';
+            const recommendationSource = movie.recommendation_source || '';
+            // Shorten text for better fit on mobile
+            let shortReason = recommendationReason;
+            if (recommendationReason === 'Users like you also liked this') {
+                shortReason = 'Users like you also liked';
+            }
+            const reasonHtml = recommendationReason 
+                ? `<div class="mt-2 px-2.5 py-1 rounded-full text-xs font-medium" style="background: rgba(229, 9, 20, 0.15); color: rgba(229, 9, 20, 0.9); border: 1px solid rgba(229, 9, 20, 0.3); display: inline-block; max-width: calc(100% - 0.5rem); word-wrap: break-word; overflow-wrap: break-word; white-space: normal; line-height: 1.3; box-sizing: border-box;">
+                    ${recommendationSource === 'collaborative_filtering' ? '👥 ' : '⭐ '}${shortReason}
+                   </div>`
+                : '';
 
             card.innerHTML = `
                 <button class="info-button" onclick="showMovieDetails(${movie.tmdb_id}, event)" title="View Details">ℹ️</button>
-                <img src="${posterUrl}" alt="${movie.title}" class="card-image">
+                <img src="${posterUrl}" alt="${movie.title}" class="card-image" draggable="false">
                 <div class="overlay like">LIKE</div>
-                <div class="overlay dislike">NOPE</div>
-                <div class="p-6 text-gray-900">
-                    <h2 class="text-2xl font-bold mb-2">${movie.title}</h2>
-                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                <div class="overlay dislike">PASS</div>
+                <div class="p-6" style="color: white; cursor: pointer; overflow: hidden;">
+                    <h2 class="text-2xl font-bold mb-2" style="word-wrap: break-word; overflow-wrap: break-word;">${movie.title}</h2>
+                    <div class="flex items-center gap-4 text-sm mb-3" style="color: #999;">
                         <span>⭐ ${rating}</span>
                         <span>📅 ${year}</span>
                     </div>
-                    <p class="text-sm text-gray-700 line-clamp-3">${movie.overview || 'No description available.'}</p>
+                    <p class="text-sm line-clamp-3" style="color: #ccc;">${movie.overview || 'No description available.'}</p>
+                    <div style="width: 100%; overflow: hidden;">
+                        ${reasonHtml}
+                    </div>
+                    <p class="text-xs mt-2" style="color: rgba(229, 9, 20, 0.7);">Tap for details • Swipe to rate</p>
                 </div>
             `;
 
@@ -478,15 +929,27 @@
 
         function startDrag(e) {
             if (currentIndex >= movies.length) return;
-            
+
+            // Prevent dragging when clicking on interactive elements
+            const target = e.target;
+            const isClickableElement = target.tagName === 'BUTTON' ||
+                                      target.tagName === 'A' ||
+                                      target.onclick !== null ||
+                                      target.closest('button') !== null;
+
+            if (isClickableElement) return;
+
             isDragging = true;
+            wasDragging = false;
+            dragStartTime = Date.now();
             const card = e.currentTarget;
             card.classList.add('swiping');
 
             startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            currentX = startX;
 
             const moveHandler = (e) => handleDragMove(e, card);
-            const endHandler = () => handleDragEnd(card, moveHandler, endHandler);
+            const endHandler = (e) => handleDragEnd(card, moveHandler, endHandler, e);
 
             document.addEventListener('mousemove', moveHandler);
             document.addEventListener('touchmove', moveHandler);
@@ -500,6 +963,11 @@
             currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
             const deltaX = currentX - startX;
             const rotation = deltaX / 20;
+
+            // Mark as dragged if moved more than 10 pixels
+            if (Math.abs(deltaX) > 10) {
+                wasDragging = true;
+            }
 
             card.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
 
@@ -519,21 +987,26 @@
             }
         }
 
-        function handleDragEnd(card, moveHandler, endHandler) {
+        function handleDragEnd(card, moveHandler, endHandler, e) {
             if (!isDragging) return;
 
             isDragging = false;
             card.classList.remove('swiping');
 
             const deltaX = currentX - startX;
+            const dragDuration = Date.now() - dragStartTime;
 
             document.removeEventListener('mousemove', moveHandler);
             document.removeEventListener('touchmove', moveHandler);
             document.removeEventListener('mouseup', endHandler);
             document.removeEventListener('touchend', endHandler);
 
-            // Determine if swipe was significant enough
-            if (Math.abs(deltaX) > 100) {
+            // Determine if swipe was significant enough (moved > 100px or quick flick)
+            const isSignificantSwipe = Math.abs(deltaX) > 100 || 
+                                       (Math.abs(deltaX) > 50 && dragDuration < 200);
+            
+            if (isSignificantSwipe) {
+                wasDragging = true;  // Ensure click doesn't fire
                 const action = deltaX > 0 ? 'like' : 'dislike';
                 animateCardRemoval(card, action);
                 recordSwipe(action);
@@ -549,113 +1022,192 @@
             if (currentIndex >= movies.length) return;
 
             const card = document.querySelector('.swipe-card');
+            const movie = movies[currentIndex];
+            
+            // Record swipe in background (fire-and-forget, don't wait)
+            recordSwipe(action, movie);
+            
+            // Animate card removal and show next card immediately
             animateCardRemoval(card, action);
-            recordSwipe(action);
         }
 
         function animateCardRemoval(card, action) {
-            const direction = action === 'like' ? 1 : -1;
             card.classList.add('removed');
-            card.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 45}deg)`;
 
+            if (action === 'like') {
+                // Swipe right with green glow
+                card.style.transform = 'translateX(1000px) rotate(45deg)';
+                card.style.boxShadow = '0 0 50px rgba(76, 175, 80, 0.8)';
+            } else if (action === 'dislike') {
+                // Swipe left with red glow
+                card.style.transform = 'translateX(-1000px) rotate(-45deg)';
+                card.style.boxShadow = '0 0 50px rgba(229, 9, 20, 0.8)';
+            } else if (action === 'watched_liked') {
+                // Swipe up-right with blue glow
+                card.style.transform = 'translateY(-500px) translateX(300px) rotate(20deg) scale(0.8)';
+                card.style.boxShadow = '0 0 50px rgba(33, 150, 243, 0.8)';
+            } else if (action === 'watched_disliked') {
+                // Swipe up-left with orange glow
+                card.style.transform = 'translateY(-500px) translateX(-300px) rotate(-20deg) scale(0.8)';
+                card.style.boxShadow = '0 0 50px rgba(255, 107, 53, 0.8)';
+            } else {
+                // Default: fade out and slide down
+                card.style.transform = 'translateY(1000px) scale(0.8)';
+            }
+
+            card.style.opacity = '0';
+
+            // Show next card immediately (optimistic UI)
+            // Don't wait for API calls
             setTimeout(() => {
                 currentIndex++;
-                renderCards();
+                renderCards(); // Don't await - render immediately
                 updateCardsRemaining();
-            }, 500);
+            }, 300); // Reduced from 500ms to 300ms for faster transition
         }
 
-        async function recordSwipe(action) {
-            const movie = movies[currentIndex];
-            
-            try {
-                const response = await fetch('/api/solo/swipe/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({
-                        tmdb_id: movie.tmdb_id,
-                        action: action,
-                        movie_title: movie.title
-                    })
+        // Fire-and-forget: don't block UI
+        function recordSwipe(action, movie) {
+            // Update UI optimistically first
+            if (action === 'like') {
+                likedMovies.unshift({
+                    ...movie,
+                    action_type: 'like'
                 });
-
-                const data = await response.json();
-
-                if (data.success && action === 'like') {
-                    likedMovies.unshift(movie);
-                    updateLikesPanel();
-                }
-            } catch (error) {
-                console.error('Error recording swipe:', error);
+                updateLikesPanel();
+            } else if (action === 'watched_liked') {
+                watchedLikedMovies.unshift({
+                    ...movie,
+                    action_type: 'watched_liked'
+                });
+                updateLikesPanel();
             }
+
+            // Send to server in background (don't wait)
+            fetch('/api/solo/swipe/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    tmdb_id: movie.tmdb_id,
+                    action: action,
+                    movie_title: movie.title
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Only update if there was an error (optimistic update already done)
+                if (!data.success) {
+                    console.warn('Swipe recording failed:', data);
+                    // Optionally revert optimistic update
+                }
+            })
+            .catch(error => {
+                console.error('Error recording swipe:', error);
+                // Swipe still recorded optimistically, will sync on next page load
+            });
         }
 
         function updateCardsRemaining() {
             const remaining = movies.length - currentIndex;
-            document.getElementById('cards-remaining').textContent = 
+            document.getElementById('cards-remaining').textContent =
                 `${remaining} movie${remaining !== 1 ? 's' : ''} remaining`;
         }
 
         function updateLikesPanel() {
             const likesList = document.getElementById('likes-list');
+            const watchedList = document.getElementById('watched-list');
             const likesCount = document.getElementById('likes-count');
+            const likedCountBadge = document.getElementById('liked-count-badge');
+            const watchedCountBadge = document.getElementById('watched-count-badge');
 
-            likesCount.textContent = likedMovies.length;
+            // Update badge counts
+            const totalCount = likedMovies.length + watchedLikedMovies.length;
+            likesCount.textContent = totalCount;
+            likedCountBadge.textContent = likedMovies.length;
+            watchedCountBadge.textContent = watchedLikedMovies.length;
 
+            // Update liked movies list
             if (likedMovies.length === 0) {
-                likesList.innerHTML = '<p class="text-gray-300 text-center">No likes yet. Start swiping!</p>';
-                return;
+                likesList.innerHTML = '<p class="text-gray-300 text-center py-4">No liked movies yet. Start swiping!</p>';
+            } else {
+                likesList.innerHTML = likedMovies.map(movie => renderMovieCard(movie, 'WANT TO WATCH', 'rgba(76, 175, 80, 0.3)', '#81C784')).join('');
             }
 
-            likesList.innerHTML = likedMovies.map(movie => `
+            // Update watched & liked movies list
+            if (watchedLikedMovies.length === 0) {
+                watchedList.innerHTML = '<p class="text-gray-300 text-center py-4">No watched movies yet. Start swiping!</p>';
+            } else {
+                watchedList.innerHTML = watchedLikedMovies.map(movie => renderMovieCard(movie, 'WATCHED & LIKED', 'rgba(33, 150, 243, 0.3)', '#64B5F6')).join('');
+            }
+            
+            // Update remove all button visibility
+            updateRemoveAllButton();
+        }
+
+        function renderMovieCard(movie, labelText, labelBg, labelColor) {
+            return `
                 <div class="liked-movie" style="position: relative;">
                     <button onclick="removeLike(${movie.tmdb_id}, event)"
                             class="remove-like-btn"
-                            title="Remove from likes"
-                            style="position: absolute; top: 4px; right: 4px; background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;">
+                            title="Remove"
+                            style="position: absolute; top: 4px; right: 4px; background: rgba(229, 9, 20, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s ease;">
                         ×
                     </button>
                     <img src="${movie.poster_url || 'https://via.placeholder.com/60x90'}" alt="${movie.title}">
                     <div class="flex-1">
-                        <h3 class="font-bold">${movie.title}</h3>
-                        <p class="text-sm text-gray-300">${movie.year || 'N/A'} • ⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</p>
+                        <h3 class="font-bold" style="color: white;">${movie.title}</h3>
+                        <p class="text-sm" style="color: #999;">${movie.year || 'N/A'} • ⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</p>
+                        <div class="mt-1">
+                            <span style="background: ${labelBg}; color: ${labelColor}; padding: 2px 6px; border-radius: 4px; font-size: 10px;">${labelText}</span>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `;
         }
 
         async function removeLike(tmdb_id, event) {
             event.stopPropagation();
 
-            if (!confirm('Remove this movie from your likes?')) {
-                return;
-            }
+            showConfirmationModal(
+                'Remove Movie?',
+                'Remove this movie from your likes?',
+                async () => {
+                    try {
+                        const response = await fetch(`/api/solo/unlike/${tmdb_id}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken')
+                            }
+                        });
 
-            try {
-                const response = await fetch(`/api/solo/unlike/${tmdb_id}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Remove from both local arrays
+                            likedMovies = likedMovies.filter(m => m.tmdb_id !== tmdb_id);
+                            watchedLikedMovies = watchedLikedMovies.filter(m => m.tmdb_id !== tmdb_id);
+                            // Update the UI
+                            updateLikesPanel();
+                        } else {
+                            showConfirmationModal(
+                                'Error',
+                                data.error || 'Failed to remove movie from likes',
+                                () => {}
+                            );
+                        }
+                    } catch (error) {
+                        console.error('Error removing like:', error);
+                        showConfirmationModal(
+                            'Error',
+                            'Failed to remove movie from likes',
+                            () => {}
+                        );
                     }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // Remove from local array
-                    likedMovies = likedMovies.filter(m => m.tmdb_id !== tmdb_id);
-                    // Update the UI
-                    updateLikesPanel();
-                } else {
-                    alert(data.error || 'Failed to remove movie from likes');
                 }
-            } catch (error) {
-                console.error('Error removing like:', error);
-                alert('Failed to remove movie from likes');
-            }
+            );
         }
 
         function toggleLikesPanel() {
@@ -669,8 +1221,11 @@
                     <div class="text-6xl mb-4">🎉</div>
                     <h2 class="text-3xl font-bold mb-4">That's all for now!</h2>
                     <p class="text-gray-300 mb-6">You've seen all the movies we have for you.</p>
-                    <button onclick="location.href='{% url 'recom_sys:solo_genre_selection' %}'" 
-                            class="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 rounded-full font-bold hover:shadow-xl transform hover:scale-105 transition-all">
+                    <button onclick="location.href='{% url 'recom_sys:solo_genre_selection' %}'"
+                            class="px-8 py-3 rounded-full font-bold transition-all"
+                            style="background: #E50914; color: white; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);"
+                            onmouseover="this.style.boxShadow='0 6px 25px rgba(229, 9, 20, 0.6)'; this.style.transform='scale(1.05)';"
+                            onmouseout="this.style.boxShadow='0 4px 15px rgba(229, 9, 20, 0.4)'; this.style.transform='scale(1)';">
                         Choose Different Genres
                     </button>
                 </div>
@@ -684,8 +1239,11 @@
                     <div class="text-6xl mb-4">😕</div>
                     <h2 class="text-2xl font-bold mb-4">Oops!</h2>
                     <p class="text-gray-300 mb-6">${message}</p>
-                    <button onclick="loadMovies()" 
-                            class="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3 rounded-full font-bold hover:shadow-xl transform hover:scale-105 transition-all">
+                    <button onclick="loadMovies()"
+                            class="px-8 py-3 rounded-full font-bold transition-all"
+                            style="background: #E50914; color: white; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);"
+                            onmouseover="this.style.boxShadow='0 6px 25px rgba(229, 9, 20, 0.6)'; this.style.transform='scale(1.05)';"
+                            onmouseout="this.style.boxShadow='0 4px 15px rgba(229, 9, 20, 0.4)'; this.style.transform='scale(1)';">
                         Try Again
                     </button>
                 </div>
@@ -705,6 +1263,103 @@
                 }
             }
             return cookieValue;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Popup confirmation modal
+        function showConfirmationModal(title, message, onConfirm, onCancel = null) {
+            const modal = document.createElement('div');
+            modal.className = 'confirmation-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: rgba(20, 20, 20, 0.95);
+                    border: 2px solid rgba(229, 9, 20, 0.3);
+                    border-radius: 16px;
+                    padding: 32px;
+                    max-width: 400px;
+                    width: 90%;
+                    text-align: center;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                ">
+                    <div style="font-size: 3em; margin-bottom: 16px;">⚠️</div>
+                    <h2 style="color: #ffffff; font-size: 1.5em; font-weight: bold; margin-bottom: 16px;">
+                        ${escapeHtml(title)}
+                    </h2>
+                    <p style="color: #cccccc; font-size: 1em; margin-bottom: 24px; line-height: 1.5; white-space: pre-line;">
+                        ${escapeHtml(message)}
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button class="confirm-btn" style="
+                            background: #E50914;
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            font-size: 1em;
+                            transition: background 0.2s;
+                        " onmouseover="this.style.background='#f40612'" onmouseout="this.style.background='#E50914'">
+                            Confirm
+                        </button>
+                        <button class="cancel-btn" style="
+                            background: rgba(255, 255, 255, 0.1);
+                            color: #cccccc;
+                            border: 2px solid rgba(255, 255, 255, 0.2);
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            font-size: 1em;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.color='#ffffff'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#cccccc'">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const confirmBtn = modal.querySelector('.confirm-btn');
+            const cancelBtn = modal.querySelector('.cancel-btn');
+            
+            confirmBtn.addEventListener('click', () => {
+                modal.remove();
+                if (onConfirm) onConfirm();
+            });
+            
+            cancelBtn.addEventListener('click', () => {
+                modal.remove();
+                if (onCancel) onCancel();
+            });
+            
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                    if (onCancel) onCancel();
+                }
+            });
         }
 
         // Movie Details Modal Functions
@@ -765,15 +1420,40 @@
                 // Build streaming providers HTML
                 let streamingHTML = '';
                 if (movie.watch_providers) {
-                    const providers = [];
+                    const sections = [];
+
+                    // Streaming (subscription) services
                     if (movie.watch_providers.flatrate && movie.watch_providers.flatrate.length > 0) {
-                        providers.push(...movie.watch_providers.flatrate.map(p =>
-                            `<div class="streaming-provider">📺 ${p.provider_name}</div>`
-                        ));
+                        const flatrateHTML = movie.watch_providers.flatrate.map(p =>
+                            `<span class="streaming-provider">📺 ${p.provider_name}</span>`
+                        ).join('');
+                        sections.push(`<div class="mb-2"><span class="text-gray-400 text-xs">Stream:</span> ${flatrateHTML}</div>`);
                     }
-                    streamingHTML = providers.length > 0
-                        ? providers.join('')
-                        : '<p class="text-gray-400">Streaming information not available</p>';
+
+                    // Rent options
+                    if (movie.watch_providers.rent && movie.watch_providers.rent.length > 0) {
+                        const rentHTML = movie.watch_providers.rent.slice(0, 4).map(p =>
+                            `<span class="streaming-provider">🎬 ${p.provider_name}</span>`
+                        ).join('');
+                        sections.push(`<div class="mb-2"><span class="text-gray-400 text-xs">Rent:</span> ${rentHTML}</div>`);
+                    }
+
+                    // Buy options
+                    if (movie.watch_providers.buy && movie.watch_providers.buy.length > 0) {
+                        const buyHTML = movie.watch_providers.buy.slice(0, 4).map(p =>
+                            `<span class="streaming-provider">🛒 ${p.provider_name}</span>`
+                        ).join('');
+                        sections.push(`<div class="mb-2"><span class="text-gray-400 text-xs">Buy:</span> ${buyHTML}</div>`);
+                    }
+
+                    // Show region info if available
+                    if (sections.length > 0 && movie.watch_providers.region) {
+                        sections.push(`<p class="text-gray-500 text-xs mt-2">📍 Region: ${movie.watch_providers.region}</p>`);
+                    }
+
+                    streamingHTML = sections.length > 0
+                        ? sections.join('')
+                        : '<p class="text-gray-400">No streaming options available in your region</p>';
                 } else {
                     streamingHTML = '<p class="text-gray-400">Streaming information not available</p>';
                 }
@@ -856,24 +1536,6 @@
             modalOpen = false;
         }
 
-        // Prevent swiping when modal is open
-        function startDrag(e) {
-            if (currentIndex >= movies.length || modalOpen) return;
-
-            isDragging = true;
-            const card = e.currentTarget;
-            card.classList.add('swiping');
-
-            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-
-            const moveHandler = (e) => handleDragMove(e, card);
-            const endHandler = () => handleDragEnd(card, moveHandler, endHandler);
-
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('touchmove', moveHandler);
-            document.addEventListener('mouseup', endHandler);
-            document.addEventListener('touchend', endHandler);
-        }
     </script>
 </body>
 </html>

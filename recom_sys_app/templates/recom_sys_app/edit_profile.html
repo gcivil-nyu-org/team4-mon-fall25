@@ -15,18 +15,64 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #141414;
       min-height: 100vh;
       padding: 40px 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Cinematic Background with Three Layered Images */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&q=80'),
+        url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1920&q=80'),
+        url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1920&q=80');
+      background-size: cover, cover, cover;
+      background-position: center top, center center, center bottom;
+      background-repeat: no-repeat;
+      background-blend-mode: overlay, multiply, screen;
+      opacity: 0.15;
+      z-index: 0;
+      filter: blur(2px) brightness(0.4);
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        135deg,
+        rgba(229, 9, 20, 0.05) 0%,
+        rgba(20, 20, 20, 0.95) 50%,
+        rgba(0, 0, 0, 0.98) 100%
+      );
+      z-index: 1;
+      pointer-events: none;
     }
 
     .edit-container {
+      position: relative;
+      z-index: 2;
       max-width: 700px;
       margin: 0 auto;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      background: rgba(20, 20, 20, 0.95);
+      border-radius: 16px;
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(229, 9, 20, 0.1);
       padding: 50px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .header {
@@ -35,49 +81,55 @@
     }
 
     .header h1 {
-      font-size: 2.2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 2.5rem;
+      color: #E50914;
       margin-bottom: 10px;
+      font-weight: 800;
+      text-shadow: 0 0 30px rgba(229, 9, 20, 0.5);
+      letter-spacing: -1px;
     }
 
     .header p {
-      color: #718096;
+      color: #999;
       font-size: 1rem;
+      letter-spacing: 0.5px;
     }
 
     .back-link {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: #667eea;
+      color: #E50914;
       text-decoration: none;
       font-weight: 600;
       margin-bottom: 30px;
       transition: all 0.3s ease;
+      font-size: 0.95rem;
     }
 
     .back-link:hover {
-      color: #764ba2;
+      color: #ff0a16;
       transform: translateX(-5px);
+      text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
     }
 
     .section-divider {
-      border-top: 2px solid #e2e8f0;
+      border-top: 1px solid rgba(229, 9, 20, 0.2);
       margin: 35px 0 25px 0;
       padding-top: 25px;
     }
 
     .section-title {
-      color: #2d3748;
-      font-size: 1.1rem;
+      color: #fff;
+      font-size: 1.2rem;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       display: flex;
       align-items: center;
       gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.95rem;
     }
 
     .form-row {
@@ -93,10 +145,11 @@
 
     label {
       display: block;
-      color: #2d3748;
+      color: #ccc;
       font-weight: 600;
       margin-bottom: 8px;
       font-size: 0.9rem;
+      letter-spacing: 0.3px;
     }
 
     input[type="text"],
@@ -105,12 +158,13 @@
     select,
     textarea {
       width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
+      padding: 14px 18px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
       font-size: 0.95rem;
       transition: all 0.3s ease;
-      background: #f7fafc;
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
       font-family: inherit;
     }
 
@@ -118,63 +172,138 @@
     select:focus,
     textarea:focus {
       outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #E50914;
+      background: rgba(0, 0, 0, 0.6);
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
     }
 
     select {
       cursor: pointer;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23E50914' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 16px center;
-      padding-right: 40px;
+      background-position: right 18px center;
+      padding-right: 45px;
+    }
+
+    select option {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 10px;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #666;
     }
 
     .form-actions {
       display: flex;
       gap: 15px;
-      margin-top: 35px;
-      padding-top: 25px;
-      border-top: 2px solid #e2e8f0;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(229, 9, 20, 0.2);
     }
 
     .btn {
       flex: 1;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 1.05rem;
-      font-weight: 600;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
       border: none;
       text-decoration: none;
       text-align: center;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
     }
 
     .btn-save {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #E50914;
       color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
     }
 
     .btn-save:hover {
+      background: #ff0a16;
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      box-shadow: 0 8px 30px rgba(229, 9, 20, 0.6);
+    }
+
+    .btn-save:active {
+      transform: translateY(0);
     }
 
     .btn-cancel {
-      background: #e2e8f0;
-      color: #4a5568;
+      background: rgba(255, 255, 255, 0.05);
+      color: #ccc;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .btn-cancel:hover {
-      background: #cbd5e0;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Animated background elements */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+
+    /* Decorative film strip effect */
+    .edit-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -10px;
+      width: 5px;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        #E50914,
+        #E50914 20px,
+        transparent 20px,
+        transparent 30px
+      );
+      opacity: 0.3;
+      border-radius: 2px;
+    }
+
+    .edit-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -10px;
+      width: 5px;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        #E50914,
+        #E50914 20px,
+        transparent 20px,
+        transparent 30px
+      );
+      opacity: 0.3;
+      border-radius: 2px;
     }
 
     @media (max-width: 640px) {
+      body {
+        padding: 20px 10px;
+      }
+
       .edit-container {
         padding: 30px 25px;
       }
@@ -187,6 +316,139 @@
       .form-actions {
         flex-direction: column;
       }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+
+    /* Loading animation for form */
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    /* Profile Image Upload Styles */
+    .profile-image-preview {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      overflow: hidden;
+      border: 3px solid rgba(229, 9, 20, 0.3);
+      background: rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .profile-image-preview:hover {
+      border-color: #E50914;
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.4);
+    }
+
+    .profile-image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 50%;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .profile-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .upload-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(229, 9, 20, 0.1);
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      border-radius: 8px;
+      color: #E50914;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .upload-label:hover {
+      background: rgba(229, 9, 20, 0.2);
+      border-color: #E50914;
+    }
+
+    .profile-image-input {
+      display: none;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Style the Django ClearableFileInput clear checkbox */
+    .profile-image-clear {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .profile-image-clear input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #E50914;
+      cursor: pointer;
+    }
+
+    .profile-image-clear label {
+      color: #E50914;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline;
+      margin: 0;
+    }
+
+    /* Hide Django's default "Currently:" and "Change:" labels */
+    .form-group p {
+      display: none;
+    }
+
+    /* Style the delete/remove button */
+    .btn-remove-image {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(229, 9, 20, 0.1);
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      border-radius: 8px;
+      color: #E50914;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .btn-remove-image:hover {
+      background: rgba(229, 9, 20, 0.2);
+      border-color: #E50914;
     }
   </style>
 </head>
@@ -198,14 +460,54 @@
 
     <div class="header">
       <h1>✏️ Edit Profile</h1>
-      <p>Update your preferences and information</p>
+      <p>Customize your CineMatch experience</p>
     </div>
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data" id="profileForm" onsubmit="return validateForm(event)">
       {% csrf_token %}
 
+      <!-- Profile Picture -->
+      <div class="section-title">📷 Profile Picture</div>
+      
+      <div class="form-group" style="text-align: center;">
+        <div class="profile-image-preview" id="profileImagePreview">
+          {% if form.instance.profile_image %}
+            {% if MEDIA_HOST %}
+              <img src="{{ MEDIA_PROTOCOL }}://{{ MEDIA_HOST }}{{ form.instance.profile_image.url }}" alt="Profile" id="previewImg" onerror="this.style.display='none'; document.getElementById('profilePlaceholder').style.display='flex';">
+            {% else %}
+              <img src="{{ form.instance.profile_image.url }}" alt="Profile" id="previewImg" onerror="this.style.display='none'; document.getElementById('profilePlaceholder').style.display='flex';">
+            {% endif %}
+            <div class="profile-placeholder" id="profilePlaceholder" style="display: none;">
+              <span style="font-size: 3rem;">👤</span>
+              <span style="color: #999; font-size: 0.9rem;">Click to upload</span>
+            </div>
+          {% else %}
+            <div class="profile-placeholder" id="profilePlaceholder">
+              <span style="font-size: 3rem;">👤</span>
+              <span style="color: #999; font-size: 0.9rem;">Click to upload</span>
+            </div>
+          {% endif %}
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 15px;">
+          <label for="id_profile_image" class="upload-label" style="margin: 0;">
+            📸 Choose Image
+          </label>
+          {% if form.instance.profile_image %}
+          <button type="button" class="btn-remove-image" id="removeImageBtn" style="margin: 0;">
+            🗑️ Remove Image
+          </button>
+          {% endif %}
+        </div>
+        <!-- File input - name must match form field exactly -->
+        <input type="file" name="profile_image" id="id_profile_image" accept="image/*" class="profile-image-input" style="display: none;">
+        <input type="hidden" name="profile_image-clear" id="profileImageClear" value="">
+        <p style="color: #666; font-size: 0.85rem; margin-top: 10px;">Supported formats: JPG, PNG, GIF (max 5MB)</p>
+      </div>
+
       <!-- Personal Information -->
-      <div class="section-title">👤 Personal Information</div>
+      <div class="section-divider">
+        <div class="section-title">👤 Personal Information</div>
+      </div>
 
       <div class="form-group">
         <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
@@ -260,5 +562,153 @@
       </div>
     </form>
   </div>
+
+  <script>
+    // Profile image preview
+    document.addEventListener('DOMContentLoaded', function() {
+      const imageInput = document.getElementById('id_profile_image');
+      const preview = document.getElementById('profileImagePreview');
+      const placeholder = document.getElementById('profilePlaceholder');
+      const clearInput = document.getElementById('profileImageClear');
+      const removeBtn = document.getElementById('removeImageBtn');
+      
+      // Click on preview area to trigger file input
+      preview.addEventListener('click', function() {
+        if (imageInput) imageInput.click();
+      });
+      
+      // Handle remove image button
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+          if (confirm('Are you sure you want to remove your profile picture?')) {
+            // Set the clear flag
+            if (clearInput) clearInput.value = 'on';
+            
+            // Clear the file input
+            if (imageInput) imageInput.value = '';
+            
+            // Show placeholder
+            const img = preview.querySelector('img');
+            if (img) img.remove();
+            
+            let placeholderEl = document.getElementById('profilePlaceholder');
+            if (!placeholderEl) {
+              placeholderEl = document.createElement('div');
+              placeholderEl.id = 'profilePlaceholder';
+              placeholderEl.className = 'profile-placeholder';
+              placeholderEl.innerHTML = '<span style="font-size: 3rem;">👤</span><span style="color: #999; font-size: 0.9rem;">Click to upload</span>';
+              preview.appendChild(placeholderEl);
+            }
+            placeholderEl.style.display = 'flex';
+            
+            // Hide remove button
+            removeBtn.style.display = 'none';
+          }
+        });
+      }
+      
+      // Handle file selection
+      if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+              alert('Image size must be less than 5MB');
+              return;
+            }
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+              alert('Please select an image file');
+              return;
+            }
+            
+            // Clear the clear flag since we're uploading a new image
+            if (clearInput) clearInput.value = '';
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              // Remove placeholder if exists
+              const placeholderEl = document.getElementById('profilePlaceholder');
+              if (placeholderEl) {
+                placeholderEl.style.display = 'none';
+              }
+              
+              // Check if image already exists
+              let img = preview.querySelector('img');
+              if (!img) {
+                img = document.createElement('img');
+                img.id = 'previewImg';
+                img.alt = 'Profile Preview';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                preview.appendChild(img);
+              }
+              
+              img.src = event.target.result;
+              img.style.display = 'block';
+              
+              // Show remove button if hidden
+              if (removeBtn) {
+                removeBtn.style.display = 'inline-flex';
+              } else {
+                // Create remove button if it doesn't exist
+                const btnContainer = preview.parentElement.querySelector('div[style*="display: flex"]');
+                if (btnContainer && !document.getElementById('removeImageBtn')) {
+                  const newRemoveBtn = document.createElement('button');
+                  newRemoveBtn.type = 'button';
+                  newRemoveBtn.className = 'btn-remove-image';
+                  newRemoveBtn.id = 'removeImageBtn';
+                  newRemoveBtn.textContent = '🗑️ Remove Image';
+                  newRemoveBtn.style.margin = '0';
+                  newRemoveBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to remove your profile picture?')) {
+                      if (clearInput) clearInput.value = 'on';
+                      if (imageInput) imageInput.value = '';
+                      if (img) img.remove();
+                      if (placeholderEl) {
+                        placeholderEl.style.display = 'flex';
+                      }
+                      newRemoveBtn.remove();
+                    }
+                  });
+                  btnContainer.appendChild(newRemoveBtn);
+                }
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    });
+
+    // Form validation before submission
+    function validateForm(event) {
+      const imageInput = document.getElementById('id_profile_image');
+      const form = document.getElementById('profileForm');
+      
+      // Check if a new file was selected
+      if (imageInput && imageInput.files && imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (file.size > maxSize) {
+          event.preventDefault();
+          alert('Image size must be less than 5MB. Please choose a smaller file.');
+          return false;
+        }
+        
+        // Ensure file is included in form
+        console.log('[Form] Submitting with file:', file.name, file.size);
+      } else {
+        console.log('[Form] No new file selected');
+      }
+      
+      // Form will submit normally
+      return true;
+    }
+  </script>
 </body>
 </html>

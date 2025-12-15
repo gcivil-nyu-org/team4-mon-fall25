@@ -1,6 +1,12 @@
 from django.contrib import admin
-from .models import UserProfile, Interaction, GroupSession, GroupMember
-from .models import GroupChatMessage
+from .models import (
+    UserProfile,
+    Interaction,
+    GroupSession,
+    GroupMember,
+    GroupChatMessage,
+    UserPreference,
+)
 
 
 @admin.register(UserProfile)
@@ -72,3 +78,34 @@ class GroupChatMessageAdmin(admin.ModelAdmin):
         return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
 
     content_preview.short_description = "Content"
+
+
+@admin.register(UserPreference)
+class UserPreferenceAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "total_interactions",
+        "total_likes",
+        "total_dislikes",
+        "top_genres_display",
+        "last_updated",
+    )
+    list_filter = ("last_updated", "total_interactions")
+    search_fields = ("user__username", "user__email")
+    readonly_fields = (
+        "created_at",
+        "last_updated",
+        "genre_preferences",
+        "preferred_actors",
+        "preferred_directors",
+    )
+    date_hierarchy = "last_updated"
+
+    def top_genres_display(self, obj):
+        """Display top 3 genres."""
+        top_genres = obj.get_top_genres(limit=3)
+        if not top_genres:
+            return "None"
+        return ", ".join([f"{genre} ({score:.2f})" for genre, score in top_genres])
+
+    top_genres_display.short_description = "Top Genres"

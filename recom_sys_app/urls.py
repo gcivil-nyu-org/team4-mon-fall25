@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from . import views_solo
 from . import views_community
+from . import views_letterboxd
 
 # Import views
 from .views import (
@@ -12,15 +13,21 @@ from .views import (
     edit_profile_view,
     set_interaction_view,
     communities_view,
+    leave_group,
+    delete_group,
+    leave_community,
+    get_user_region_api,
+    set_user_region_api,
 )
 from .views_auth import signup_view
 from .views_group import (
     get_group_deck,
     swipe_like,
+    swipe_dislike,
     group_room_view,
     group_deck_view,  # New: Swipe Card Page View
     get_group_matches,  # New: Retrieve matching records
-    join_or_create_community_group,  # New: Community group creation
+    clear_group_swipes,
 )
 from . import views_group
 from . import views  # For additional helper views
@@ -72,6 +79,7 @@ urlpatterns = [
     # ==================== PROFILE & RECOMMENDATIONS ====================
     path("profile/", profile_view, name="profile"),
     path("profile/edit/", edit_profile_view, name="edit_profile"),
+    path("profile/watched/", views_solo.watched_movies_page, name="watched_movies"),
     path("communities/", communities_view, name="communities"),
     path("recommend/", recommend_view, name="recommend"),
     # ==================== INTERACTIONS ====================
@@ -104,6 +112,11 @@ urlpatterns = [
     path("search/", views.movie_search_view, name="movie_search"),
     path("api/search/movies/", views.search_movies_api, name="api_search_movies"),
     path(
+        "api/search/autocomplete/",
+        views.autocomplete_movies_api,
+        name="api_autocomplete_movies",
+    ),
+    path(
         "api/movies/<int:tmdb_id>/similar/",
         views.get_similar_movies_api,
         name="api_similar_movies",
@@ -113,6 +126,8 @@ urlpatterns = [
     path("api/solo/deck/", views_solo.get_solo_deck, name="get_solo_deck"),
     path("api/solo/swipe/", views_solo.solo_swipe, name="solo_swipe"),
     path("api/solo/likes/", views_solo.get_solo_likes, name="get_solo_likes"),
+    path("api/solo/watch-later/", views_solo.get_watch_later, name="get_watch_later"),
+    path("api/solo/watched/", views_solo.get_watched, name="get_watched"),
     path(
         "api/solo/unlike/<int:tmdb_id>/", views_solo.unlike_movie, name="unlike_movie"
     ),
@@ -121,9 +136,17 @@ urlpatterns = [
     path("api/groups", views.create_group, name="create_group"),
     path("api/groups/join", views.join_group, name="join_group"),
     path("api/groups/<uuid:group_id>", views.get_group_details, name="group_details"),
+    # Group management - leave and delete
+    path("api/groups/<uuid:group_id>/leave/", leave_group, name="leave_group"),
+    path("api/groups/<uuid:group_id>/delete/", delete_group, name="delete_group"),
     # Group Recommendation API (New)
     path("api/groups/<str:group_code>/deck/", get_group_deck, name="api_group_deck"),
     path("api/groups/<str:group_code>/swipe/like/", swipe_like, name="api_swipe_like"),
+    path(
+        "api/groups/<str:group_code>/swipe/dislike/",
+        swipe_dislike,
+        name="api_swipe_dislike",
+    ),
     path(
         "api/groups/<str:group_code>/matches/",
         get_group_matches,
@@ -134,7 +157,37 @@ urlpatterns = [
         views_community.join_community,
         name="api_community_join",
     ),
+    # GROUP MATCHING
+    path(
+        "api/groups/<str:group_code>/completion-status/",
+        views_group.check_completion_status,
+        name="check_completion_status",
+    ),
+    path(
+        "api/groups/<str:group_code>/final-matches/",
+        views_group.get_final_matches,
+        name="get_final_matches",
+    ),
+    path(
+        "api/groups/<str:group_code>/clear-swipes/",
+        clear_group_swipes,
+        name="clear_group_swipes",
+    ),
     # Community API Endpoints (Genre-based)
+    path(
+        "api/communities/<uuid:group_id>/leave/",
+        leave_community,
+        name="leave_community",
+    ),
+    # Region/Geolocation API Endpoints
+    path("api/region/", get_user_region_api, name="get_user_region"),
+    path("api/region/set/", set_user_region_api, name="set_user_region"),
+    # Letterboxd Import
+    path(
+        "api/letterboxd/upload/",
+        views_letterboxd.upload_letterboxd_csv,
+        name="upload_letterboxd",
+    ),
     path(
         "api/communities/<str:group_code>/deck/",
         views_community.get_community_deck,

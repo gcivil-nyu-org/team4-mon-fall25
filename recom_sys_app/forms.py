@@ -16,10 +16,14 @@ class UserProfileForm(forms.ModelForm):
     favourite_genre2 = forms.ChoiceField(
         choices=Genre.choices, required=False, label="Favourite Genre 2"
     )
+    profile_image = forms.ImageField(
+        required=False, label="Profile Picture", help_text="Upload a profile picture"
+    )
 
     class Meta:
         model = UserProfile
         fields = [
+            "profile_image",
             "name",
             "sex",
             "age",
@@ -37,6 +41,9 @@ class UserProfileForm(forms.ModelForm):
         ]
         widgets = {
             "date_of_birth": forms.DateInput(attrs={"type": "date"}),
+            "profile_image": forms.ClearableFileInput(
+                attrs={"accept": "image/*", "class": "profile-image-input"}
+            ),
         }
 
 

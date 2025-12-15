@@ -14,36 +14,94 @@
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #141414;
       min-height: 100vh;
       padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Cinematic Background with Three Layered Images - Red Blend */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        url('{% static "recom_sys_app/images/Gemini_Generated_Image_bh81l1bh81l1bh81.png" %}'),
+        url('{% static "recom_sys_app/images/6cb18e0d07fa3ab0c15de17289acc907.jpg" %}'),
+        url('{% static "recom_sys_app/images/images.png" %}');
+      background-size: cover, cover, cover;
+      background-position: center top, center center, center bottom;
+      background-repeat: no-repeat;
+      background-blend-mode: screen, lighten, overlay;
+      opacity: 0.25;
+      z-index: 0;
+      filter:
+        brightness(0.4)
+        contrast(1.8)
+        saturate(0)
+        sepia(100%)
+        hue-rotate(345deg)
+        drop-shadow(0 0 40px rgba(229, 9, 20, 0.6))
+        drop-shadow(0 0 20px rgba(229, 9, 20, 0.5))
+        drop-shadow(0 0 10px rgba(229, 9, 20, 0.4));
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(ellipse at top left, rgba(229, 9, 20, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom right, rgba(229, 9, 20, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at center, rgba(229, 9, 20, 0.03) 0%, transparent 70%),
+        linear-gradient(
+          135deg,
+          rgba(229, 9, 20, 0.05) 0%,
+          rgba(20, 20, 20, 0.95) 50%,
+          rgba(0, 0, 0, 0.98) 100%
+        );
+      z-index: 1;
+      pointer-events: none;
     }
     
     .profile-container {
       max-width: 800px;
       margin: 0 auto;
-      background: white;
+      background: rgba(20, 20, 20, 0.95);
       border-radius: 20px;
       padding: 40px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(229, 9, 20, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      z-index: 2;
     }
     
     h1 {
-      color: #2c3e50;
+      color: #fff;
       margin-bottom: 30px;
     }
     
     /* 群组操作区域 */
     .group-actions {
-      background: #f8f9fa;
+      background: rgba(0, 0, 0, 0.4);
       border-radius: 12px;
       padding: 25px;
       margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .group-actions h2 {
       font-size: 1.3rem;
-      color: #2c3e50;
+      color: #fff;
       margin-bottom: 20px;
     }
     
@@ -66,13 +124,14 @@
     }
     
     .btn-create {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #E50914;
       color: white;
     }
-    
+
     .btn-create:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.6);
+      background: #ff0a16;
     }
     
     .btn-join {
@@ -96,9 +155,9 @@
       display: none;
       margin-top: 15px;
       padding: 20px;
-      background: white;
+      background: rgba(0, 0, 0, 0.4);
       border-radius: 8px;
-      border: 2px solid #e9ecef;
+      border: 2px solid rgba(255, 255, 255, 0.1);
     }
     
     .join-form.active {
@@ -109,24 +168,27 @@
       display: block;
       font-weight: 600;
       margin-bottom: 8px;
-      color: #2c3e50;
+      color: #ccc;
     }
-    
+
     .join-form input {
       width: 100%;
       padding: 12px;
-      border: 2px solid #dfe6e9;
+      border: 2px solid rgba(255, 255, 255, 0.1);
       border-radius: 6px;
       font-size: 1rem;
       margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 2px;
       font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
     }
-    
+
     .join-form input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #E50914;
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
     }
     
     .join-form-buttons {

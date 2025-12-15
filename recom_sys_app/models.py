@@ -42,6 +42,14 @@ class UserProfile(models.Model):
         db_index=True,
     )
 
+    # Profile image
+    profile_image = models.ImageField(
+        upload_to="profile_images/",
+        blank=True,
+        null=True,
+        help_text="Upload a profile picture",
+    )
+
     # requested fields
     name = models.CharField(max_length=120)  # display name
     sex = models.CharField(max_length=1, choices=Sex.choices, default=Sex.UNSPECIFIED)
@@ -102,10 +110,15 @@ class UserProfile(models.Model):
 # ---- 2) Interactions table (single source of truth per user x movie) ----
 class Interaction(models.Model):
     class Status(models.TextChoices):
-        LIKE = "LIKE", "Like"
-        DISLIKE = "DISLIKE", "Dislike"
+        LIKE = "LIKE", "Like"  # Want to watch, interested
+        DISLIKE = "DISLIKE", "Dislike"  # Pass, not interested
         WATCH_LATER = "WATCH_LATER", "Watch Later"
-        WATCHED = "WATCHED", "Watched"
+        WATCHED = "WATCHED", "Watched"  # Legacy: watched (neutral)
+        WATCHED_LIKED = "WATCHED_LIKED", "Watched & Liked"  # Watched and enjoyed
+        WATCHED_DISLIKED = (
+            "WATCHED_DISLIKED",
+            "Watched & Disliked",
+        )  # Watched but didn't enjoy
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -114,7 +127,7 @@ class Interaction(models.Model):
         db_index=True,
     )
     tmdb_id = models.IntegerField(db_index=True)
-    status = models.CharField(max_length=12, choices=Status.choices, db_index=True)
+    status = models.CharField(max_length=20, choices=Status.choices, db_index=True)
 
     # helpful extras
     rating = models.PositiveSmallIntegerField(
@@ -406,3 +419,94 @@ class GroupChatMessage(models.Model):
     def __str__(self):
         preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
         return f"{self.user.username}: {preview}"
+
+
+# ---- 5) User Preferences (NEW) ----
+class UserPreference(models.Model):
+    """
+    Tracks user preferences learned from interaction history.
+    Automatically updated via Django signals when users interact with movies.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="preferences",
+        db_index=True,
+    )
+
+    # Genre preferences: JSON field storing genre -> score (0.0-1.0)
+    # Example: {"Action": 0.85, "Comedy": 0.72, "Drama": 0.45}
+    genre_preferences = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Genre preference scores (0.0-1.0) based on user interactions",
+    )
+
+    # Preferred actors/directors: JSON field storing TMDB person IDs
+    # Example: {"actors": [123, 456], "directors": [789]}
+    preferred_actors = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of preferred actor TMDB IDs",
+    )
+    preferred_directors = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of preferred director TMDB IDs",
+    )
+
+    # Rating patterns
+    average_rating_given = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Average rating given by user (1-10 scale)",
+    )
+    total_interactions = models.IntegerField(default=0, db_index=True)
+    total_likes = models.IntegerField(default=0)
+    total_dislikes = models.IntegerField(default=0)
+
+    # Timestamps
+    last_updated = models.DateTimeField(auto_now=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_preferences"
+        ordering = ["-last_updated"]
+        indexes = [
+            models.Index(fields=["user", "-last_updated"]),
+            models.Index(fields=["total_interactions"]),
+        ]
+
+    def __str__(self):
+        return f"Preferences for {self.user.username}"
+
+    def get_top_genres(self, limit=5):
+        """
+        Get top N genres by preference score.
+
+        Args:
+            limit: Number of top genres to return
+
+        Returns:
+            list: List of (genre_name, score) tuples, sorted by score descending
+        """
+        if not self.genre_preferences:
+            return []
+
+        sorted_genres = sorted(
+            self.genre_preferences.items(), key=lambda x: x[1], reverse=True
+        )
+        return sorted_genres[:limit]
+
+    def get_genre_score(self, genre_name):
+        """
+        Get preference score for a specific genre.
+
+        Args:
+            genre_name: Name of the genre
+
+        Returns:
+            float: Preference score (0.0-1.0), or 0.0 if genre not found
+        """
+        return self.genre_preferences.get(genre_name, 0.0)

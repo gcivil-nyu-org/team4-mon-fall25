@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.shortcuts import render, redirect
 import os
@@ -6,7 +6,6 @@ import re
 import json
 import ast
 import requests
-from django.http import JsonResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from dotenv import load_dotenv
@@ -21,6 +20,12 @@ from django.contrib.auth import login
 from .forms import UserProfileForm, SignUpForm
 from .models import UserProfile, Interaction, Genre
 from .services import RecommendationService
+from .geolocation import (
+    get_user_region,
+    set_user_region,
+    get_all_regions,
+    SUPPORTED_REGIONS,
+)
 
 # NEW for group
 
@@ -117,6 +122,13 @@ def _tmdb_watch_providers(movie_id: int, region: str = "US"):
     """
     Get streaming platform availability for a movie from TMDB.
     Returns watch provider data (Netflix, Hulu, etc.) for the specified region.
+
+    Args:
+        movie_id: TMDB movie ID
+        region: ISO 3166-1 alpha-2 country code (e.g., "US", "GB", "IN")
+
+    Returns:
+        dict with flatrate, rent, buy providers and JustWatch link
     """
     try:
         r = requests.get(
@@ -130,7 +142,9 @@ def _tmdb_watch_providers(movie_id: int, region: str = "US"):
         # Extract providers for the specified region
         results = data.get("results", {}).get(region, {})
 
+        # If no providers found for the user's region, return empty but note the region
         return {
+            "region": region,
             "flatrate": results.get(
                 "flatrate", []
             ),  # Subscription services (Netflix, Disney+, etc.)
@@ -139,10 +153,18 @@ def _tmdb_watch_providers(movie_id: int, region: str = "US"):
             ),  # Rental options (iTunes, Google Play, etc.)
             "buy": results.get("buy", []),  # Purchase options
             "link": results.get("link", ""),  # JustWatch link
+            "available": bool(results),  # Whether movie is available in this region
         }
     except Exception:
         # Return empty dict if API call fails
-        return {"flatrate": [], "rent": [], "buy": [], "link": ""}
+        return {
+            "region": region,
+            "flatrate": [],
+            "rent": [],
+            "buy": [],
+            "link": "",
+            "available": False,
+        }
 
 
 def _tmdb_fetch_all(titles: list[str]) -> list[dict]:
@@ -380,6 +402,28 @@ def _get_user_interactions(user, status=None):
         return []
 
 
+def _get_movie_titles_from_ids(tmdb_ids: list[int], limit: int = 20) -> list[str]:
+    """
+    Fetch movie titles from TMDB IDs.
+    Returns a list of movie titles.
+    """
+    if not tmdb_ids:
+        return []
+
+    titles = []
+    for tmdb_id in tmdb_ids[:limit]:  # Limit to avoid too many API calls
+        try:
+            det = _tmdb_details(tmdb_id)
+            title = det.get("title", "")
+            if title:
+                titles.append(title)
+        except Exception as e:
+            print(f"Error fetching title for movie {tmdb_id}: {e}")
+            continue
+
+    return titles
+
+
 # ============================================
 # AI Agent Helper Functions
 # ============================================
@@ -431,34 +475,146 @@ def _extract_titles(agent_text: str) -> list[str]:
 def _build_recommendation_agent(user, groq_api_key: str):
     """
     Build and configure the recommendation agent with user preferences.
+    Now uses UserPreference model for more robust, data-driven recommendations.
     """
+    from recom_sys_app.models import UserPreference
+    from recom_sys_app.services import PreferenceService
+
+    # Get signup movies and genres (fallback for new users)
     movies = _get_signup_movies(user)
     genres = _get_signup_genre(user)
-    liked_movies = _get_user_interactions(user, status="LIKE")
 
-    # Build context about user preferences
+    # Get interaction IDs for different statuses
+    liked_ids = _get_user_interactions(user, status="LIKE")
+    disliked_ids = _get_user_interactions(user, status="DISLIKE")
+    watch_later_ids = _get_user_interactions(user, status="WATCH_LATER")
+    watched_liked_ids = _get_user_interactions(user, status="WATCHED_LIKED")
+    watched_disliked_ids = _get_user_interactions(user, status="WATCHED_DISLIKED")
+
+    # Fetch actual movie titles from IDs (limit to 10 each to avoid too many API calls)
+    liked_titles = _get_movie_titles_from_ids(liked_ids, limit=10)
+    disliked_titles = _get_movie_titles_from_ids(disliked_ids, limit=10)
+    watch_later_titles = _get_movie_titles_from_ids(watch_later_ids, limit=10)
+    watched_liked_titles = _get_movie_titles_from_ids(watched_liked_ids, limit=10)
+    watched_disliked_titles = _get_movie_titles_from_ids(watched_disliked_ids, limit=10)
+
+    # Get or create user preferences (will calculate if doesn't exist)
+    try:
+        preference = UserPreference.objects.get(user=user)
+        # Update if stale (older than 1 hour)
+        from django.utils import timezone
+        from datetime import timedelta
+
+        if preference.last_updated < timezone.now() - timedelta(hours=1):
+            preference = PreferenceService.update_user_preferences(user)
+    except UserPreference.DoesNotExist:
+        # Create preferences if they don't exist
+        preference = PreferenceService.update_user_preferences(user)
+
+    # Build preference-based context (more robust than just listing movies)
+    preference_context = []
+
+    # Genre preferences (weighted scores from actual interactions)
+    if preference.genre_preferences:
+        top_genres = preference.get_top_genres(limit=5)
+        if top_genres:
+            genre_details = ", ".join(
+                [f"{genre} ({score:.0%} preference)" for genre, score in top_genres]
+            )
+            preference_context.append(
+                f"Based on {preference.total_interactions} interactions, the user's top genre preferences are: {genre_details}."
+            )
+
+    # Interaction statistics
+    if preference.total_interactions > 0:
+        preference_context.append(
+            f"The user has liked {preference.total_likes} movies and disliked {preference.total_dislikes} movies. "
+            f"Average rating given: {preference.average_rating_given:.1f}/10"
+            if preference.average_rating_given
+            else f"The user has liked {preference.total_likes} movies and disliked {preference.total_dislikes} movies."
+        )
+
+    # Build context about user preferences (legacy support)
     affinity_text = (
         f"The user has affinity to movies like: {', '.join(movies)}"
         if movies
         else "The user has not provided a movie affinity list."
     )
     genre_text = f"The user prefers {' and '.join(genres)} genres." if genres else ""
+
+    # Build text descriptions with actual movie titles
     liked_text = (
-        f"The user has liked {len(liked_movies)} movies." if liked_movies else ""
+        f"Movies the user has liked (wants to watch): {', '.join(liked_titles)}"
+        if liked_titles
+        else ""
+    )
+    disliked_text = (
+        f"Movies the user has disliked (not interested): {', '.join(disliked_titles)}"
+        if disliked_titles
+        else ""
+    )
+    watch_later_text = (
+        f"Movies in user's watch later list: {', '.join(watch_later_titles)}"
+        if watch_later_titles
+        else ""
+    )
+    watched_liked_text = (
+        f"Movies the user has watched and enjoyed: {', '.join(watched_liked_titles)}"
+        if watched_liked_titles
+        else ""
+    )
+    watched_disliked_text = (
+        f"Movies the user has watched and did not enjoy: {', '.join(watched_disliked_titles)}"
+        if watched_disliked_titles
+        else ""
     )
 
+    # Build instructions list, prioritizing preference-based data
     instructions = [
-        "You are a movie recommendation agent.",
-        affinity_text,
-        genre_text,
-        liked_text,
-        "Recommend exactly 3 movies with a one-line reason for each.",
-        "Search for movies released after 2020.",
-        "For each movie provide a score of match out of 100% based on reviews and comparison with the user's movies affinity.",
-        "Format each as: Title — Reason (Match: NN%).",
-        "Use markdown to format your answers.",
-        'Return the three movies at the end as a JSON array of strings like: ["Movie 1", "Movie 2", "Movie 3"]',
+        "You are an intelligent movie recommendation agent that provides personalized suggestions.",
     ]
+
+    # Add preference-based context first (most important)
+    if preference_context:
+        instructions.extend(preference_context)
+        instructions.append(
+            "Use these genre preferences as the PRIMARY guide for recommendations. "
+            "Prioritize movies in genres with higher preference scores."
+        )
+
+    # Add legacy context (for backward compatibility)
+    instructions.append(affinity_text)
+    if genre_text:
+        instructions.append(genre_text)
+
+    # Add specific movie examples
+    if liked_text:
+        instructions.append(liked_text)
+    if disliked_text:
+        instructions.append(disliked_text)
+    if watch_later_text:
+        instructions.append(watch_later_text)
+    if watched_liked_text:
+        instructions.append(watched_liked_text)
+    if watched_disliked_text:
+        instructions.append(watched_disliked_text)
+
+    instructions.extend(
+        [
+            "Recommend exactly 3 movies that the user is MOST LIKELY to enjoy based on their preferences.",
+            "Prioritize genres with higher preference scores when making recommendations.",
+            "Search for movies released after 2020 unless it belongs to one of the classic titles.",
+            "Avoid recommending movies the user has already disliked, watched and disliked, or explicitly marked as not interested.",
+            "For each movie provide a score of match out of 100% based on:",
+            "  1. Genre preference alignment (higher weight for preferred genres)",
+            "  2. Similarity to movies the user has enjoyed",
+            "  3. Overall quality and reviews",
+            "  4. Recency and relevance",
+            "Format each as: **Title** — Reason (Match: NN%).",
+            "Use markdown to format your answers.",
+            'Return the three movies at the end as a JSON array of strings like: ["Movie 1", "Movie 2", "Movie 3"]',
+        ]
+    )
 
     agent = Agent(
         name="Recommendation Agent",
@@ -501,6 +657,83 @@ def profile_view(request):
         creator=request.user, is_active=True, kind=GroupSession.Kind.PRIVATE
     ).order_by("-created_at")
 
+    # Fetch personalized movie recommendations for preview sections
+    try:
+        # Solo Mode - Get personalized recommendations based on user preferences
+        # Request more than needed to ensure we have 14 after filtering
+        solo_movie_ids = RecommendationService.get_solo_deck(request.user, limit=20)
+        print(f"[DEBUG profile_view] Solo movie IDs: {solo_movie_ids}")
+
+        if solo_movie_ids:
+            # Fetch up to 20 and take first 14 that load successfully
+            solo_movies = _tmdb_fetch_by_ids(solo_movie_ids[:20])
+            solo_movies = solo_movies[:14]  # Limit to 14
+            print(f"[DEBUG profile_view] Solo movies fetched: {len(solo_movies)}")
+        else:
+            # Fallback to popular movies if no recommendations
+            print("[DEBUG profile_view] No solo recommendations, using popular movies")
+            fallback_ids = RecommendationService._get_popular_movies(limit=20)
+            solo_movies = _tmdb_fetch_by_ids(fallback_ids[:20]) if fallback_ids else []
+            solo_movies = solo_movies[:14]  # Limit to 14
+
+        # If we still don't have enough movies, try to get more popular ones
+        if len(solo_movies) < 14:
+            print(
+                f"[DEBUG profile_view] Only got {len(solo_movies)} movies, fetching more popular movies"
+            )
+            additional_ids = RecommendationService._get_popular_movies(limit=20)
+            existing_ids = {m.get("tmdb_id") for m in solo_movies}
+            additional_ids = [mid for mid in additional_ids if mid not in existing_ids]
+            additional_movies = _tmdb_fetch_by_ids(
+                additional_ids[: 14 - len(solo_movies)]
+            )
+            solo_movies.extend(additional_movies)
+            solo_movies = solo_movies[:14]
+
+        # Private Groups - No placeholder movies, will load when user creates/joins a group
+        group_movies = []
+
+        # Communities - Get one movie per genre for preview (7-8 genres)
+        community_genres = [
+            {"name": "Action", "id": 28},
+            {"name": "Horror", "id": 27},
+            {"name": "Comedy", "id": 35},
+            {"name": "Romance", "id": 10749},
+            {"name": "Science Fiction", "id": 878},
+            {"name": "Thriller", "id": 53},
+            {"name": "Drama", "id": 18},
+            {"name": "Animation", "id": 16},
+        ]
+
+        community_previews = []
+        for genre in community_genres:
+            try:
+                genre_movie_ids = RecommendationService._get_movies_by_genres(
+                    [genre["id"]], limit=1
+                )
+                if genre_movie_ids:
+                    movies = _tmdb_fetch_by_ids([genre_movie_ids[0]])
+                    if movies:
+                        community_previews.append(
+                            {
+                                "genre": genre["name"],
+                                "genre_id": genre["id"],
+                                "movie": movies[0],
+                            }
+                        )
+            except Exception as e:
+                print(f"Error fetching preview for {genre['name']}: {e}")
+                continue
+
+    except Exception as e:
+        print(f"Error fetching preview movies: {e}")
+        import traceback
+
+        traceback.print_exc()
+        solo_movies = []
+        group_movies = []
+        community_previews = []
+
     get_token(request)  # ensure CSRF cookie
     return render(
         request,
@@ -509,6 +742,9 @@ def profile_view(request):
             "profile": profile,
             "user_groups": user_groups,
             "created_groups": created_groups,
+            "solo_movies": solo_movies,
+            "group_movies": group_movies,
+            "community_previews": community_previews,
         },
     )
 
@@ -573,18 +809,64 @@ def edit_profile_view(request):
     """
     Edit profile view for updating user preferences.
     GET: Display profile edit form
-    POST: Update profile
+    POST: Update profile (including profile image)
     """
     profile, _ = UserProfile.objects.get_or_create(
         user=request.user, defaults={"name": request.user.username}
     )
 
     if request.method == "POST":
-        form = UserProfileForm(request.POST, instance=profile)
+        form = UserProfileForm(request.POST, request.FILES, instance=profile)
+
+        # Debug logging
+        print(f"[Profile Edit] POST data keys: {list(request.POST.keys())}")
+        print(f"[Profile Edit] FILES keys: {list(request.FILES.keys())}")
+        print(
+            f"[Profile Edit] Has profile_image in FILES: {'profile_image' in request.FILES}"
+        )
+        if "profile_image" in request.FILES:
+            print(f"[Profile Edit] File name: {request.FILES['profile_image'].name}")
+            print(f"[Profile Edit] File size: {request.FILES['profile_image'].size}")
+
         if form.is_valid():
             form.instance.user = request.user
-            form.save()
-            return redirect("recom_sys:profile")
+
+            # Handle profile image removal
+            if request.POST.get("profile_image-clear") == "on":
+                # Delete the old image file if it exists
+                if profile.profile_image:
+                    try:
+                        profile.profile_image.delete(save=False)
+                    except Exception as e:
+                        print(f"[Profile Edit] Error deleting old image: {e}")
+                form.instance.profile_image = None
+            # Handle new image upload - ensure it's saved
+            elif "profile_image" in request.FILES:
+                # The file is in request.FILES, form should handle it
+                # But ensure it's properly assigned
+                uploaded_file = request.FILES["profile_image"]
+                form.instance.profile_image = uploaded_file
+                print(f"[Profile Edit] Assigning uploaded file: {uploaded_file.name}")
+
+            try:
+                profile = form.save()
+                print(f"[Profile Edit] Profile saved. Image: {profile.profile_image}")
+                return redirect("recom_sys:profile")
+            except Exception as e:
+                print(f"[Profile Edit] Error saving profile: {e}")
+                import traceback
+
+                traceback.print_exc()
+                # Re-render form with error
+                return render(
+                    request,
+                    "recom_sys_app/edit_profile.html",
+                    {"form": form, "error": f"Error saving profile: {str(e)}"},
+                )
+        else:
+            # Log form errors for debugging
+            print(f"[Profile Edit] Form errors: {form.errors}")
+            print(f"[Profile Edit] Form non_field_errors: {form.non_field_errors()}")
     else:
         form = UserProfileForm(instance=profile)
 
@@ -620,16 +902,57 @@ def recommend_view(request):
     """
     Movie recommendation view for Solo mode.
     Generates personalized recommendations based on user history or onboarding preferences.
+    Can optionally start with a specific movie if movie_id is provided.
     """
     try:
+        # Check if a specific movie was selected from homepage
+        start_movie_id = request.GET.get("movie_id")
+        start_movie = None
+
+        if start_movie_id:
+            # Fetch details for the starting movie
+            start_movies = _tmdb_fetch_by_ids([int(start_movie_id)])
+            if start_movies and start_movies[0].get("found", False):
+                start_movie = start_movies[0]
+
         # Use RecommendationService to get personalized solo deck
         movie_ids = RecommendationService.get_solo_deck(request.user, limit=50)
+
+        # If we have a starting movie, get similar movies to it as well
+        if start_movie_id:
+            try:
+                # Fetch similar movies to the selected movie
+                similar_response = requests.get(
+                    f"https://api.themoviedb.org/3/movie/{start_movie_id}/similar",
+                    params={"api_key": settings.TMDB_API_KEY, "page": 1},
+                    timeout=10,
+                )
+                if similar_response.status_code == 200:
+                    similar_data = similar_response.json()
+                    similar_ids = [
+                        m["id"] for m in similar_data.get("results", [])[:20]
+                    ]
+                    # Add similar movies to the deck (deduplicated)
+                    movie_ids = similar_ids + [
+                        mid for mid in movie_ids if mid not in similar_ids
+                    ]
+            except Exception as e:
+                print(f"Error fetching similar movies: {e}")
 
         # Fetch TMDB details for recommended movies
         tmdb_results = _tmdb_fetch_by_ids(movie_ids) if movie_ids else []
 
         # Filter to only successfully fetched movies
         tmdb_results = [m for m in tmdb_results if m.get("found", False)]
+
+        # If we have a starting movie, put it at the beginning
+        if start_movie:
+            # Remove it from results if it exists to avoid duplicates
+            tmdb_results = [
+                m for m in tmdb_results if m.get("tmdb_id") != int(start_movie_id)
+            ]
+            # Add it at the beginning
+            tmdb_results.insert(0, start_movie)
 
         context = {
             "agent_text": "",  # No AI agent text in new implementation
@@ -638,6 +961,7 @@ def recommend_view(request):
             ),  # Convert to JSON string for JavaScript
             "user_movies": _get_signup_movies(request.user),
             "user_genres": _get_signup_genre(request.user),
+            "start_movie_title": start_movie.get("title") if start_movie else None,
         }
 
         return render(request, "recom_sys_app/recommend_cards.html", context)
@@ -716,12 +1040,16 @@ def movie_details_view(request, tmdb_id: int):
     """
     Get detailed information about a specific movie.
     Includes TMDB data and user's interaction status.
+    Uses user's detected/preferred region for watch providers.
     """
     try:
         movie_data = _tmdb_details(tmdb_id, append="videos,credits,recommendations")
 
-        # Fetch watch providers (where to watch)
-        watch_providers = _tmdb_watch_providers(tmdb_id)
+        # Get user's region for watch providers
+        user_region = get_user_region(request)
+
+        # Fetch watch providers (where to watch) for user's region
+        watch_providers = _tmdb_watch_providers(tmdb_id, region=user_region)
 
         # Check if user has interacted with this movie
         interaction = None
@@ -891,7 +1219,7 @@ def home_view(request):
     Shows login/signup for anonymous users, dashboard for authenticated users.
     """
     if request.user.is_authenticated:
-        return redirect("profile")
+        return redirect("recom_sys:profile")
 
     return render(request, "recom_sys_app/home.html")
 
@@ -1187,12 +1515,97 @@ def search_movies_api(request):
 
 @login_required
 @require_http_methods(["GET"])
+def autocomplete_movies_api(request):
+    """
+    Lightweight API endpoint for Algolia-style movie autocomplete.
+    Returns multiple relevant movie suggestions as user types.
+
+    Query params:
+        q: Search query string (required)
+        limit: Max results to return (default: 8)
+    """
+    query = request.GET.get("q", "").strip()
+
+    if not query or len(query) < 2:
+        return JsonResponse({"success": True, "results": [], "count": 0})
+
+    try:
+        limit = min(int(request.GET.get("limit", 8)), 15)  # Cap at 15
+    except (ValueError, TypeError):
+        limit = 8
+
+    try:
+        if not TMDB_TOKEN:
+            return JsonResponse(
+                {"success": False, "message": "TMDB API not configured"}, status=500
+            )
+
+        # Use TMDB search API for fast autocomplete
+        r = requests.get(
+            f"{TMDB_BASE}/search/movie",
+            params={
+                "query": query,
+                "include_adult": "False",
+                "language": "en-US",
+                "page": 1,
+            },
+            headers=TMDB_HEADERS,
+            timeout=5,  # Short timeout for autocomplete
+        )
+        r.raise_for_status()
+
+        results = r.json().get("results", [])
+
+        # Format results for autocomplete dropdown
+        formatted_results = []
+        for movie in results[:limit]:
+            release_date = movie.get("release_date", "")
+            year = release_date[:4] if release_date else ""
+
+            formatted_results.append(
+                {
+                    "tmdb_id": movie.get("id"),
+                    "title": movie.get("title"),
+                    "year": year,
+                    "vote_average": round(movie.get("vote_average", 0), 1),
+                    "poster_path": movie.get("poster_path"),
+                    "poster_url": (
+                        f"{IMG_BASE}{movie['poster_path']}"
+                        if movie.get("poster_path")
+                        else None
+                    ),
+                }
+            )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "query": query,
+                "count": len(formatted_results),
+                "results": formatted_results,
+            }
+        )
+
+    except requests.Timeout:
+        return JsonResponse({"success": False, "message": "Search timeout"}, status=504)
+    except requests.HTTPError as e:
+        return JsonResponse(
+            {"success": False, "message": f"TMDB API error: {e.response.status_code}"},
+            status=502,
+        )
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
 def get_similar_movies_api(request, tmdb_id):
     """
     API endpoint to get similar movies for a given movie ID
     """
     try:
-        limit = int(request.GET.get("limit", 20))
+        # Increase default limit to return more movies
+        limit = int(request.GET.get("limit", 30))
 
         # Use RecommendationService to get similar movies
         results = RecommendationService.get_similar_movies(tmdb_id, limit=limit)
@@ -1206,5 +1619,208 @@ def get_similar_movies_api(request, tmdb_id):
             }
         )
 
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+# ============================================
+# GROUP MANAGEMENT - LEAVE & DELETE
+# ============================================
+
+
+@login_required
+@require_POST
+def leave_group(request, group_id):
+    """
+    API endpoint for a user to leave a group (sets is_active=False)
+    POST /api/groups/<uuid:group_id>/leave/
+    """
+    try:
+        group = get_object_or_404(GroupSession, id=group_id)
+
+        # Find the user's membership
+        membership = GroupMember.objects.filter(
+            group_session=group, user=request.user, is_active=True
+        ).first()
+
+        if not membership:
+            return JsonResponse(
+                {"success": False, "message": "You are not a member of this group"},
+                status=404,
+            )
+
+        # Creator cannot leave their own group - they must delete it
+        if membership.role == GroupMember.Role.CREATOR:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "As the creator, you cannot leave. You can delete the group instead.",
+                },
+                status=400,
+            )
+
+        # Soft delete - set is_active to False
+        membership.is_active = False
+        membership.save()
+
+        return JsonResponse(
+            {"success": True, "message": "You have left the group successfully"}
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Failed to leave group: {str(e)}"},
+            status=500,
+        )
+
+
+@login_required
+@require_POST
+def delete_group(request, group_id):
+    """
+    API endpoint for creator to delete a group entirely
+    POST /api/groups/<uuid:group_id>/delete/
+    """
+    try:
+        group = get_object_or_404(GroupSession, id=group_id)
+
+        # Only the creator can delete the group
+        if group.creator != request.user:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Only the group creator can delete this group",
+                },
+                status=403,
+            )
+
+        # Delete the group (CASCADE will delete related GroupMembers, GroupSwipes, etc.)
+        group_code = group.group_code
+        group.delete()
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"Group {group_code} has been deleted successfully",
+            }
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Failed to delete group: {str(e)}"},
+            status=500,
+        )
+
+
+@login_required
+@require_POST
+def leave_community(request, group_id):
+    """
+    API endpoint for a user to leave a community (sets is_active=False)
+    POST /api/communities/<uuid:group_id>/leave/
+    """
+    try:
+        group = get_object_or_404(
+            GroupSession, id=group_id, kind=GroupSession.Kind.COMMUNITY
+        )
+
+        # Find the user's membership
+        membership = GroupMember.objects.filter(
+            group_session=group, user=request.user, is_active=True
+        ).first()
+
+        if not membership:
+            return JsonResponse(
+                {"success": False, "message": "You are not a member of this community"},
+                status=404,
+            )
+
+        # Soft delete - set is_active to False
+        membership.is_active = False
+        membership.save()
+
+        return JsonResponse(
+            {"success": True, "message": "You have left the community successfully"}
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Failed to leave community: {str(e)}"},
+            status=500,
+        )
+
+
+# ============================================
+# REGION / GEOLOCATION API ENDPOINTS
+# ============================================
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_user_region_api(request):
+    """
+    Get the user's detected or preferred region.
+    Used for filtering movies by regional availability.
+
+    Returns:
+        JSON with region code, name, and available regions list
+    """
+    from .geolocation import REGION_NAMES
+
+    region = get_user_region(request)
+
+    return JsonResponse(
+        {
+            "success": True,
+            "region": {
+                "code": region,
+                "name": REGION_NAMES.get(region, region),
+            },
+            "available_regions": get_all_regions(),
+        }
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def set_user_region_api(request):
+    """
+    Manually set the user's preferred region.
+    Allows users to override the auto-detected region.
+
+    Body: {"region": "US"}
+    """
+    try:
+        data = json.loads(request.body)
+        region_code = data.get("region", "").strip().upper()
+
+        if not region_code:
+            return JsonResponse(
+                {"success": False, "message": "Region code is required"}, status=400
+            )
+
+        if region_code not in SUPPORTED_REGIONS:
+            return JsonResponse(
+                {"success": False, "message": f"Invalid region code: {region_code}"},
+                status=400,
+            )
+
+        set_user_region(request, region_code)
+
+        from .geolocation import REGION_NAMES
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"Region set to {REGION_NAMES.get(region_code, region_code)}",
+                "region": {
+                    "code": region_code,
+                    "name": REGION_NAMES.get(region_code, region_code),
+                },
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)}, status=500)

@@ -59,17 +59,32 @@ deploy:
   region: us-east-1
   app: cinematch-app
   env: cinematch-production
-  bucket_name: elasticbeanstalk-us-east-1-464975960156
+  bucket_name: elasticbeanstalk-us-east-1-028210901732
   bucket_path: cinematch-app
   skip_cleanup: true
+  # Ensure credentials are properly set
+  edge: true
   on:
     branch: develop
     python: "3.12"
+
+# Invalidate CloudFront cache after successful deployment
+after_deploy:
+  - |
+    if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+      echo "Invalidating CloudFront distribution: $CLOUDFRONT_DISTRIBUTION_ID"
+      aws cloudfront create-invalidation \
+        --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+        --paths "/*" \
+        --region us-east-1 || echo "CloudFront invalidation failed, but deployment succeeded"
+    else
+      echo "CLOUDFRONT_DISTRIBUTION_ID not set, skipping CloudFront invalidation"
+    fi
 
 # Notifications
 notifications:
   email:
     recipients:
-      - your-team-email@example.com  # Update with actual team email
+      - rrp4822@nyu.edu   # Update with actual team email
     on_success: change
     on_failure: always

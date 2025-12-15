@@ -1,0 +1,368 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watched Movies - CineMatch</title>
+  <link rel="stylesheet" href="{% static 'recom_sys_app/cards.css' %}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(229, 9, 20, 0.3);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #E50914, #ff0a16);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .back-btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #E50914, #b8070f);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(229, 9, 20, 0.4);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, rgba(20, 20, 20, 0.95), rgba(30, 30, 30, 0.9));
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #E50914;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #999;
+      margin-top: 8px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      background: linear-gradient(135deg, #E50914, #b8070f);
+      border-color: #E50914;
+    }
+
+    .filter-btn:hover {
+      background: rgba(229, 9, 20, 0.2);
+    }
+
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .movie-card {
+      background: rgba(20, 20, 20, 0.8);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 40px rgba(229, 9, 20, 0.3);
+      border-color: rgba(229, 9, 20, 0.5);
+    }
+
+    .movie-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    }
+
+    .movie-info {
+      padding: 15px;
+    }
+
+    .movie-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .movie-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .movie-year {
+      color: #666;
+    }
+
+    .movie-rating {
+      color: #ffd700;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
+
+    .badge-liked {
+      background: rgba(33, 150, 243, 0.9);
+      color: white;
+    }
+
+    .badge-disliked {
+      background: rgba(229, 9, 20, 0.9);
+      color: white;
+    }
+
+    .badge-watched {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #666;
+    }
+
+    .empty-state h2 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      font-size: 1.2rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎬 Watched Movies</h1>
+      <a href="{% url 'recom_sys:profile' %}" class="back-btn">← Back to Profile</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="total-count">0</div>
+        <div class="stat-label">Total Watched</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="liked-count">0</div>
+        <div class="stat-label">Watched & Liked</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="disliked-count">0</div>
+        <div class="stat-label">Watched & Disliked</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="neutral-count">0</div>
+        <div class="stat-label">Watched (Neutral)</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="WATCHED_LIKED">👍 Liked</button>
+      <button class="filter-btn" data-filter="WATCHED_DISLIKED">👎 Disliked</button>
+      <button class="filter-btn" data-filter="WATCHED">⚪ Neutral</button>
+    </div>
+
+    <div id="loading" class="loading">Loading your watched movies...</div>
+    <div id="movies-grid" class="movies-grid" style="display: none;"></div>
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <h2>No watched movies yet</h2>
+      <p>Start swiping to build your watched list!</p>
+    </div>
+  </div>
+
+  <script>
+    let allMovies = [];
+    let currentFilter = 'all';
+
+    // Fetch watched movies
+    async function loadWatchedMovies() {
+      try {
+        const response = await fetch('/api/solo/watched/');
+        const data = await response.json();
+
+        if (data.success) {
+          allMovies = data.movies;
+          updateStats();
+          renderMovies();
+          document.getElementById('loading').style.display = 'none';
+
+          if (allMovies.length === 0) {
+            document.getElementById('empty-state').style.display = 'block';
+          } else {
+            document.getElementById('movies-grid').style.display = 'grid';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading watched movies:', error);
+        document.getElementById('loading').textContent = 'Error loading movies';
+      }
+    }
+
+    function updateStats() {
+      const liked = allMovies.filter(m => m.status === 'WATCHED_LIKED').length;
+      const disliked = allMovies.filter(m => m.status === 'WATCHED_DISLIKED').length;
+      const neutral = allMovies.filter(m => m.status === 'WATCHED').length;
+
+      document.getElementById('total-count').textContent = allMovies.length;
+      document.getElementById('liked-count').textContent = liked;
+      document.getElementById('disliked-count').textContent = disliked;
+      document.getElementById('neutral-count').textContent = neutral;
+    }
+
+    function renderMovies() {
+      const grid = document.getElementById('movies-grid');
+      const filtered = currentFilter === 'all'
+        ? allMovies
+        : allMovies.filter(m => m.status === currentFilter);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><h2>No movies match this filter</h2></div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(movie => {
+        // Use poster_url if available, otherwise try poster_path, otherwise placeholder
+        let posterUrl = '';
+        if (movie.poster_url) {
+          posterUrl = movie.poster_url;
+          // Ensure HTTPS
+          if (posterUrl.startsWith('http://')) {
+            posterUrl = posterUrl.replace('http://', 'https://');
+          }
+        } else if (movie.poster_path) {
+          posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+        } else {
+          posterUrl = 'https://via.placeholder.com/300x450?text=No+Poster';
+        }
+
+        const badgeClass = movie.status === 'WATCHED_LIKED' ? 'badge-liked'
+          : movie.status === 'WATCHED_DISLIKED' ? 'badge-disliked'
+          : 'badge-watched';
+
+        const badgeText = movie.status === 'WATCHED_LIKED' ? '👍 Liked'
+          : movie.status === 'WATCHED_DISLIKED' ? '👎 Disliked'
+          : '⚪ Watched';
+
+        return `
+          <div class="movie-card" onclick="window.location.href='/recommend/?movie_id=${movie.tmdb_id}'">
+            <span class="status-badge ${badgeClass}">${badgeText}</span>
+            <img src="${posterUrl}" alt="${movie.title}" class="movie-poster" loading="lazy" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+            <div class="movie-info">
+              <div class="movie-title">${movie.title}</div>
+              <div class="movie-meta">
+                <span class="movie-year">${movie.release_year || 'N/A'}</span>
+                <span class="movie-rating">⭐ ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderMovies();
+      });
+    });
+
+    // Load on page load
+    loadWatchedMovies();
+  </script>
+</body>
+</html>
